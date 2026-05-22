@@ -7,7 +7,7 @@
 ========================================================= */
 
 const ADMIN_PASSWORD = "9999";
-const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxr678i7FucanH3Asa7wYRlNCBcRJ1LaeeEIlUndem1eOfy_zh5jlplv3plW95gKpNI/exec";
+const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz275M78sjmlt0i851oyt0r-TkRGI2mQiPml6N_NOLD_Cv9T7zpI0h3qqWFKHZbPvtb/exec";
 
 const STORAGE_KEYS = {
   sessionStudent: "learningTool_sessionStudent",
