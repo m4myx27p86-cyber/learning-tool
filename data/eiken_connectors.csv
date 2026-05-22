@@ -1,0 +1,31 @@
+﻿id,section,word,correctAnswer,distractor1,distractor2,distractor3,points,explanation
+EIKEN-C001,Contrast,"The city has improved its public transportation; ___, traffic congestion remains a serious problem.",however,therefore,for example,as a result,1,however は逆接。前半の改善と後半の問題が対比されています。
+EIKEN-C002,Cause and Effect,"Many students work part-time jobs after school; ___, they have less time to study at home.",as a result,in contrast,nevertheless,for instance,1,as a result は結果を表します。
+EIKEN-C003,Addition,"The program helps students develop communication skills; ___, it gives them opportunities to work with people from different backgrounds.",in addition,however,therefore,despite this,1,in addition は情報の追加を表します。
+EIKEN-C004,Example,"Some local governments are trying new ways to reduce waste; ___, they encourage citizens to use reusable bags.",for example,therefore,on the other hand,consequently,1,for example は具体例を導入します。
+EIKEN-C005,Concession,"Online classes are convenient for many learners; ___, they may not provide enough face-to-face interaction.",nevertheless,as a result,in addition,for example,1,nevertheless は譲歩・逆接を表します。
+EIKEN-C006,Cause and Effect,"The number of tourists has increased rapidly; ___, local businesses have gained more customers.",therefore,however,for instance,on the other hand,1,therefore は原因から結果への流れを示します。
+EIKEN-C007,Contrast,"Some people believe that technology makes life easier; ___, others worry that it reduces human interaction.",on the other hand,in addition,for example,as a result,1,on the other hand は対立する見方を示します。
+EIKEN-C008,Addition,"Reading newspapers can improve vocabulary; ___, it helps learners understand current social issues.",moreover,however,therefore,in contrast,1,moreover は追加・強調です。
+EIKEN-C009,Cause and Effect,"The company introduced flexible working hours; ___, employee satisfaction improved.",consequently,nevertheless,for example,in contrast,1,consequently は結果を表します。
+EIKEN-C010,Clarification,"The policy may not solve every problem; ___, it can be an important first step.",still,for instance,as a result,in addition,1,still は「それでも」という譲歩を表します。
+EIKEN-C011,Cause and Effect,"Because the population is aging, the demand for healthcare workers is increasing; ___, training programs should be expanded.",therefore,however,for example,in contrast,1,therefore は主張の根拠から結論へつなぎます。
+EIKEN-C012,Example,"There are many ways to support children’s learning at home; ___, parents can read books with them regularly.",for instance,therefore,however,moreover,1,for instance は例示です。
+EIKEN-C013,Contrast,"Studying abroad can be expensive; ___, it can provide valuable cultural experiences.",nevertheless,as a result,for example,in addition,1,nevertheless は費用の問題を認めつつ価値を示します。
+EIKEN-C014,Addition,"Public libraries provide access to books; ___, they often offer free educational events.",furthermore,therefore,however,on the contrary,1,furthermore は追加です。
+EIKEN-C015,Cause and Effect,"Many people rely on smartphones for information; ___, digital literacy has become increasingly important.",as a result,however,for example,in contrast,1,as a result は結果を導きます。
+EIKEN-C016,Contrast,"Renewable energy is becoming cheaper; ___, it still requires investment in new infrastructure.",however,therefore,for example,in addition,1,however は逆接を表します。
+EIKEN-C017,Purpose,"Schools should teach students how to evaluate online information; ___, students can avoid believing unreliable sources.",so that,although,for example,in contrast,1,so that は目的を表します。
+EIKEN-C018,Reason,Public transportation should be improved ___ it can reduce traffic and air pollution.,because,however,for example,nevertheless,1,because は理由を表します。
+EIKEN-C019,Concession,"___ technology is useful in education, teachers still play an essential role.",Although,Because,Therefore,For example,1,Although は譲歩を表す従属接続詞です。
+EIKEN-C020,Condition,"___ governments invest in local industries, more young people may choose to stay in their hometowns.",If,Although,Therefore,However,1,If は条件を表します。
+EIKEN-C021,Cause and Effect,"The cost of living has risen; ___, many families are trying to reduce unnecessary spending.",as a result,for example,however,moreover,1,as a result は結果を示します。
+EIKEN-C022,Contrast,"AI can make work more efficient; ___, it may also change the skills required in the workplace.",at the same time,therefore,for example,in addition,1,at the same time は別の側面を同時に示します。
+EIKEN-C023,Addition,"Volunteering benefits local communities; ___, it helps participants develop a sense of responsibility.",also,however,therefore,for instance,1,also は追加です。
+EIKEN-C024,Example,"Many environmental problems are connected to daily habits; ___, leaving lights on wastes energy.",for example,nevertheless,therefore,on the other hand,1,for example は具体例です。
+EIKEN-C025,Conclusion,"In conclusion, schools should provide more career education; ___, students can make better decisions about their futures.",in this way,however,for example,on the contrary,1,in this way は前の提案がもたらす結果をまとめます。
+EIKEN-C026,Contrast,"Some people prefer living in large cities; ___, others value the quiet environment of rural areas.",by contrast,in addition,therefore,for example,1,by contrast は比較・対照を示します。
+EIKEN-C027,Cause and Effect,"The Internet allows people to access information quickly; ___, misinformation can spread just as fast.",however,therefore,for example,as a result,1,前半は利点、後半は問題点なので however が適切です。
+EIKEN-C028,Reason,More students should learn about finance ___ it helps them manage money responsibly.,because,although,therefore,nevertheless,1,because は理由を示します。
+EIKEN-C029,Concession,"___ remote work saves commuting time, it can make communication more difficult.",Although,Because,Therefore,For instance,1,Although は利点を認めつつ欠点を述べます。
+EIKEN-C030,Addition,"Exercise improves physical health; ___, it can reduce stress and improve concentration.",besides,however,therefore,in contrast,1,besides は追加情報を示します。
