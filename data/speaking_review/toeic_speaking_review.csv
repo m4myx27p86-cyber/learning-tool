@@ -99,3 +99,930 @@
 98,5/20 Opinion：タブレット学習,decrease the risk of forgetting to bring our textbooks,reduce the risk of forgetting their textbooks,decrease forgetting textbooks,reduce forgetting textbook risk
 99,5/20 Opinion：食品ロス,reduce the food proportion,reduce food portions,reduce food proportionally,reduce food size
 100,5/20 Opinion：食品ロス,reduce the reducing cost of their operation,reduce operating costs,reduce operation costing,reduce cost of operating
+URLがあるとかなり正確になります。
+
+理由は、あなたの現在のサイトには TOEIC S&W 学習カレンダー機能がすでに実装されている からです。index.htmlを見ると、
+
+「TOEIC S&W 学習カレンダー」ボタン
+calendarScreen
+calendarArea
+resetCalendarButton
+
+があり、6月21日に向けた日別タスクを表示する設計になっています
+
+さらに script.js 側でも
+
+openCalendar
+resetCalendarChecks
+toeicCalendar
+
+があるので、今サイト上でどんな日程を設定しているか をURLで見られると、
+
+今日が何日目か
+未消化タスク
+Speaking / Writing / Monitor の配分
+復習履歴
+
+までかなり具体的に提案できます。
+
+URLがある場合にできること
+
+例えばあなたがURLを送ってくれれば、
+
+「今日のカレンダー内容」
+「昨日未達ならどこを圧縮するか」
+「Speakingを増やすべきか」
+「Part別の弱点補強」
+「本番までの残日数調整」
+
+をかなり具体的にできます。
+
+特にあなたは昨日の発話を見ると：
+
+音読（Read Aloud）
+Picture Description
+Respond to Questions
+
+をかなり練習していて、
+
+課題は“長く話しすぎて崩れること” と以前話していましたよね。
+
+なのでURLがあると
+
+今日は Monitor 10問より、Q3-Q5の45秒回答を優先
+
+みたいな細かい調整ができます。
+
+URLがなくても、今日やるべきことは提案できます
+
+これまでのやり取りを見る限り、あなたの現状は
+
+強み
+
+語彙
+Reading
+学習量
+TOEIC L&R基礎
+
+課題
+
+Speakingの瞬発力
+1文が長くなりすぎる
+Writing/Speakingのテンプレ運用
+
+なので、今日（平日想定）なら 90〜120分版 はこれがかなり合理的です。
+
+今日やること（優先順位順）
+① Read Aloud（15分）
+
+サイトのモニター練習 or 公式問題
+
+3題
+録音
+「詰まった箇所」だけメモ
+
+意識：
+
+意味より区切り
+
+② Picture Description（20分）
+
+5枚
+
+各回答を
+
+location
+people
+action
+
+の3文で止める
+
+例：
+
+This picture was taken at an airport.
+Several people are waiting in line.
+A woman is talking to an employee.
+
+今は「長文化」がスコア阻害要因なので、短く。
+
+③ Respond to Questions（25分）
+
+最重要
+
+Q4–Q6を10題
+
+回答テンプレ：
+
+意見
+
+I think so because...
+
+経験
+
+Yes, I have...
+
+提案
+
+I recommend...
+
+④ Write a Sentence / Opinion（20分）
+3問
+
+Typing速度より
+
+主語
+動詞
+理由1つ
+
+を安定させる。
+
+⑤ あなたのサイトの復習機能（15分）
+
+かなり良い実装になっています。
+
+特に：
+
+Speaking Review
+Monitor Practice
+Mistake review
+
+があるので、最後に間違えた問題だけ解くのが効率的です。
+
+今日やらなくていいこと
+
+今日は以下は優先度低いです。
+
+Stock3000新規大量追加
+古文
+長時間L&R
+コード修正
+
+今は 6/21 TOEIC S&Wの得点最大化 が優先。
+
+結論
+URLあり → あなた専用の「今日やること」を正確に提示可能
+URLなし → 上のメニューで十分戦える
+
+個人的にはURL送ってもらえると、
+「今日はサイト上のどの教材を何問やるか」まで具体化できます。
+
+写真が昨日時点の計画です。また、先程まで機能を追加していたのは､サイトをアルバイトで使うためです。
+編集
+
+どうぞ。
+この画像を見て 20〜30秒で3文程度 説明してみてください。
+
+意識する順番：
+
+場所
+
+This picture was taken at...
+
+前景の人
+
+In the foreground...
+
+背景
+
+In the background...
+
+今回は特に 話しすぎないこと を意識してください。
+回答どうぞ。
+
+編集
+
+では今日ラストです ✅
+
+この画像を見て 20〜30秒 / 3文程度 で説明してください。
+
+意識：
+
+場所
+メインの人
+周囲の人
+
+例のように情報を詰め込みすぎなくてOKです。
+
+回答どうぞ。
+
+16日分の練習メニューを提示してくだい
+
+了解しました。
+**16日分（TOEIC S&W + 古典）**は、今の状況を見ると
+
+TOEIC Speaking → 表現の短文化・自然さ改善中
+古典 → 単語CSV作成済み＋読解頻出語の暗記フェーズ
+6/21 TOEIC S&W本番まで時間が限られる
+
+なので、**「毎日2〜3時間で回せる現実的なメニュー」**にします。
+（授業・研究もある前提）
+
+毎日固定（60〜90分）
+① TOEIC Speaking復習（25分）
+
+教材：
+TOEIC Speaking 復習
+パスワード：2180
+
+毎日
+speakingReview：20問
+monitor：20問
+
+特にあなたは
+
+there is/are
+前置詞
+長すぎる説明
+不自然な opinion 表現
+
+が課題なので、毎日固定。
+
+例：
+× There are a woman
+○ There is a woman
+
+× It becomes companies save money
+○ It helps companies save money
+
+② 音読（20分）
+Read Aloud
+
+公式問題集 2セット
+
+Photo Description
+
+2問
+
+Response to Questions
+
+2問
+
+Opinion
+
+1問
+
+意識すること
+
+1文を短く
+
+悪い例：
+
+There are many people and they are trying to pass gate and maybe they are confused...
+
+良い例：
+
+This picture was taken at an airport.
+Many people are waiting in line.
+They may be going through security.
+
+③ 古典単語（20〜30分）
+
+教材：
+古典単語
+パスワード：1110
+
+毎日30問
+
+Day1-5
+
+読解必修語50
+
+例：
+
+ののしる
+ねんず
+しのぶ
+あはれ
+かなし
+よし
+おぼつかなし
+
+Day6-10
+
+読解重要語100
+
+例：
+
+ためし
+わざ
+うつつ
+こころち
+ついで
+ところせし
+よろづ
+さうざうし
+
+Day11-16
+
+最重要敬語30
+
+おぼす
+きこしめす
+まゐらす
+おぼしめす
+たまふ
+たまはす
+
+隔日（30分）
+語順並べ替え
+
+パスワード：1200
+
+20問
+
+→ TOEIC Speakingの文構築速度向上にも効く
+
+週2回（40分）
+速読英単語
+
+パスワード：5000
+
+30問
+
+16日スケジュール
+Day	TOEIC	古典	追加
+Day1	Speaking復習	読解必修語	語順
+Day2	Speaking復習	読解必修語	音読強化
+Day3	Speaking復習	読解必修語	速読
+Day4	Speaking復習	読解必修語	語順
+Day5	Speaking復習	読解必修語	音読
+Day6	Speaking復習	読解重要語	語順
+Day7	Speaking復習	読解重要語	速読
+Day8	Speaking復習	読解重要語	音読
+Day9	Speaking復習	読解重要語	語順
+Day10	Speaking復習	読解重要語	音読
+Day11	Speaking復習	敬語	語順
+Day12	Speaking復習	敬語	速読
+Day13	Speaking復習	敬語	音読
+Day14	Speaking復習	敬語	語順
+Day15	Speaking復習	敬語	模試
+Day16	軽い復習のみ	軽い復習	早寝
+本番3日前以降
+
+新しい問題追加禁止
+
+やること：
+
+speakingReview復習
+opinionテンプレ確認
+read aloud
+睡眠
+
+のみ
+
+最優先順位（時間ない日）
+
+これだけやればOK
+
+① Speaking復習20問
+② Photo 2問
+③ 古典単語20問
+
+→ 合計45分程度
+
+正直、今のログを見ると
+**TOEICは知識不足というより「瞬発的に自然な短文を出す訓練不足」**です。
+
+一方古典は単語回転数がそのまま点数になるので、
+毎日少量×高速回転がかなり効きます。
+
+TOEIC S &Wに集中してくだい。その他は生徒ための問題です！
+写真の計画通り本日の学習を進めてましょう！
+問題数を3倍にして､昨日と同じ形で進めたいです！
+今日の学習お願いします。二つ目は終えていますので､
+The first bullet and the third bulletをお願いします。
+今日もこちらの計画に沿って問題を出してください。
+5/19 TOEIC S&W 練習
+① Read Aloud（3問）
+Read Aloud 1
+
+Many employees expect to work in the same job for their entire lives. However, due to rapid technological change, companies may need to recruit workers with different skills in the future.
+
+Read Aloud 2
+
+Scents are the only sensations that travel directly to the emotional and memory centers of the brain. That is why certain smells can remind us of special moments from the past.
+
+Read Aloud 3
+
+AlphaZero learned to play chess at a level beyond human ability in only four hours. This result surprised many researchers and showed the rapid progress of artificial intelligence.
+
+② Respond（5問）
+Q1
+
+When does the training session begin?
+
+Model Answer
+
+It begins at two o’clock this afternoon.
+
+Q2
+
+Could you attend the meeting tomorrow morning?
+
+Model Answer
+
+Yes, I should be available tomorrow morning.
+
+Q3
+
+What do you usually do to reduce stress?
+
+Model Answer
+
+I usually listen to podcasts and take short walks.
+
+Q4
+
+Why do some people prefer working from home?
+
+Model Answer
+
+Because they can reduce commuting time and spend more time with their families.
+
+Q5
+
+Would you like to participate in the orientation event?
+
+Model Answer
+
+Yes, I would be happy to help with the orientation event.
+
+③ Opinion（2問）
+Opinion 1
+
+Do you think schools should use AI tools in class?
+
+Sample Answer
+
+Yes, I think schools should use AI tools carefully.
+AI can provide immediate feedback and help students study more efficiently.
+For example, students can practice speaking and writing outside the classroom.
+However, teachers still need to guide students appropriately.
+
+Opinion 2
+
+Do you prefer studying alone or with other people?
+
+Sample Answer
+
+I prefer studying alone.
+When I study by myself, I can focus more easily and manage my own schedule.
+For example, I often practice TOEIC speaking by recording my answers repeatedly.
+Therefore, studying alone is more effective for me.
+
+今日のポイント
+「短く・完成した文」
+
+今日のテーマ通り：
+
+Short and complete answers.
+
+です。
+
+特に：
+
+begins at 〜
+I should be available.
+reduce commuting time
+spend time with their families
+I would be happy to 〜
+
+は、TOEIC S&Wで非常に使いやすい定番表現です。
+
+これらの統計用語に関する問題をRespondの形式でShort answerで答えられるように一問ずつ、毎日行っているTOEIC　S&W対策の形式で作成してください。
+こちら今日の学習の計画です。photo を5問、opinionを15問に変更してください。
+貼り付けられたテキスト（1 点）.txt
+ドキュメント
+それではspeaking reviewの問題を追加してください。
+今日のメニューです。
+Solution Question を15問
+Writing Email を5問に変更し､今日のメニューを開始してください。
+
+今日のメニュー（5/21）を更新する場合は、calendarData.js（またはカレンダー配列部分）を以下のように変更してください。
+これまでの制作の流れと同様に、「表示内容」だけを変更し、既存のチェック機能・保存機能はそのまま維持する形です。
+
+{
+  date: "5/21",
+  tasks: [
+    "Solution Question 15問",
+    "Writing Email 5問"
+  ],
+  message: "Business English day."
+}
+
+もし現在 script.js 内に直接 toeicCalendar がある場合は、
+「5/21」の部分を探して差し替えてください。
+
+また、今日のメニュー開始用として、TOEIC S&Wの流れに合わせるなら次の順番がおすすめです。
+
+Solution Question（15問）
+because
+therefore
+in addition
+as a result
+one possible solution is ...
+I would recommend ...
+Writing Email（5問）
+request
+apology
+schedule change
+confirmation
+recommendation
+
+Speaking Review の追加問題データは、現在の toeic_speaking_review.csv に続けて追記する形で運用できます。
+
+思考時間: 22s
+
+ご指摘ありがとうございます。
+正しくは、TOEIC Writing の E-mail Writing は文法四択ではなく、公式形式では Questions 6–7: Respond to a written request です。各メールに対して 10分で返信を書く形式で、評価は文の質・語彙・構成などに基づきます。
+
+今日はあなたの希望通り Writing Email 5問 をやりますが、形式は公式に寄せて、
+「受け取ったメールに返信する」→ あなたが本文を書く → 私が添削
+で進めます。
+
+Writing Email 1/5
+
+以下のメールを読んで、返信を書いてください。
+目安は 60〜90語程度で大丈夫です。件名は不要です。
+
+メールアドレス
+
+Hi,
+
+I’m organizing a team meeting for next Wednesday at 10 a.m. However, I heard that some members may have other appointments at that time.
+
+Could you let me know if you can attend the meeting?
+If you cannot attend, please explain why.
+Also, please suggest another possible time for the meeting.
+
+Best,
+Kevin
+
+返信では必ずこの3点に答えてください。
+
+出席できるか
+出席できない場合は理由
+別の時間の提案
+
+どうぞ。
+
+Dear Kevin,
+
+Thank you for your arrangement of a team meeting.
+I am afraid I cannot attend the session. I have to meet a client at that time.
+Would you mind rescheduling our meeting for next Monday at 9 a.m.
+
+Best regards,
+Taichi
+思考時間: 26s
+
+良いです。内容はかなり伝わっています。特に I am afraid I cannot attend... と Would you mind rescheduling...? はビジネスメールとして自然です。
+
+修正版はこちらです。
+
+Dear Kevin,
+
+Thank you for arranging the team meeting.
+
+I am afraid I cannot attend the session because I have to meet a client at that time. Would it be possible to reschedule our meeting for next Monday at 9 a.m.?
+
+Best regards,
+Taichi
+
+主な修正点は3つです。
+
+arrangement of a team meeting → arranging the team meeting
+「会議を手配してくれてありがとう」は Thank you for arranging... が自然です。
+
+Would you mind ... ?
+疑問文なので最後に ? が必要です。
+
+the session / our meeting
+同じ会議を指しているので、最後は our meeting にすると自然です。
+
+完成度は 4/5 です。短く、目的も明確です。
+
+では、Writing Email 2/5 に進みます。
+
+Writing Email 2/5
+
+You received the following email from Sarah.
+
+Dear Taichi,
+
+We are planning a customer service training session for new employees next Friday. 
+Could you let me know whether you can help with the session? 
+Also, please suggest one topic that should be included in the training.
+
+Best,
+Sarah
+
+次の3点を入れて返信してください。
+
+手伝えるかどうか
+なぜその研修が重要か
+研修に入れるべきトピックを1つ提案する
+Dear Sarah,
+
+I appreciate your contribution for tutorial session every year.
+I am happy to join the session.
+Regarding topic, it is good to understand why other employees to choose our company.
+How about talking about what employees to motivation to work.
+
+Best regards,
+Taichi
+思考時間: 13s
+
+良いです。
+特に I am happy to join the session. で、手伝えることを明確に言えている点は良いです。
+
+ただし、今回のメールは customer service training なので、提案するトピックは「社員の仕事へのモチベーション」よりも、customer complaints / polite communication / responding to customers の方が自然です。
+
+修正版
+Dear Sarah,
+
+Thank you for organizing the customer service training session for new employees.
+
+I would be happy to help with the session. I think this training is important because new employees need to learn how to communicate with customers politely and professionally.
+
+Regarding the topic, I suggest including how to respond to customer complaints. This will help new employees handle difficult situations more confidently.
+
+Best regards,
+Taichi
+主な修正点
+
+contribution for tutorial session
+→ organizing the customer service training session
+今回は “tutorial” ではなく “training session” が自然です。
+
+I am happy to join
+→ I would be happy to help
+「参加する」より「手伝う」と明確に答えています。
+
+what employees motivation to work
+→ 今回は customer service training なので、
+how to respond to customer complaints の方がタスクに合っています。
+
+完成度は 3.5/5 です。
+丁寧さは良いですが、トピック提案をメールの目的に合わせるとさらに強くなります。
+
+Writing Email 3/5
+
+You received the following email from Mark.
+
+Dear Taichi,
+
+Our department is planning to introduce a new online booking system for meeting rooms.
+Could you let me know whether you think this system would be useful?
+Also, please explain one possible problem with the system and suggest a solution.
+
+Best,
+Mark
+
+次の3点を入れて返信してください。
+
+そのシステムが役立つと思うか
+考えられる問題を1つ説明する
+解決策を1つ提案する
+Dear Mark,
+
+Thank you for your contribution. 
+I think the system make our work more efficiently. 
+However, it is better to share the way to use the system for all of the employees.
+Would you make a introduction video clip for everyone?
+
+Best regards,
+Taichi
+思考時間: 12s
+
+良いです。今回は 3点すべて 入っています。
+
+システムは役立つ
+問題：使い方を共有する必要がある
+解決策：紹介動画を作る
+
+ただし、少し自然に直すとかなり良くなります。
+
+メールアドレス
+
+Dear Mark,
+
+Thank you for your email.
+
+I think the new online booking system would be useful because it would help employees reserve meeting rooms more efficiently.
+
+However, one possible problem is that some employees may not know how to use the system at first. To solve this problem, I suggest creating a short introductory video for all employees.
+
+Best regards,
+Taichi
+
+主な修正点です。
+
+Thank you for your contribution
+→ 今回は相手の貢献に感謝するより、メールへの返答なので Thank you for your email が自然です。
+
+the system make our work more efficiently
+→ the system would help employees reserve meeting rooms more efficiently
+make + 名詞 + 形容詞 か help + 人 + 動詞 の形にすると自然です。
+
+Would you make a introduction video clip?
+→ I suggest creating a short introductory video
+TOEIC Writingでは、依頼よりも「提案」として書く方が安定します。
+
+完成度は 4/5 です。内容はかなり良いので、あとは business email らしい表現に整えるだけです。
+
+Writing Email 4/5
+
+次のメールに返信してください。
+必ず3点を入れてください。
+
+イベントに参加できるか
+イベントで行う活動を1つ提案する
+その活動がなぜ良いか説明する
+メールアドレス
+
+Dear Taichi,
+
+We are planning a welcome event for new employees next month.
+
+Could you let me know whether you can attend the event?
+Also, please suggest one activity for the event and explain why it would be useful.
+
+Best,
+Lisa
+
+返信を書いてください。
+
+Dear Lisa,
+
+Thank you for your efforts to plan the welcome event.
+I am happy to attend the event after I finish my current project.
+One of the activities which I am interested in is a group recreation.
+We can get to know each other through the session.
+
+Best,
+Taichi
+思考時間: 6s
+
+良いです。
+今回も 3点すべて 入っています。
+
+参加できる
+活動提案：group recreation
+理由：get to know each other
+
+特に get to know each other は welcome event にかなり合っています。
+
+修正版
+Dear Lisa,
+
+Thank you for planning the welcome event.
+
+I would be happy to attend the event after I finish my current project.
+
+For the activity, I suggest having a group recreation activity. It would be useful because new employees and current employees can get to know each other in a relaxed atmosphere.
+
+Best regards,
+Taichi
+主な修正点
+
+Thank you for your efforts to plan
+→ Thank you for planning
+こちらの方が自然で簡潔です。
+
+One of the activities which I am interested in is...
+→ I suggest having...
+TOEIC Writingでは、質問に直接答える方が強いです。
+
+through the session
+→ in a relaxed atmosphere
+welcome event の目的に合う説明になります。
+
+完成度は 4/5 です。
+かなり良いですが、提案文はもっと直接的にするとさらに安定します。
+
+Writing Email 5/5
+
+次のメールに返信してください。
+必ず3点を入れてください。
+
+会議室の問題に気づいているか
+どの問題を優先して直すべきか
+その理由を説明する
+Dear Taichi,
+
+Some employees have complained about the condition of our meeting rooms.
+
+Have you noticed any problems with the meeting rooms?
+Which problem do you think we should fix first?
+Please explain why.
+
+Best,
+Kevin
+
+返信を書いてください。
+
+Dear Kevin, 
+
+Thank you for your notification.
+I haven't realize the trouble of our meeting room. I think we should fix air conditioner as soon as possible. 
+But for the repair, we cannot invite clients to the meeting room.
+
+Best, 
+Taichi 
+思考時間: 7s
+
+良いです。
+ただし今回は、1点だけ内容の矛盾があります。
+
+あなたは、
+
+I haven't realize the trouble of our meeting room.
+
+と言っていますが、その後で
+
+we should fix air conditioner
+
+と書いています。
+
+つまり、気づいていないのに問題を指摘している形になっています。
+TOEIC Writingでは、ここを一貫させるとかなり良くなります。
+
+修正版
+Dear Kevin,
+
+Thank you for your notification.
+
+Yes, I have noticed some problems with our meeting rooms. I think we should fix the air conditioner first because the room can become uncomfortable during meetings.
+
+Also, if the room is too hot or too cold, it may be difficult to invite clients there.
+
+Best regards,
+Taichi
+主な修正点
+
+I haven't realize
+→ I have noticed / I haven't noticed
+
+今回は air conditioner の問題を述べているので、
+I have noticed の方が自然です。
+
+the trouble of our meeting room
+→ some problems with our meeting rooms
+
+fix air conditioner
+→ fix the air conditioner
+
+we cannot invite clients
+→ it may be difficult to invite clients there
+
+こちらの方が自然で丁寧です。
+
+完成度
+
+3.5/5
+
+内容の方向性は良いです。
+ただし、今回は noticed / haven't noticed の一貫性 が一番大事でした。
+
+今日の Email Writing 5問全体では、あなたは 3点回答はかなり安定しています。次は「簡潔で自然な business expression」に寄せる段階です。
+
+貼り付けられたテキスト（1 点）.txt
+ドキュメント
+それでは今日の文の復習問題を作成してください。
+思考時間: 19s
+
+添付CSVは100番まで入っているので、101番から続きで作成します。
+今日の Solution Question 15問 + Writing Email 5問 のミス・改善表現を中心にしました。
+
+id,section,question,correctAnswer,choice1,choice2,choice3
+101,5/21 Solution：会議遅刻対応,employees arrived later than expected,employees arrived late,employees arrived lately,employees arrived later
+102,5/21 Solution：紙削減,the need to print out is decreasing,the need to print documents will decrease,the need of print out decreases,printing out is decreasing
+103,5/21 Solution：労働時間改善,employees' opinion,employees' opinions,employee opinions,employees opinion
+104,5/21 Solution：労働時間改善,improvements are conducted,companies make improvements,improvements conduct,companies conduct improvements
+105,5/21 Solution：電話対応改善,typical programs,common problems,typical problems,common programs
+106,5/21 Solution：電話対応改善,customers can solve their programs,customers can solve their problems,customers solve programs,customers can solve them programs
+107,5/21 Solution：部署間交流,prepare our social network service,create an internal social network service,prepare internal SNS,create our SNS service
+108,5/21 Solution：部署間交流,make employees communicate among different departments,help employees from different departments communicate,make employees communication departments,employees communicate among departments
+109,5/21 Solution：締切管理,prepare a calendar,create a shared calendar,prepare shared deadline,make calendar deadline
+110,5/21 Solution：締切管理,assure now your deadline is coming,remind employees of upcoming deadlines,assure deadline coming,remind deadline comes
+111,5/21 Solution：ウェブサイト改善,collect opinions from employees,collect opinions from customers,collect employees opinions,collect customers opinion
+112,5/21 Solution：ウェブサイト改善,revise the website structures,revise the website structure,revise website structures,revise structures website
+113,5/21 Solution：チームワーク改善,address other people's information,access other employees' information,address employees information,access other people information
+114,5/21 Solution：長い会議,take a rest for 15 minutes,take a 15-minute break,take 15 minutes rest,take 15-minute rest
+115,5/21 Solution：ソフトウェア研修,a leader who teach new software,a leader who teaches new software,a leader who teaching software,a leader teach software
+116,5/21 Solution：会議参加促進,discussion questions or preparing topics is better,preparing discussion questions in advance is effective,prepare questions is better,discussion questions are better to engage
+117,5/21 Solution：国際顧客対応,learning SLA theory is good for employees,providing communication training is useful for employees,learning theories are good employees,SLA theory make communication better
+118,5/21 Solution：意見共有,make a form atmosphere,create an open atmosphere,make formal atmosphere,create form atmosphere
+119,5/21 Solution：会議記録,help to remind the content,help employees review the meeting content,help remind content,help reviewing meeting content
+120,5/21 Solution：動機づけ,to make employees realize the value of engagement,help employees realize the value of their work,make employees realize engagement value,help employees realize work value
+121,5/21 Writing：日程変更,Thank you for your arrangement of a team meeting,Thank you for arranging the team meeting,Thank you for arrangement meeting,Thank you for arrange the meeting
+122,5/21 Writing：日程変更,Would you mind rescheduling our meeting for next Monday at 9 a.m.,Would it be possible to reschedule our meeting for next Monday at 9 a.m.?,Would you mind reschedule our meeting,Would it possible to reschedule meeting
+123,5/21 Writing：研修協力,contribution for tutorial session,organizing the customer service training session,contribution to tutorial session,organizing tutorial contribution
+124,5/21 Writing：研修協力,what employees motivation to work,how to respond to customer complaints,what employees motivate work,how customer complaints respond
+125,5/21 Writing：予約システム,the system make our work more efficiently,the system would help employees reserve meeting rooms more efficiently,the system makes our work efficiently,the system would make work more efficient
+126,5/21 Writing：予約システム,a introduction video clip,an introductory video,a introductory video,an introduction video
+127,5/21 Writing：歓迎イベント,One of the activities which I am interested in is a group recreation,I suggest having a group recreation activity,One activity I interested is recreation,I suggest to have group recreation
+128,5/21 Writing：会議室改善,I haven't realize the trouble of our meeting room,I have noticed some problems with our meeting rooms,I haven't realized meeting room trouble,I noticed troubles of meeting room
+129,5/21 Writing：会議室改善,we should fix air conditioner,we should fix the air conditioner,we should fix an air conditioner,we should repair air conditioner
+130,5/21 Writing：会議室改善,we cannot invite clients to the meeting room,it may be difficult to invite clients there,we cannot invite clients meeting room,it is difficult invite clients there
