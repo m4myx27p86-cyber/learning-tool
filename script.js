@@ -164,6 +164,7 @@ let mistakes = [];
 let startTime = null;
 let questionStartTime = null;
 let selectedTimeLimit = 0;
+let selectedAutoNextDelay = AUTO_NEXT_DELAY_MS;
 let timerId = null;
 let remainingSeconds = 0;
 let autoAdvanceTimerId = null;
@@ -944,6 +945,7 @@ function startQuizCommon() {
   mistakes = [];
   startTime = new Date();
   selectedTimeLimit = Number(document.getElementById("timeLimitSelect").value) || 0;
+  selectedAutoNextDelay = Number(document.getElementById("autoNextDelaySelect")?.value ?? AUTO_NEXT_DELAY_MS);
   showOnly("quizScreen");
   showQuestion();
 }
@@ -1103,14 +1105,33 @@ function showClozeQuestion() {
   const q = questions[currentIndex];
   document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
   const hint = q.hint || createInitialHint(q.answer);
+  const examples = extractLearningExamples(q.explanation || "");
+  const originalBlock = examples.wrong
+    ? `<div class="source-expression"><span>直す前の表現</span><strong>${escapeHtml(examples.wrong)}</strong></div>`
+    : `<div class="source-expression"><span>学習目標</span><strong>TOEIC Speakingでそのまま使える自然なチャンクを完成させる</strong></div>`;
 
   document.getElementById("questionArea").innerHTML = `
-    <div class="question-prompt cloze-prompt">${escapeHtml(q.prompt)}</div>
+    <div class="question-prompt cloze-prompt">
+      <div class="task-badge">${escapeHtml(q.section || "穴埋め")}</div>
+      <p class="task-instruction">下の表現をより自然な英語に直すつもりで、空欄に入る表現を入力してください。</p>
+      ${originalBlock}
+      <div class="target-expression"><span>完成させる英文</span><strong>${escapeHtml(q.prompt)}</strong></div>
+    </div>
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
     <input type="text" id="answerInput" class="answer-input" placeholder="空欄に入る表現を入力：${escapeHtml(hint)}" autocomplete="off" />
   `;
 
   document.getElementById("answerInput").focus();
+}
+
+function extractLearningExamples(explanation) {
+  const text = String(explanation || "");
+  const correctMatch = text.match(/正しい全文：(.+?)(?:\s*\/\s*誤答例：|$)/);
+  const wrongMatch = text.match(/誤答例：(.+)$/);
+  return {
+    correct: correctMatch ? correctMatch[1].trim() : "",
+    wrong: wrongMatch ? wrongMatch[1].trim() : ""
+  };
 }
 
 function createInitialHint(sentence) {
@@ -1204,19 +1225,38 @@ function processAnswer(data) {
   clearQuestionTimer();
   const now = new Date();
   const responseSeconds = questionStartTime ? Math.max(0, Math.round((now - questionStartTime) / 1000)) : 0;
+  const feedback = document.getElementById("feedback");
 
   if (data.isCorrect) {
     score += data.points;
-    document.getElementById("feedback").textContent = "✅ 正解！";
-    document.getElementById("feedback").className = "correct";
+    const praise = getCorrectPraise();
+    feedback.className = "correct feedback-visible";
+    feedback.innerHTML = `
+      <div class="feedback-card feedback-correct">
+        <div class="feedback-icon">${praise.icon}</div>
+        <div>
+          <strong>${escapeHtml(praise.title)}</strong>
+          <p>${escapeHtml(praise.message)}</p>
+        </div>
+      </div>
+    `;
+    triggerCorrectEffect();
   } else {
-    document.getElementById("feedback").innerHTML = `${data.timedOut ? "⏰ 時間切れ。" : "❌ 不正解。"}<br>正解：${escapeHtml(data.correctAnswer)}`;
-    document.getElementById("feedback").className = "wrong";
+    feedback.className = "wrong feedback-visible";
+    feedback.innerHTML = `
+      <div class="feedback-card feedback-wrong">
+        <div class="feedback-icon">${data.timedOut ? "⏰" : "💡"}</div>
+        <div>
+          <strong>${data.timedOut ? "時間切れ" : "あと少し"}</strong>
+          <p>正解：${escapeHtml(data.correctAnswer)}</p>
+        </div>
+      </div>
+    `;
     mistakes.push(data);
   }
 
   if (data.explanation) {
-    document.getElementById("feedback").innerHTML += `<br><span class="explanation">解説：${escapeHtml(data.explanation)}</span>`;
+    feedback.innerHTML += `<div class="explanation-box">解説：${escapeHtml(data.explanation)}</div>`;
   }
 
   const record = {
@@ -1249,14 +1289,47 @@ function processAnswer(data) {
   appendLocalHistory(record);
 
   document.getElementById("checkButton").disabled = true;
-  document.getElementById("nextButton").textContent = "次の問題へ（自動で進みます）";
-  document.getElementById("nextButton").classList.remove("hidden");
+  const delay = Number(selectedAutoNextDelay) || 0;
+  const nextButton = document.getElementById("nextButton");
+  nextButton.textContent = delay > 0
+    ? `次の問題へ（${(delay / 1000).toFixed(1)}秒後に自動で進みます）`
+    : "次の問題へ";
+  nextButton.classList.remove("hidden");
   document.getElementById("progressBar").style.width = `${Math.round(((currentIndex + 1) / questions.length) * 100)}%`;
 
   clearAutoAdvanceTimer();
-  autoAdvanceTimerId = setTimeout(() => {
-    nextQuestion();
-  }, data.isCorrect ? AUTO_NEXT_DELAY_MS : AUTO_NEXT_DELAY_MS + 900);
+  if (delay > 0) {
+    autoAdvanceTimerId = setTimeout(() => {
+      nextQuestion();
+    }, data.isCorrect ? delay : delay + 900);
+  }
+}
+
+function getCorrectPraise() {
+  const praises = [
+    { icon: "🎉", title: "Great!", message: "その表現はそのままSpeakingで使えます。" },
+    { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" },
+    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。" },
+    { icon: "🔥", title: "Keep going!", message: "この調子で使える表現を増やしましょう。" }
+  ];
+  return praises[currentIndex % praises.length];
+}
+
+function triggerCorrectEffect() {
+  const layer = document.createElement("div");
+  layer.className = "celebration-layer";
+  const marks = ["★", "●", "◆", "✦", "✓"];
+  for (let i = 0; i < 22; i++) {
+    const piece = document.createElement("span");
+    piece.className = "confetti-piece";
+    piece.textContent = marks[i % marks.length];
+    piece.style.left = `${8 + Math.random() * 84}%`;
+    piece.style.animationDelay = `${Math.random() * 0.18}s`;
+    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+    layer.appendChild(piece);
+  }
+  document.body.appendChild(layer);
+  setTimeout(() => layer.remove(), 1100);
 }
 
 function nextQuestion() {

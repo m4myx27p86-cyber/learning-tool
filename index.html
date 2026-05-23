@@ -147,6 +147,16 @@
               <option value="120">120秒</option>
             </select>
           </label>
+          <label>
+            正解表示から次へ進むまで
+            <select id="autoNextDelaySelect">
+              <option value="0">自動で進まない</option>
+              <option value="1000">1.0秒</option>
+              <option value="1600" selected>1.6秒</option>
+              <option value="2500">2.5秒</option>
+              <option value="4000">4.0秒</option>
+            </select>
+          </label>
         </div>
 
         <div id="vocabReviewArea" class="hidden panel">
@@ -190,7 +200,7 @@
         </div>
         <div class="progress-wrap"><div id="progressBar" class="progress-bar"></div></div>
         <div id="questionArea"></div>
-        <p id="feedback" aria-live="polite"></p>
+        <div id="feedback" aria-live="polite"></div>
         <button id="checkButton">回答する</button>
         <button id="nextButton" class="hidden">次の問題へ</button>
         <button id="quitButton" class="quit-button">途中で終了する</button>
@@ -227,6 +237,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=access-code-20260522"></script>
+  <script src="script.js?v=feedback-timing-20260523"></script>
 </body>
 </html>
