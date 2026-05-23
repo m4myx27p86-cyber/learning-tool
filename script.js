@@ -330,6 +330,7 @@ async function checkLogin() {
     allowedMaterials = null;
     isAdmin = false;
     if (message) message.textContent = "";
+    resetPasswordVisibility();
     showOnly("studentScreen");
     return;
   }
@@ -432,12 +433,31 @@ function logout() {
   localStorage.removeItem(STORAGE_KEYS.allowedMaterials);
   document.getElementById("passwordInput").value = "";
   document.getElementById("studentLoginInput").value = "";
+  resetPasswordVisibility();
   showOnly("loginScreen");
 }
 
 function togglePasswordField(id, checked) {
   const field = document.getElementById(id);
-  if (field) field.type = checked ? "text" : "password";
+  if (!field) return;
+  field.type = checked ? "text" : "password";
+  field.classList.toggle("is-visible", checked);
+}
+
+function resetPasswordVisibility() {
+  [
+    ["passwordInput", "showPassword"],
+    ["studentLoginInput", "showStudentPassword"],
+    ["materialPasswordInput", "showMaterialPassword"]
+  ].forEach(([fieldId, checkboxId]) => {
+    const field = document.getElementById(fieldId);
+    const checkbox = document.getElementById(checkboxId);
+    if (field) {
+      field.type = "password";
+      field.classList.remove("is-visible");
+    }
+    if (checkbox) checkbox.checked = false;
+  });
 }
 
 /* =========================
@@ -549,6 +569,7 @@ function openMaterial(type, fromDirectLogin = false) {
   document.getElementById("materialPasswordTitle").textContent = `${config.title} のパスワード`;
   document.getElementById("materialPasswordInput").value = "";
   document.getElementById("materialPasswordMessage").textContent = "";
+  resetPasswordVisibility();
   showOnly("materialPasswordScreen");
 }
 
@@ -1240,7 +1261,7 @@ function processAnswer(data) {
         </div>
       </div>
     `;
-    triggerCorrectEffect();
+    triggerCorrectEffect(praise);
   } else {
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
@@ -1306,30 +1327,70 @@ function processAnswer(data) {
 }
 
 function getCorrectPraise() {
+  const correctCount = answersLog.filter(answer => answer.correct).length + 1;
+  const currentStreak = calculateCurrentCorrectStreak() + 1;
   const praises = [
-    { icon: "🎉", title: "Great!", message: "その表現はそのままSpeakingで使えます。" },
-    { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" },
-    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。" },
-    { icon: "🔥", title: "Keep going!", message: "この調子で使える表現を増やしましょう。" }
+    { icon: "✨", title: "Perfect Output!", message: "今の表現はそのままSpeakingで使えます。" },
+    { icon: "🚀", title: "Excellent Flow!", message: "チャンクとして素早く出せる形に近づいています。" },
+    { icon: "💎", title: "Sharp Accuracy!", message: "正確さと自然さの両方を積み上げられています。" },
+    { icon: "🔥", title: "Great Streak!", message: "この調子で、使える表現をさらに増やしましょう。" }
   ];
-  return praises[currentIndex % praises.length];
+  const praise = praises[currentIndex % praises.length];
+  return {
+    ...praise,
+    badge: currentStreak >= 3 ? `${currentStreak}連続正解` : `${correctCount}問目クリア`
+  };
 }
 
-function triggerCorrectEffect() {
+function calculateCurrentCorrectStreak() {
+  let streak = 0;
+  for (let i = answersLog.length - 1; i >= 0; i--) {
+    if (!answersLog[i].correct) break;
+    streak++;
+  }
+  return streak;
+}
+
+function triggerCorrectEffect(praise = {}) {
   const layer = document.createElement("div");
   layer.className = "celebration-layer";
-  const marks = ["★", "●", "◆", "✦", "✓"];
-  for (let i = 0; i < 22; i++) {
+
+  const toast = document.createElement("div");
+  toast.className = "celebration-toast";
+  toast.innerHTML = `
+    <span class="celebration-toast-icon">${escapeHtml(praise.icon || "✨")}</span>
+    <span>${escapeHtml(praise.badge || "Nice!")}</span>
+  `;
+  layer.appendChild(toast);
+
+  const marks = ["✦", "★", "●", "◆", "✓", "✧"];
+  for (let i = 0; i < 34; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
     piece.textContent = marks[i % marks.length];
-    piece.style.left = `${8 + Math.random() * 84}%`;
-    piece.style.animationDelay = `${Math.random() * 0.18}s`;
-    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+    piece.style.setProperty("--x", `${Math.random() * 100}vw`);
+    piece.style.setProperty("--drift", `${-80 + Math.random() * 160}px`);
+    piece.style.setProperty("--delay", `${Math.random() * 0.22}s`);
+    piece.style.setProperty("--spin", `${160 + Math.random() * 260}deg`);
+    piece.style.setProperty("--size", `${14 + Math.random() * 14}px`);
     layer.appendChild(piece);
   }
+
+  const quizScreen = document.getElementById("quizScreen");
+  if (quizScreen) {
+    quizScreen.classList.remove("correct-pulse");
+    void quizScreen.offsetWidth;
+    quizScreen.classList.add("correct-pulse");
+  }
+
+  document.body.classList.add("correct-moment");
   document.body.appendChild(layer);
-  setTimeout(() => layer.remove(), 1100);
+
+  setTimeout(() => {
+    layer.remove();
+    document.body.classList.remove("correct-moment");
+    if (quizScreen) quizScreen.classList.remove("correct-pulse");
+  }, 1400);
 }
 
 function nextQuestion() {
