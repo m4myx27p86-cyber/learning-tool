@@ -3,11 +3,12 @@
    - 管理者ログイン: 9999
    - 学習者コード: Google Sheets / Apps Script の AccessCodes で管理
    - 許可教材だけ表示 / 1教材なら直接表示
-   - CSV教材、語順並べ替え、Writing提出、履歴送信に対応
+   - CSV教材、語順並べ替え、穴埋め、Writing提出、履歴送信に対応
 ========================================================= */
 
 const ADMIN_PASSWORD = "9999";
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbws03Pj4a2ojmA-ihgTrC3HM4FHZjPunJnjRkALqTzMhDGVeSqplY56wdS7xGNAaDww/exec";
+const AUTO_NEXT_DELAY_MS = 1600;
 
 const STORAGE_KEYS = {
   sessionStudent: "learningTool_sessionStudent",
@@ -24,11 +25,12 @@ const SENTENCE_FILES = [
 ];
 
 const CATEGORY_INFO = {
-  toeic: { label: "TOEIC", description: "TOEIC S&W・実用表現を練習", theme: "toeic" },
-  toefl: { label: "TOEFL", description: "アカデミック英語の準備", theme: "toefl" },
-  highschool: { label: "高校英語", description: "語彙・文法・英検対策", theme: "highschool" },
-  classics: { label: "古文", description: "古典単語・文法・古文常識", theme: "classics" },
-  eiken: { label: "英検", description: "英検準一級Writing対策", theme: "eiken" }
+  toeic: { label: "TOEIC", description: "Speaking/Writingで使う表現を瞬発的に出す", theme: "toeic", icon: "🎙️" },
+  toefl: { label: "TOEFL", description: "アカデミック英語・語順アウトプット", theme: "toefl", icon: "🎓" },
+  highschool: { label: "高校英語", description: "語彙・文法・英検対策", theme: "highschool", icon: "📚" },
+  classics: { label: "古文", description: "古典単語・文法・古文常識", theme: "classics", icon: "🌸" },
+  teacher: { label: "教師用問題", description: "英語教育理論・授業研究用の確認問題", theme: "teacher", icon: "🧑‍🏫" },
+  eiken: { label: "英検", description: "英検準一級Writing対策", theme: "eiken", icon: "✍️" }
 };
 
 const TEST_CONFIG = {
@@ -54,12 +56,12 @@ const TEST_CONFIG = {
   },
   sentence: {
     title: "語順並べ替えテスト",
-    category: "highschool",
+    category: "toefl",
     type: "sentence",
     password: "1200",
     defaultTime: 45,
     files: SENTENCE_FILES,
-    description: "語順を意識しながら、英文を正確にアウトプットします。"
+    description: "TOEFL型の英語アウトプット準備として、語順を正確に組み立てます。"
   },
   eikenConnectors: {
     title: "英検準一級 接続詞対策",
@@ -89,17 +91,26 @@ const TEST_CONFIG = {
     description: "TOEIC S&Wで使いやすい自然な表現を選びます。"
   },
   speakingReview: {
-    title: "TOEIC Speaking 復習",
+    title: "TOEIC Speaking 復習（語順並べ替え）",
     category: "toeic",
-    type: "choice",
+    type: "sentence",
+    password: "2180",
+    defaultTime: 45,
+    files: ["data/speaking_review/toeic_speaking_review_sentence.csv"],
+    description: "これまでのSpeaking/Writingの誤答から、正しいチャンクを語順で再構成します。"
+  },
+  speakingReviewCloze: {
+    title: "TOEIC Speaking 復習（穴埋め）",
+    category: "toeic",
+    type: "cloze",
     password: "2180",
     defaultTime: 30,
-    path: "data/speaking_review/toeic_speaking_review.csv",
-    description: "スピーキングで使う表現を短く正確に復習します。"
+    path: "data/speaking_review/toeic_speaking_review_cloze.csv",
+    description: "正しい表現の一部を自分で書き出し、瞬発的に使えるチャンクを増やします。"
   },
   englishTheory: {
     title: "英語教育理論",
-    category: "toefl",
+    category: "teacher",
     type: "choice",
     password: "3303",
     defaultTime: 30,
@@ -155,6 +166,7 @@ let questionStartTime = null;
 let selectedTimeLimit = 0;
 let timerId = null;
 let remainingSeconds = 0;
+let autoAdvanceTimerId = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
@@ -450,7 +462,7 @@ function hasAccessToMaterial(type) {
 function renderMaterialCategories() {
   const area = document.getElementById("materialCategoryArea");
   const visible = getVisibleMaterials();
-  const categoryOrder = ["toeic", "toefl", "highschool", "classics"];
+  const categoryOrder = ["toeic", "toefl", "highschool", "classics", "teacher"];
 
   area.innerHTML = categoryOrder.map(categoryKey => {
     const info = CATEGORY_INFO[categoryKey];
@@ -473,9 +485,10 @@ function renderMaterialCategories() {
       <section class="category-section category-${info.theme}">
         <div class="category-head">
           <div>
-            <span>${escapeHtml(info.label)}</span>
+            <span class="category-title"><b class="category-icon">${escapeHtml(info.icon || "✨")}</b>${escapeHtml(info.label)}</span>
             <p>${escapeHtml(info.description)}</p>
           </div>
+          <small class="category-tip">今日の1問が次の自信につながります</small>
         </div>
         <div class="material-grid">${cards}</div>
       </section>
@@ -553,7 +566,7 @@ function checkMaterialPassword() {
 
 function applyThemeForMaterial(type) {
   const category = TEST_CONFIG[type]?.category || "highschool";
-  document.body.classList.remove("theme-toeic", "theme-toefl", "theme-highschool", "theme-classics", "theme-eiken");
+  document.body.classList.remove("theme-toeic", "theme-toefl", "theme-highschool", "theme-classics", "theme-eiken", "theme-teacher");
   document.body.classList.add(`theme-${CATEGORY_INFO[category]?.theme || category}`);
 }
 
@@ -571,7 +584,7 @@ function openAccessManager() {
 
 function renderAccessMaterialCheckboxes() {
   const area = document.getElementById("accessMaterialCheckboxes");
-  const categoryOrder = ["toeic", "toefl", "highschool", "classics"];
+  const categoryOrder = ["toeic", "toefl", "highschool", "classics", "teacher"];
   area.innerHTML = categoryOrder.map(categoryKey => {
     const info = CATEGORY_INFO[categoryKey];
     const items = Object.keys(TEST_CONFIG).filter(type => TEST_CONFIG[type].category === categoryKey);
@@ -736,6 +749,8 @@ async function ensureQuestionsLoaded(type) {
   const config = TEST_CONFIG[type];
   if (config.type === "sentence") {
     loadedQuestions[type] = await loadSentenceQuestions(config.files);
+  } else if (config.type === "cloze") {
+    loadedQuestions[type] = await loadClozeQuestions(config.path);
   } else if (config.type === "writing") {
     loadedQuestions[type] = await loadWritingTasks(config.path);
   } else {
@@ -808,11 +823,36 @@ async function loadSentenceQuestions(files) {
       id: row[0],
       section: row[1],
       answer: row[2],
-      points: 1
+      prompt: row[3] || "",
+      hint: row[4] || "",
+      explanation: row[5] || "",
+      points: Number(row[6]) || 1
     })).filter(q => q.id && q.section && q.answer);
     all.push(...loaded);
   }
   return all;
+}
+
+async function loadClozeQuestions(filePath) {
+  const response = await fetch(filePath);
+  if (!response.ok) {
+    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
+    return [];
+  }
+
+  const text = await response.text();
+  const rows = parseCSV(text);
+  rows.shift();
+
+  return rows.map(row => ({
+    id: row[0],
+    section: row[1],
+    prompt: row[2],
+    answer: row[3],
+    hint: row[4] || "",
+    explanation: row[5] || "",
+    points: Number(row[6]) || 1
+  })).filter(q => q.id && q.section && q.prompt && q.answer);
 }
 
 async function loadWritingTasks(filePath) {
@@ -914,6 +954,7 @@ function startQuizCommon() {
 
 function showQuestion() {
   clearQuestionTimer();
+  clearAutoAdvanceTimer();
   selectedChoice = "";
   questionStartTime = new Date();
 
@@ -926,6 +967,7 @@ function showQuestion() {
 
   if (TEST_CONFIG[testType].type === "choice") showChoiceQuestion();
   if (TEST_CONFIG[testType].type === "sentence") showSentenceQuestion();
+  if (TEST_CONFIG[testType].type === "cloze") showClozeQuestion();
 
   startQuestionTimer();
 }
@@ -960,11 +1002,17 @@ function clearQuestionTimer() {
   timerId = null;
 }
 
+function clearAutoAdvanceTimer() {
+  if (autoAdvanceTimerId) clearTimeout(autoAdvanceTimerId);
+  autoAdvanceTimerId = null;
+}
+
 function handleTimeUp() {
   if (document.getElementById("checkButton").disabled) return;
   const q = questions[currentIndex];
-  const correctAnswer = TEST_CONFIG[testType].type === "sentence" ? q.answer : q.correctAnswer;
-  const questionText = TEST_CONFIG[testType].type === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : q.word;
+  const configType = TEST_CONFIG[testType].type;
+  const correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
+  const questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
   const typedAnswer = document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
 
   processAnswer({
@@ -1022,14 +1070,46 @@ function showSentenceQuestion() {
   const q = questions[currentIndex];
   document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
   q.words = shuffle(splitSentence(q.answer));
+  const hint = q.hint || createInitialHint(q.answer);
+  const prompt = q.prompt ? `<div class="question-prompt">${escapeHtml(q.prompt)}</div>` : "";
 
   document.getElementById("questionArea").innerHTML = `
-    <div class="sentence-hint">${createInitialHint(q.answer)}</div>
-    <div class="words" id="sentenceWords">${q.words.map(word => `<span class="word-chip">${escapeHtml(word)}</span>`).join("")}</div>
-    <input type="text" id="answerInput" placeholder="英文を入力してください" autocomplete="off" />
+    ${prompt}
+    <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
+    <div class="words" id="sentenceWords">${q.words.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
+    <input type="text" id="answerInput" class="answer-input" placeholder="ヒント: ${escapeHtml(hint)}" autocomplete="off" />
+    <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
   `;
 
+  document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const input = document.getElementById("answerInput");
+      input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
+      updateUsedWords();
+      input.focus();
+    });
+  });
+  document.getElementById("clearSentenceButton").addEventListener("click", () => {
+    const input = document.getElementById("answerInput");
+    input.value = "";
+    updateUsedWords();
+    input.focus();
+  });
   document.getElementById("answerInput").addEventListener("input", updateUsedWords);
+  document.getElementById("answerInput").focus();
+}
+
+function showClozeQuestion() {
+  const q = questions[currentIndex];
+  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
+  const hint = q.hint || createInitialHint(q.answer);
+
+  document.getElementById("questionArea").innerHTML = `
+    <div class="question-prompt cloze-prompt">${escapeHtml(q.prompt)}</div>
+    <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
+    <input type="text" id="answerInput" class="answer-input" placeholder="空欄に入る表現を入力：${escapeHtml(hint)}" autocomplete="off" />
+  `;
+
   document.getElementById("answerInput").focus();
 }
 
@@ -1058,6 +1138,7 @@ function updateUsedWords() {
 function checkAnswer() {
   if (TEST_CONFIG[testType].type === "choice") checkChoiceAnswer();
   if (TEST_CONFIG[testType].type === "sentence") checkSentenceAnswer();
+  if (TEST_CONFIG[testType].type === "cloze") checkClozeAnswer();
 }
 
 function checkChoiceAnswer() {
@@ -1093,12 +1174,29 @@ function checkSentenceAnswer() {
   processAnswer({
     id: q.id,
     section: q.section,
-    question: q.words.join(" / "),
+    question: q.prompt || q.words.join(" / "),
     userAnswer,
     correctAnswer: q.answer,
-    explanation: "",
+    explanation: q.explanation || "",
     isCorrect,
-    points: 1
+    points: q.points || 1
+  });
+}
+
+function checkClozeAnswer() {
+  const q = questions[currentIndex];
+  const userAnswer = document.getElementById("answerInput").value;
+  const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
+
+  processAnswer({
+    id: q.id,
+    section: q.section,
+    question: q.prompt,
+    userAnswer,
+    correctAnswer: q.answer,
+    explanation: q.explanation || "",
+    isCorrect,
+    points: q.points || 1
   });
 }
 
@@ -1151,17 +1249,25 @@ function processAnswer(data) {
   appendLocalHistory(record);
 
   document.getElementById("checkButton").disabled = true;
+  document.getElementById("nextButton").textContent = "次の問題へ（自動で進みます）";
   document.getElementById("nextButton").classList.remove("hidden");
   document.getElementById("progressBar").style.width = `${Math.round(((currentIndex + 1) / questions.length) * 100)}%`;
+
+  clearAutoAdvanceTimer();
+  autoAdvanceTimerId = setTimeout(() => {
+    nextQuestion();
+  }, data.isCorrect ? AUTO_NEXT_DELAY_MS : AUTO_NEXT_DELAY_MS + 900);
 }
 
 function nextQuestion() {
+  clearAutoAdvanceTimer();
   currentIndex++;
   if (currentIndex < questions.length) showQuestion();
   else showResult(false);
 }
 
 function quitQuiz() {
+  clearAutoAdvanceTimer();
   if (confirm("途中で終了して、結果画面に進みますか？")) showResult(true);
 }
 
@@ -1596,6 +1702,7 @@ function getStreakInfo() {
 
 function resetQuizState() {
   clearQuestionTimer();
+  clearAutoAdvanceTimer();
   currentIndex = 0;
   score = 0;
   selectedChoice = "";
