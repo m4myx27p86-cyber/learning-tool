@@ -1,4 +1,4 @@
-﻿id,section,answer,prompt,hint,explanation,points
+id,section,answer,prompt,hint,explanation,points
 1,5/18 写真描写：基本描写,there is a table,誤答例：there are a table / 自然な表現になるように語順を組み立ててください。,t____ i_ a t____,元の表現「there are a table」を、TOEIC S&Wで使いやすい自然なチャンクに直します。,1
 2,5/18 写真描写：基本描写,boxes are stacked,誤答例：boxes are stocked / 自然な表現になるように語順を組み立ててください。,b____ a__ s______,元の表現「boxes are stocked」を、TOEIC S&Wで使いやすい自然なチャンクに直します。,1
 3,5/18 写真描写：基本描写,companies can save money,誤答例：companies can save their money / 自然な表現になるように語順を組み立ててください。,c________ c__ s___ m____,元の表現「companies can save their money」を、TOEIC S&Wで使いやすい自然なチャンクに直します。,1
@@ -129,3 +129,8 @@
 128,5/21 Writing：会議室改善,I have noticed some problems with our meeting rooms,誤答例：I haven't realize the trouble of our meeting room / 自然な表現になるように語順を組み立ててください。,I h___ n______ s___ p_______ w___ o__ m______ r____,元の表現「I haven't realize the trouble of our meeting room」を、TOEIC S&Wで使いやすい自然なチャンクに直します。,1
 129,5/21 Writing：会議室改善,we should fix the air conditioner,誤答例：we should fix air conditioner / 自然な表現になるように語順を組み立ててください。,w_ s_____ f__ t__ a__ c__________,元の表現「we should fix air conditioner」を、TOEIC S&Wで使いやすい自然なチャンクに直します。,1
 130,5/21 Writing：会議室改善,it may be difficult to invite clients there,誤答例：we cannot invite clients to the meeting room / 自然な表現になるように語順を組み立ててください。,i_ m__ b_ d________ t_ i_____ c______ t____,元の表現「we cannot invite clients to the meeting room」を、TOEIC S&Wで使いやすい自然なチャンクに直します。,1
+131,5/23-24 TOEIC Business Speaking,AI tools can make our work more efficient,誤答例：AI tools can make work efficiently / 自然な語順にしてください。,A_ t____ c__ m___ o__ w___ m___ e________,TOEIC S&Wで頻出の business chunk。,1
+132,5/23-24 TOEIC Business Speaking,Companies can identify potential problems,誤答例：Companies can realize potential problems / 自然な表現にしてください。,C________ c__ i_______ p________ p_______,identify problems は TOEIC business English の頻出表現。,1
+133,5/24 Online Meetings,People can participate in meetings,誤答例：People can participate meetings / 自然な表現にしてください。,P_____ c__ p__________ i_ m_______,participate の後には in が必要。,1
+134,5/24 Workplace Communication,encourage employees to communicate,誤答例：encourage employees to have communication / 自然な表現にしてください。,e________ e________ t_ c__________,TOEIC Speakingでは動詞で短く自然に言うことが重要。,1
+135,5/24 Photo Description,A train has arrived,誤答例：there is a train / 状況描写として自然にしてください。,A t____ h__ a_______,TOEIC写真描写での状況説明に使いやすい表現。,1
