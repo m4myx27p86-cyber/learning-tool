@@ -953,3 +953,151 @@ input[type="password"]::-ms-clear {
 .category-tip {
   font-family: var(--font-display);
 }
+
+/* =========================================================
+   20260525 contextual feedback update
+   - TOEIC / 古文 / 英語教育理論 / 英検 / 語彙のフィードバックを教材別に調整
+========================================================= */
+.feedback-detail-grid {
+  display: grid;
+  gap: 10px;
+  margin: 12px auto 0;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  box-shadow: 0 10px 24px rgba(15, 23, 42, .06);
+  text-align: left;
+}
+.feedback-answer-row {
+  display: grid;
+  gap: 4px;
+}
+.feedback-answer-row span {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.feedback-answer-row strong {
+  color: #0f172a;
+  font-size: clamp(17px, 2.2vw, 22px);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.feedback-detail-classics,
+.explanation-classics {
+  background: linear-gradient(135deg, #fff7ed, #fff1f2);
+  border-color: #fecdd3;
+}
+.feedback-classics-card.feedback-correct {
+  background: linear-gradient(135deg, #fff7ed, #fff1f2);
+  border-color: #fda4af;
+}
+.feedback-classics-card.feedback-wrong {
+  background: linear-gradient(135deg, #fff7ed, #fef2f2);
+  border-color: #fecaca;
+}
+.feedback-detail-toeic,
+.explanation-toeic {
+  background: linear-gradient(135deg, #eff6ff, #ecfeff);
+  border-color: #bfdbfe;
+}
+.feedback-detail-theory,
+.explanation-theory {
+  background: linear-gradient(135deg, #f0fdfa, #eef2ff);
+  border-color: #99f6e4;
+}
+.feedback-detail-eiken,
+.explanation-eiken {
+  background: linear-gradient(135deg, #fffbeb, #fff7ed);
+  border-color: #fed7aa;
+}
+.feedback-detail-vocab,
+.explanation-vocab {
+  background: linear-gradient(135deg, #f8fafc, #eef2ff);
+  border-color: #cbd5e1;
+}
+.feedback-detail-sentence,
+.explanation-sentence {
+  background: linear-gradient(135deg, #f8fafc, #ecfeff);
+  border-color: #bae6fd;
+}
+.mistake-classics {
+  border-left: 8px solid #b91c1c;
+  background: linear-gradient(135deg, #fff7ed, #fff1f2);
+}
+.mistake-toeic {
+  border-left: 8px solid #2563eb;
+  background: linear-gradient(135deg, #eff6ff, #ecfeff);
+}
+.mistake-theory {
+  border-left: 8px solid #0f766e;
+  background: linear-gradient(135deg, #f0fdfa, #eef2ff);
+}
+
+
+
+/* =========================================================
+   20260525 update: admin access-code material editor
+========================================================= */
+.material-edit-panel {
+  border: 2px solid rgba(37, 99, 235, .18);
+  background: linear-gradient(180deg, #ffffff, #f8fafc);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, .10);
+}
+.material-edit-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.material-edit-category .material-check {
+  align-items: flex-start;
+}
+.material-edit-category .material-check span {
+  display: grid;
+  gap: 3px;
+}
+.material-edit-category .material-check b {
+  color: #0f172a;
+  font-size: 14px;
+}
+.material-edit-category .material-check small {
+  color: #64748b;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.access-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.access-action-row button {
+  margin: 0;
+}
+.material-edit-button {
+  background: linear-gradient(135deg, #0f766e, #2563eb);
+  box-shadow: 0 8px 18px rgba(15, 118, 110, .18);
+}
+.material-edit-button:hover {
+  background: linear-gradient(135deg, #0f766e, #1d4ed8);
+}
+.small-note {
+  font-size: 13px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 820px) {
+  .access-action-row,
+  .material-edit-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .access-action-row button,
+  .material-edit-actions button {
+    width: 100%;
+  }
+}

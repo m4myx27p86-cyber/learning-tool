@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>学習ツール</title>
-  <link rel="stylesheet" href="style.css?v=learning-renewal-20260523" />
+  <link rel="stylesheet" href="style.css?v=contextual-feedback-20260525" />
 </head>
 <body>
   <div class="app-shell">
@@ -89,6 +89,23 @@
             <button id="refreshAccessCodesButton" class="secondary-button small-button">再読み込み</button>
           </div>
           <div id="accessCodeListArea" class="history-table-wrap"></div>
+        </div>
+
+        <div id="accessMaterialEditPanel" class="panel admin-panel material-edit-panel hidden">
+          <div class="screen-head compact-head">
+            <div>
+              <h3 id="editAccessCodeTitle">教材変更</h3>
+              <p id="editAccessCodeDetail" class="muted">この学習者コードで使用できる教材を変更します。</p>
+            </div>
+            <button id="cancelAccessMaterialsButton" class="secondary-button small-button">キャンセル</button>
+          </div>
+          <div id="editAccessMaterialCheckboxes" class="checkbox-grid"></div>
+          <div class="material-edit-actions">
+            <button id="saveAccessMaterialsButton">教材を更新</button>
+            <button id="cancelAccessMaterialsBottomButton" class="secondary-button">戻る</button>
+          </div>
+          <p id="editAccessMaterialsMessage"></p>
+          <p class="muted small-note">更新後、学習者側では一度ログアウトして同じコードで再ログインすると新しい教材が反映されます。</p>
         </div>
       </section>
 
@@ -237,6 +254,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=feedback-timing-20260523"></script>
+  <script src="script.js?v=contextual-feedback-20260525"></script>
 </body>
 </html>

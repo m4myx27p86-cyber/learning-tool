@@ -175,6 +175,8 @@ let writingTasks = [];
 let writingStartTime = null;
 let selectedSentenceWords = [];
 let selectedSentenceChipIndexes = [];
+let accessCodeRecordsCache = [];
+let editingAccessCode = "";
 
 /* =========================
    初期化・イベント登録
@@ -195,6 +197,9 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("accessBackButton", "click", () => { renderMenu(); showOnly("menuScreen"); });
   safeAddEvent("createAccessCodeButton", "click", createAccessCodeFromForm);
   safeAddEvent("refreshAccessCodesButton", "click", loadAccessCodeList);
+  safeAddEvent("saveAccessMaterialsButton", "click", saveAccessMaterialsChange);
+  safeAddEvent("cancelAccessMaterialsButton", "click", closeAccessMaterialEditor);
+  safeAddEvent("cancelAccessMaterialsBottomButton", "click", closeAccessMaterialEditor);
 
   safeAddEvent("showMaterialPassword", "change", function () { togglePasswordField("materialPasswordInput", this.checked); });
   safeAddEvent("materialPasswordButton", "click", checkMaterialPassword);
@@ -367,7 +372,7 @@ async function checkLogin() {
   try {
     if (message) message.textContent = "学習者コードを確認しています...";
     const result = await apiGetJsonp("validateAccessCode", { code: input });
-    if (!result || !result.valid) {
+    if (!result || result.ok === false || !result.valid) {
       if (message) message.textContent = result?.error || "この学習者コードは使えません。";
       return;
     }
@@ -646,25 +651,48 @@ function openAccessManager() {
   loadAccessCodeList();
 }
 
-function renderAccessMaterialCheckboxes() {
-  const area = document.getElementById("accessMaterialCheckboxes");
-  const categoryOrder = ["toeic", "toefl", "highschool", "classics", "teacher"];
+function getAccessCategoryOrder() {
+  const preferred = ["toeic", "toefl", "highschool", "eiken", "classics", "teacher"];
+  const existing = [...new Set(Object.values(TEST_CONFIG).map(config => config.category).filter(Boolean))];
+  return [...preferred.filter(key => existing.includes(key)), ...existing.filter(key => !preferred.includes(key))];
+}
+
+function normalizeAllowedMaterials(value) {
+  if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
+  if (typeof value === "string") {
+    return value.split(/[\n,、/]+/).map(item => item.trim()).filter(Boolean);
+  }
+  return [];
+}
+
+function renderMaterialCheckboxGroup(containerId, selectedTypes = []) {
+  const area = document.getElementById(containerId);
+  if (!area) return;
+  const selectedSet = new Set(normalizeAllowedMaterials(selectedTypes));
+  const categoryOrder = getAccessCategoryOrder();
   area.innerHTML = categoryOrder.map(categoryKey => {
-    const info = CATEGORY_INFO[categoryKey];
+    const info = CATEGORY_INFO[categoryKey] || { label: categoryKey };
     const items = Object.keys(TEST_CONFIG).filter(type => TEST_CONFIG[type].category === categoryKey);
     if (items.length === 0) return "";
     return `
-      <div class="checkbox-category">
-        <strong>${escapeHtml(info.label)}</strong>
+      <div class="checkbox-category material-edit-category">
+        <strong>${escapeHtml(info.icon ? `${info.icon} ${info.label}` : info.label)}</strong>
         ${items.map(type => `
           <label class="material-check">
-            <input type="checkbox" value="${escapeHtml(type)}">
-            ${escapeHtml(TEST_CONFIG[type].title)}
+            <input type="checkbox" value="${escapeHtml(type)}" ${selectedSet.has(type) ? "checked" : ""}>
+            <span>
+              <b>${escapeHtml(TEST_CONFIG[type].title)}</b>
+              <small>${escapeHtml(TEST_CONFIG[type].description || "")}</small>
+            </span>
           </label>
         `).join("")}
       </div>
     `;
   }).join("");
+}
+
+function renderAccessMaterialCheckboxes() {
+  renderMaterialCheckboxGroup("accessMaterialCheckboxes", []);
 }
 
 async function createAccessCodeFromForm() {
@@ -726,52 +754,156 @@ async function loadAccessCodeList() {
 }
 
 function renderAccessCodeList(records) {
+  accessCodeRecordsCache = Array.isArray(records) ? records : [];
   const area = document.getElementById("accessCodeListArea");
-  if (records.length === 0) {
+  closeAccessMaterialEditor(false);
+
+  if (accessCodeRecordsCache.length === 0) {
     area.innerHTML = "<p class='muted'>発行済みコードはまだありません。</p>";
     return;
   }
 
   area.innerHTML = `
-    <table class="history-table compact-table">
+    <table class="history-table compact-table access-code-table">
       <thead>
         <tr>
           <th>コード</th><th>ID</th><th>名前</th><th>許可教材</th><th>状態</th><th>使用回数</th><th>最終使用</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
-        ${records.map(record => `
-          <tr>
-            <td><strong>${escapeHtml(record.code)}</strong></td>
-            <td>${escapeHtml(record.studentId)}</td>
-            <td>${escapeHtml(record.studentName)}</td>
-            <td>${escapeHtml(materialNames(record.allowedMaterials).join(" / "))}</td>
-            <td class="${record.active ? "correct" : "wrong"}">${record.active ? "有効" : "無効"}</td>
-            <td>${escapeHtml(record.useCount ?? 0)}</td>
-            <td>${escapeHtml(formatSheetDate(record.lastUsedAt))}</td>
-            <td><button class="small-button ${record.active ? "quit-button" : "secondary-button"}" data-code="${escapeHtml(record.code)}" data-active="${record.active ? "false" : "true"}">${record.active ? "無効化" : "有効化"}</button></td>
-          </tr>
-        `).join("")}
+        ${accessCodeRecordsCache.map(record => {
+          const code = String(record.code || "");
+          const allowed = normalizeAllowedMaterials(record.allowedMaterials);
+          return `
+            <tr>
+              <td><strong>${escapeHtml(code)}</strong></td>
+              <td>${escapeHtml(record.studentId || "")}</td>
+              <td>${escapeHtml(record.studentName || "")}</td>
+              <td>${escapeHtml(materialNames(allowed).join(" / "))}</td>
+              <td class="${record.active ? "correct" : "wrong"}">${record.active ? "有効" : "無効"}</td>
+              <td>${escapeHtml(record.useCount ?? 0)}</td>
+              <td>${escapeHtml(formatSheetDate(record.lastUsedAt))}</td>
+              <td>
+                <div class="access-action-row">
+                  <button class="small-button ${record.active ? "quit-button" : "secondary-button"}" data-toggle-code="${escapeHtml(code)}" data-active="${record.active ? "false" : "true"}">${record.active ? "無効化" : "有効化"}</button>
+                  <button class="small-button material-edit-button" data-edit-materials="${escapeHtml(code)}">教材変更</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join("")}
       </tbody>
     </table>
   `;
 
-  area.querySelectorAll("button[data-code]").forEach(button => {
-    button.addEventListener("click", () => updateAccessCodeActive(button.dataset.code, button.dataset.active === "true"));
+  area.querySelectorAll("button[data-toggle-code]").forEach(button => {
+    button.addEventListener("click", () => updateAccessCodeActive(button.dataset.toggleCode, button.dataset.active === "true"));
+  });
+
+  area.querySelectorAll("button[data-edit-materials]").forEach(button => {
+    button.addEventListener("click", () => {
+      const record = accessCodeRecordsCache.find(item => String(item.code) === String(button.dataset.editMaterials));
+      if (record) openAccessMaterialEditor(record);
+    });
   });
 }
 
 async function updateAccessCodeActive(code, active) {
   try {
-    await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, active });
+    const result = await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, active });
+    if (result && result.ok === false) throw new Error(result.error || "状態変更に失敗しました。");
     loadAccessCodeList();
   } catch (error) {
     alert(error.message);
   }
 }
 
+function openAccessMaterialEditor(record) {
+  editingAccessCode = String(record.code || "");
+  const panel = document.getElementById("accessMaterialEditPanel");
+  const title = document.getElementById("editAccessCodeTitle");
+  const detail = document.getElementById("editAccessCodeDetail");
+  const msg = document.getElementById("editAccessMaterialsMessage");
+  const allowed = normalizeAllowedMaterials(record.allowedMaterials);
+
+  if (!panel) return;
+  if (title) title.textContent = `教材変更：${editingAccessCode}`;
+  if (detail) {
+    const name = record.studentName ? ` / ${record.studentName}` : "";
+    detail.textContent = `学習者ID：${record.studentId || "未入力"}${name}　現在：${allowed.length}教材`;
+  }
+  if (msg) {
+    msg.className = "muted";
+    msg.textContent = "追加・削除したい教材にチェックを入れて、更新してください。";
+  }
+
+  renderMaterialCheckboxGroup("editAccessMaterialCheckboxes", allowed);
+  panel.classList.remove("hidden");
+  panel.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function closeAccessMaterialEditor(clearCode = true) {
+  const panel = document.getElementById("accessMaterialEditPanel");
+  const msg = document.getElementById("editAccessMaterialsMessage");
+  if (panel) panel.classList.add("hidden");
+  if (msg) msg.textContent = "";
+  if (clearCode) editingAccessCode = "";
+}
+
+async function saveAccessMaterialsChange() {
+  const msg = document.getElementById("editAccessMaterialsMessage");
+  const checked = [...document.querySelectorAll("#editAccessMaterialCheckboxes input[type='checkbox']:checked")].map(box => box.value);
+
+  if (!editingAccessCode) {
+    if (msg) {
+      msg.className = "error";
+      msg.textContent = "変更対象のコードが選択されていません。";
+    }
+    return;
+  }
+  if (checked.length === 0) {
+    if (msg) {
+      msg.className = "error";
+      msg.textContent = "使用できる教材を1つ以上選択してください。";
+    }
+    return;
+  }
+
+  try {
+    if (msg) {
+      msg.className = "muted";
+      msg.textContent = "教材の権限を更新しています...";
+    }
+
+    // Apps Script 側の既存 action="updateAccessCode" を使って allowedMaterials だけ更新します。
+    // これにより、新しい updateAccessMaterials action を追加しなくても運用できます。
+    const result = await apiGetJsonp("updateAccessCode", {
+      adminPassword: ADMIN_PASSWORD,
+      code: editingAccessCode,
+      allowedMaterials: checked
+    });
+    if (!result || result.ok === false) throw new Error(result?.error || "教材変更に失敗しました。");
+
+    if (msg) {
+      msg.className = "correct";
+      msg.textContent = "教材を更新しました。学習者は一度ログアウトして再ログインすると反映されます。";
+    }
+
+    setTimeout(() => {
+      closeAccessMaterialEditor();
+      loadAccessCodeList();
+    }, 700);
+  } catch (error) {
+    console.error(error);
+    if (msg) {
+      msg.className = "error";
+      msg.textContent = `${error.message} Apps Scriptのデプロイと updateAccessCode の動作を確認してください。`;
+    }
+  }
+}
+
 function materialNames(types) {
-  return (types || []).map(type => TEST_CONFIG[type]?.title || type);
+  return normalizeAllowedMaterials(types).map(type => TEST_CONFIG[type]?.title || type);
 }
 
 function formatSheetDate(value) {
@@ -1360,38 +1492,41 @@ function processAnswer(data) {
   const now = new Date();
   const responseSeconds = questionStartTime ? Math.max(0, Math.round((now - questionStartTime) / 1000)) : 0;
   const feedback = document.getElementById("feedback");
+  const feedbackContext = getMaterialFeedbackContext(testType);
 
   if (data.isCorrect) {
     score += data.points;
-    const praise = getCorrectPraise();
-    feedback.className = "correct feedback-visible";
+    const praise = getCorrectPraise(data);
+    feedback.className = `correct feedback-visible feedback-${feedbackContext.slug}`;
     feedback.innerHTML = `
-      <div class="feedback-card feedback-correct">
+      <div class="feedback-card feedback-correct feedback-${feedbackContext.slug}-card">
         <div class="feedback-icon">${praise.icon}</div>
         <div>
           <strong>${escapeHtml(praise.title)}</strong>
           <p>${escapeHtml(praise.message)}</p>
         </div>
       </div>
+      ${buildAnswerDetailHtml(data, feedbackContext, true)}
     `;
-    triggerCorrectEffect();
+    triggerCorrectEffect(praise);
   } else {
-    feedback.className = "wrong feedback-visible";
+    const wrongFeedback = getWrongFeedback(data);
+    feedback.className = `wrong feedback-visible feedback-${feedbackContext.slug}`;
     feedback.innerHTML = `
-      <div class="feedback-card feedback-wrong">
-        <div class="feedback-icon">${data.timedOut ? "⏰" : "💡"}</div>
+      <div class="feedback-card feedback-wrong feedback-${feedbackContext.slug}-card">
+        <div class="feedback-icon">${wrongFeedback.icon}</div>
         <div>
-          <strong>${data.timedOut ? "時間切れ" : "あと少し"}</strong>
-          <p>正解：${escapeHtml(data.correctAnswer)}</p>
+          <strong>${escapeHtml(wrongFeedback.title)}</strong>
+          <p>${escapeHtml(wrongFeedback.message)}</p>
         </div>
       </div>
+      ${buildAnswerDetailHtml(data, feedbackContext, false)}
     `;
     mistakes.push(data);
   }
 
-  if (data.explanation) {
-    feedback.innerHTML += `<div class="explanation-box">解説：${escapeHtml(data.explanation)}</div>`;
-  }
+  const explanationHtml = buildExplanationHtml(data, feedbackContext);
+  if (explanationHtml) feedback.innerHTML += explanationHtml;
 
   const record = {
     date: now.toLocaleString("ja-JP"),
@@ -1445,14 +1580,284 @@ function processAnswer(data) {
   }
 }
 
-function getCorrectPraise() {
-  const praises = [
-    { icon: "🏆", title: "Perfect chunk!", message: "その表現はTOEIC Speakingでそのまま使えます。" },
-    { icon: "🚀", title: "Output upgraded!", message: "正確なチャンクとして素早く出せる形になっています。" },
-    { icon: "✨", title: "Excellent retrieval!", message: "自然な business English が自動化に近づいています。" },
-    { icon: "🔥", title: "Great momentum!", message: "この正確さを次の問題にもつなげましょう。" }
-  ];
-  return praises[currentIndex % praises.length];
+function isClassicalTest(type = testType) {
+  return ["classicalWords", "classicalGrammar", "classicalKnowledge"].includes(type);
+}
+
+function getMaterialFeedbackContext(type = testType) {
+  const config = TEST_CONFIG[type] || {};
+  const base = {
+    slug: "general",
+    icon: "✅",
+    wrongIcon: "💡",
+    correctLabel: "正解",
+    userLabel: "あなたの答え",
+    questionLabel: "問題",
+    explanationLabel: "解説",
+    timeUpMessage: "制限時間内に答えられませんでした。正解と解説を確認しましょう。",
+    correctPraises: [
+      { icon: "✅", title: "正解です", message: "この問題のポイントを正確に押さえられています。", burstTitle: "Correct!", burstSubtitle: "Point confirmed" },
+      { icon: "🌟", title: "よくできました", message: "次の問題でも同じ判断基準を使ってみましょう。", burstTitle: "Nice!", burstSubtitle: "Keep going" }
+    ],
+    wrongTitle: "確認しましょう",
+    wrongMessage: "正解と解説を確認し、次に同じポイントを選べるようにしましょう。",
+    resultMessages: {
+      high: "かなり安定しています。次は制限時間を少し短くすると、さらに実戦力が上がります。",
+      mid: "良いペースです。ミスした問題の根拠を確認すると定着しやすくなります。",
+      low: "復習の価値が高い回です。今日は間違いの原因を見つけられたこと自体が成果です。"
+    }
+  };
+
+  const contexts = {
+    vocab: {
+      slug: "vocab",
+      icon: "📘",
+      wrongIcon: "🔎",
+      correctLabel: "正しい意味",
+      userLabel: "選んだ意味",
+      questionLabel: "単語",
+      explanationLabel: "語義メモ",
+      timeUpMessage: "時間切れです。単語を見て意味を即答できるように、正しい意味を確認しましょう。",
+      correctPraises: [
+        { icon: "📘", title: "語義OK!", message: "単語と意味の対応を正確に押さえられています。", burstTitle: "Word OK!", burstSubtitle: "Meaning fixed" },
+        { icon: "⚡", title: "即答力アップ", message: "この反応速度を次の語彙にもつなげましょう。", burstTitle: "Fast!", burstSubtitle: "Vocabulary" }
+      ],
+      wrongTitle: "語義を確認",
+      wrongMessage: "選んだ意味と正しい意味の違いを確認しましょう。"
+    },
+    sokudokuVocab: {
+      slug: "vocab",
+      icon: "📗",
+      wrongIcon: "🔎",
+      correctLabel: "正しい意味",
+      userLabel: "選んだ意味",
+      questionLabel: "単語",
+      explanationLabel: "語義メモ",
+      timeUpMessage: "時間切れです。速読中に意味をすぐ出せるように確認しましょう。",
+      correctPraises: [
+        { icon: "📗", title: "読解語彙OK!", message: "速読で必要な語義を正確に選べています。", burstTitle: "Good!", burstSubtitle: "Reading vocab" }
+      ],
+      wrongTitle: "読解語彙を確認",
+      wrongMessage: "本文中でその語がどの意味になるかを意識して復習しましょう。"
+    },
+    monitor: {
+      slug: "toeic",
+      icon: "🎙️",
+      wrongIcon: "🧩",
+      correctLabel: "自然な表現",
+      userLabel: "選んだ表現",
+      questionLabel: "出題表現",
+      explanationLabel: "TOEIC S&W メモ",
+      timeUpMessage: "時間切れです。TOEIC S&Wでは短時間で自然な表現を選ぶ練習が重要です。",
+      correctPraises: [
+        { icon: "🎙️", title: "Natural choice!", message: "TOEIC S&Wで使いやすい自然な表現を選べています。", burstTitle: "Great!", burstSubtitle: "Natural English" },
+        { icon: "🚀", title: "Output ready!", message: "実際のSpeaking/Writingでそのまま使える形です。", burstTitle: "Ready!", burstSubtitle: "TOEIC S&W" }
+      ],
+      wrongTitle: "自然な表現を確認",
+      wrongMessage: "TOEIC S&Wでは、意味だけでなく自然なコロケーションを優先しましょう。",
+      resultMessages: {
+        high: "TOEIC S&Wらしい自然な表現選択がかなり安定しています。",
+        mid: "良いペースです。ミスした表現をチャンクとして言い直すと定着します。",
+        low: "復習価値が高い回です。誤答を自然なchunkに置き換える練習をしましょう。"
+      }
+    },
+    speakingReview: {
+      slug: "toeic",
+      icon: "🧠",
+      wrongIcon: "🧩",
+      correctLabel: "正しいチャンク",
+      userLabel: "組み立てた答え",
+      questionLabel: "復習ポイント",
+      explanationLabel: "チャンク解説",
+      timeUpMessage: "時間切れです。正しい語順とチャンクを確認して、次はより速く組み立てましょう。",
+      correctPraises: [
+        { icon: "🏆", title: "Perfect chunk!", message: "その表現はTOEIC Speakingでそのまま使えます。", burstTitle: "Great!", burstSubtitle: "Chunk mastered" },
+        { icon: "✨", title: "Excellent retrieval!", message: "自然な business English が自動化に近づいています。", burstTitle: "Nice!", burstSubtitle: "Output speed" }
+      ],
+      wrongTitle: "チャンクを修正",
+      wrongMessage: "語順・前置詞・コロケーションのどこで崩れたかを確認しましょう。",
+      resultMessages: {
+        high: "business chunk の再生がかなり安定しています。次はより短い制限時間で自動化しましょう。",
+        mid: "良い流れです。ミスしたchunkだけを声に出して復習すると効果的です。",
+        low: "復習価値が高い回です。誤答を正しいchunkに置き換えることが今日の成果です。"
+      }
+    },
+    speakingReviewCloze: {
+      slug: "toeic",
+      icon: "✍️",
+      wrongIcon: "🧩",
+      correctLabel: "空欄の正解",
+      userLabel: "入力した表現",
+      questionLabel: "完成させる英文",
+      explanationLabel: "チャンク解説",
+      timeUpMessage: "時間切れです。空欄に入る自然なchunkを確認しましょう。",
+      correctPraises: [
+        { icon: "✍️", title: "Chunk completed!", message: "空欄に入る自然な表現を正確に出せています。", burstTitle: "Complete!", burstSubtitle: "Cloze chunk" },
+        { icon: "⚡", title: "Fast retrieval!", message: "Speakingで必要な瞬発的な表現検索が強くなっています。", burstTitle: "Fast!", burstSubtitle: "Retrieval" }
+      ],
+      wrongTitle: "空欄のchunkを確認",
+      wrongMessage: "正解の前置詞・名詞形・語のまとまりを確認しましょう。"
+    },
+    sentence: {
+      slug: "sentence",
+      icon: "🔤",
+      wrongIcon: "🧱",
+      correctLabel: "正しい語順",
+      userLabel: "あなたの語順",
+      questionLabel: "語順問題",
+      explanationLabel: "語順メモ",
+      timeUpMessage: "時間切れです。主語・動詞・目的語・修飾語の順番を確認しましょう。",
+      correctPraises: [
+        { icon: "🔤", title: "語順OK!", message: "文の骨格を正確に組み立てられています。", burstTitle: "Order OK!", burstSubtitle: "Sentence" }
+      ],
+      wrongTitle: "語順を確認",
+      wrongMessage: "文の中心となる主語・動詞から確認し、修飾語の位置を見直しましょう。"
+    },
+    eikenConnectors: {
+      slug: "eiken",
+      icon: "🔗",
+      wrongIcon: "🔁",
+      correctLabel: "適切な接続表現",
+      userLabel: "選んだ表現",
+      questionLabel: "英文穴埋め",
+      explanationLabel: "接続関係メモ",
+      timeUpMessage: "時間切れです。前後の文の論理関係を確認しましょう。",
+      correctPraises: [
+        { icon: "🔗", title: "論理関係OK!", message: "前後のつながりに合う接続表現を選べています。", burstTitle: "Logic OK!", burstSubtitle: "Connector" }
+      ],
+      wrongTitle: "接続関係を確認",
+      wrongMessage: "逆接・因果・追加・譲歩のどの関係かを見直しましょう。"
+    },
+    englishTheory: {
+      slug: "theory",
+      icon: "🧑‍🏫",
+      wrongIcon: "📌",
+      correctLabel: "正しい概念",
+      userLabel: "選んだ概念",
+      questionLabel: "説明文",
+      explanationLabel: "概念解説",
+      timeUpMessage: "時間切れです。定義とキーワードを対応させて確認しましょう。",
+      correctPraises: [
+        { icon: "🧑‍🏫", title: "Concept clear!", message: "説明と概念の対応を正確に捉えられています。", burstTitle: "Clear!", burstSubtitle: "Theory" }
+      ],
+      wrongTitle: "概念を確認",
+      wrongMessage: "定義・キーワード・具体例の対応を見直しましょう。"
+    },
+    classicalWords: {
+      slug: "classics",
+      icon: "🌸",
+      wrongIcon: "📖",
+      correctLabel: "正しい現代語訳",
+      userLabel: "選んだ訳",
+      questionLabel: "古典単語",
+      explanationLabel: "語義・用法メモ",
+      timeUpMessage: "時間切れです。古典単語は中心義を素早く出せるように確認しましょう。",
+      correctPraises: [
+        { icon: "🌸", title: "語義OK!", message: "古典単語の中心となる意味を正確に押さえられています。", burstTitle: "Good!", burstSubtitle: "古典単語" },
+        { icon: "📖", title: "現代語訳に強くなっています", message: "この語義判断は読解のスピードにもつながります。", burstTitle: "Nice!", burstSubtitle: "語義確認" }
+      ],
+      wrongTitle: "語義を確認",
+      wrongMessage: "選んだ訳と正しい現代語訳の違いを確認し、中心義で覚え直しましょう。",
+      resultMessages: {
+        high: "古典単語の語義判断がかなり安定しています。次は制限時間を短くして読解速度につなげましょう。",
+        mid: "良いペースです。ミスした単語は中心義と文脈上の訳をセットで確認しましょう。",
+        low: "復習価値が高い回です。今日は覚え直すべき語を発見できたことが成果です。"
+      }
+    },
+    classicalGrammar: {
+      slug: "classics",
+      icon: "🏯",
+      wrongIcon: "📖",
+      correctLabel: "正しい文法判断",
+      userLabel: "選んだ答え",
+      questionLabel: "古典文法",
+      explanationLabel: "文法ポイント",
+      timeUpMessage: "時間切れです。接続・活用・意味・識別の順で確認しましょう。",
+      correctPraises: [
+        { icon: "🏯", title: "文法判断OK!", message: "助動詞・敬語・識別などの判断が正確です。", burstTitle: "Good!", burstSubtitle: "古典文法" },
+        { icon: "🌸", title: "根拠を選べています", message: "文法問題では、意味だけでなく接続や活用の根拠が重要です。", burstTitle: "Nice!", burstSubtitle: "文法根拠" }
+      ],
+      wrongTitle: "文法判断を確認",
+      wrongMessage: "正解を確認したら、接続・活用・意味・識別のどれがポイントだったかを見直しましょう。",
+      resultMessages: {
+        high: "古典文法の判断がかなり安定しています。次は根拠を言語化できるか確認しましょう。",
+        mid: "良いペースです。ミスは接続・活用・意味・識別のどこで迷ったか分類しましょう。",
+        low: "復習価値が高い回です。今日は文法判断の弱点を見つける回として意味があります。"
+      }
+    },
+    classicalKnowledge: {
+      slug: "classics",
+      icon: "🎎",
+      wrongIcon: "📖",
+      correctLabel: "正しい古文常識",
+      userLabel: "選んだ答え",
+      questionLabel: "古文常識",
+      explanationLabel: "背景知識メモ",
+      timeUpMessage: "時間切れです。人物関係・年中行事・生活習慣などの背景知識を確認しましょう。",
+      correctPraises: [
+        { icon: "🎎", title: "古文常識OK!", message: "読解に必要な背景知識を正確に押さえられています。", burstTitle: "Good!", burstSubtitle: "古文常識" },
+        { icon: "🌸", title: "読解の土台ができています", message: "背景知識があると、本文の状況理解がかなり速くなります。", burstTitle: "Nice!", burstSubtitle: "背景知識" }
+      ],
+      wrongTitle: "背景知識を確認",
+      wrongMessage: "正解の知識が本文理解にどう関係するかを確認しましょう。",
+      resultMessages: {
+        high: "古文常識がかなり安定しています。本文中で知識を使えるかも確認しましょう。",
+        mid: "良いペースです。ミスした常識事項は、場面や人物関係とセットで復習しましょう。",
+        low: "復習価値が高い回です。古文常識は読解の前提知識なので、ミスを発見できたことが成果です。"
+      }
+    }
+  };
+
+  return { ...base, ...(contexts[type] || {}) };
+}
+
+function getCorrectPraise(data = {}) {
+  const context = getMaterialFeedbackContext(testType);
+  const praises = context.correctPraises && context.correctPraises.length ? context.correctPraises : [];
+  return praises[currentIndex % praises.length] || {
+    icon: context.icon || "✅",
+    title: "正解です",
+    message: "この問題のポイントを正確に押さえられています。",
+    burstTitle: "Correct!",
+    burstSubtitle: "Point confirmed"
+  };
+}
+
+function getWrongFeedback(data = {}) {
+  const context = getMaterialFeedbackContext(testType);
+  return {
+    icon: data.timedOut ? "⏰" : (context.wrongIcon || "💡"),
+    title: data.timedOut ? "時間切れ" : (context.wrongTitle || "確認しましょう"),
+    message: data.timedOut ? context.timeUpMessage : context.wrongMessage
+  };
+}
+
+function buildAnswerDetailHtml(data, context, isCorrect) {
+  const userAnswer = data.userAnswer === undefined || data.userAnswer === null || data.userAnswer === "" ? "未回答" : data.userAnswer;
+  const userRow = isCorrect ? "" : `
+    <div class="feedback-answer-row">
+      <span>${escapeHtml(context.userLabel || "あなたの答え")}</span>
+      <strong>${escapeHtml(userAnswer)}</strong>
+    </div>
+  `;
+  return `
+    <div class="feedback-detail-grid feedback-detail-${escapeHtml(context.slug || "general")}">
+      ${userRow}
+      <div class="feedback-answer-row">
+        <span>${escapeHtml(context.correctLabel || "正解")}</span>
+        <strong>${escapeHtml(data.correctAnswer)}</strong>
+      </div>
+    </div>
+  `;
+}
+
+function buildExplanationHtml(data, context) {
+  if (!data.explanation) return "";
+  return `
+    <div class="explanation-box explanation-${escapeHtml(context.slug || "general")}">
+      <strong>${escapeHtml(context.explanationLabel || "解説")}：</strong>${escapeHtml(data.explanation)}
+    </div>
+  `;
 }
 
 function playCorrectSound() {
@@ -1485,17 +1890,22 @@ function playCorrectSound() {
   }
 }
 
-function triggerCorrectEffect() {
+function triggerCorrectEffect(praise = {}) {
   playCorrectSound();
   const layer = document.createElement("div");
   layer.className = "celebration-layer deluxe-celebration";
 
   const burst = document.createElement("div");
   burst.className = "celebration-burst";
-  burst.innerHTML = `<span>✨</span><strong>Great!</strong><small>Chunk mastered</small>`;
+  const burstIcon = praise.icon || "✨";
+  const burstTitle = praise.burstTitle || praise.title || "Correct!";
+  const burstSubtitle = praise.burstSubtitle || "Point confirmed";
+  burst.innerHTML = `<span>${escapeHtml(burstIcon)}</span><strong>${escapeHtml(burstTitle)}</strong><small>${escapeHtml(burstSubtitle)}</small>`;
   layer.appendChild(burst);
 
-  const marks = ["★", "●", "◆", "✦", "✓", "✧", "◇", "●"];
+  const marks = isClassicalTest(testType)
+    ? ["桜", "◆", "✦", "〇", "✓", "◇", "花", "●"]
+    : ["★", "●", "◆", "✦", "✓", "✧", "◇", "●"];
   for (let i = 0; i < 60; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece deluxe-piece";
@@ -1556,28 +1966,31 @@ async function showResult(isQuit) {
 }
 
 function getMotivationMessage(accuracy, answeredCount) {
+  const context = getMaterialFeedbackContext(testType);
   if (answeredCount === 0) return "<strong>今日は準備だけでもOKです。</strong><br>次は1問だけ始めてみましょう。";
-  if (accuracy >= 90) return "<strong>すばらしい安定感です。</strong><br>次は制限時間を少し短くすると、さらに実戦力が上がります。";
-  if (accuracy >= 70) return "<strong>かなり良いペースです。</strong><br>ミスした問題だけをもう一度解くと定着しやすくなります。";
-  return "<strong>復習の価値が高い回です。</strong><br>今日はミスを見つけられたこと自体が成果です。";
+  const messages = context.resultMessages || {};
+  if (accuracy >= 90) return `<strong>すばらしい安定感です。</strong><br>${escapeHtml(messages.high || "次は制限時間を少し短くすると、さらに実戦力が上がります。")}`;
+  if (accuracy >= 70) return `<strong>かなり良いペースです。</strong><br>${escapeHtml(messages.mid || "ミスした問題だけをもう一度解くと定着しやすくなります。")}`;
+  return `<strong>復習の価値が高い回です。</strong><br>${escapeHtml(messages.low || "今日はミスを見つけられたこと自体が成果です。")}`;
 }
 
 function showMistakes() {
   const area = document.getElementById("mistakeArea");
+  const context = getMaterialFeedbackContext(testType);
   if (mistakes.length === 0) {
     area.innerHTML = "<p class='correct'>ミスはありません。</p>";
     return;
   }
 
   area.innerHTML = `
-    <div class="mistake-list">
+    <div class="mistake-list mistake-${escapeHtml(context.slug || "general")}">
       <h3>今回ミスした問題</h3>
       ${mistakes.map(m => `
         <div class="mistake-item">
-          <strong>問題：</strong>${escapeHtml(m.question)}<br>
-          <strong>あなたの答え：</strong>${escapeHtml(m.userAnswer)}<br>
-          <strong>正解：</strong>${escapeHtml(m.correctAnswer)}<br>
-          ${m.explanation ? `<strong>解説：</strong>${escapeHtml(m.explanation)}` : ""}
+          <strong>${escapeHtml(context.questionLabel || "問題")}：</strong>${escapeHtml(m.question)}<br>
+          <strong>${escapeHtml(context.userLabel || "あなたの答え")}：</strong>${escapeHtml(m.userAnswer)}<br>
+          <strong>${escapeHtml(context.correctLabel || "正解")}：</strong>${escapeHtml(m.correctAnswer)}<br>
+          ${m.explanation ? `<strong>${escapeHtml(context.explanationLabel || "解説")}：</strong>${escapeHtml(m.explanation)}` : ""}
         </div>
       `).join("")}
     </div>
