@@ -1,4 +1,4 @@
-id,section,prompt,answer,hint,explanation,points
+﻿id,section,prompt,answer,hint,explanation,points
 1,5/18 写真描写：基本描写,[ _____ ] a table,there is,t____ i_,正しい全文：there is a table / 誤答例：there are a table,1
 2,5/18 写真描写：基本描写,[ _____ ],boxes are stacked,b____ a__ s______,正しい全文：boxes are stacked / 誤答例：boxes are stocked,1
 3,5/18 写真描写：基本描写,[ _____ ],companies can save money,c________ c__ s___ m____,正しい全文：companies can save money / 誤答例：companies can save their money,1
@@ -129,8 +129,123 @@ id,section,prompt,answer,hint,explanation,points
 128,5/21 Writing：会議室改善,[ _____ ] some problems with our meeting rooms,I have noticed,I h___ n______,正しい全文：I have noticed some problems with our meeting rooms / 誤答例：I haven't realize the trouble of our meeting room,1
 129,5/21 Writing：会議室改善,[ _____ ] fix the air conditioner,we should,w_ s_____,正しい全文：we should fix the air conditioner / 誤答例：we should fix air conditioner,1
 130,5/21 Writing：会議室改善,[ _____ ] invite clients there,it may be difficult to,i_ m__ b_ d________ t_,正しい全文：it may be difficult to invite clients there / 誤答例：we cannot invite clients to the meeting room,1
-131,5/23-24 TOEIC Business Speaking,Companies can identify potential [ _____ ] through training.,problems,p_______,正しい全文：Companies can identify potential problems through training. / 誤答例：realize potential problems,1
-132,5/23-24 TOEIC Business Speaking,People can participate [ _____ ] meetings regardless of time and location.,in,i_,正しい全文：participate in meetings / 誤答例：participate meetings,1
-133,5/23-24 TOEIC Business Speaking,Flexible working hours can lead to more efficient [ _____ ].,work,w___,正しい全文：lead to more efficient work / 誤答例：lead to work efficiently,1
-134,5/24 Photo Description,They are sitting around a [ _____ ].,table,t____,正しい全文：sitting around a table / TOEIC写真描写で頻出,1
-135,5/24 Customer Service,Customers often complain [ _____ ] service quality.,about,a____,正しい全文：complain about service quality / 誤答例：complain of service quality,1
+131,5/25 Chunk Review：前置詞チャンク,People can [ _____ ] regardless of location.,participate in meetings,p__________ i_ m_______,正しい全文：People can participate in meetings regardless of location. / 誤答例：participate meetings,1
+132,5/25 Chunk Review：前置詞チャンク,Employees can [ _____ ] from home.,participate in online meetings,p__________ i_ o_____ m_______,正しい全文：Employees can participate in online meetings from home. / 誤答例：participate online meetings,1
+133,5/25 Chunk Review：前置詞チャンク,Customers often [ _____ ].,complain about service quality,c_______ a____ s______ q______,正しい全文：Customers often complain about service quality. / 誤答例：complain of service quality,1
+134,5/25 Chunk Review：前置詞チャンク,Some customers [ _____ ].,complain about delivery delays,c_______ a____ d_______ d_____,正しい全文：Some customers complain about delivery delays. / 誤答例：complain of delivery delays,1
+135,5/25 Chunk Review：前置詞チャンク,Improving my speaking skills will give me [ _____ ].,confidence in my teaching,c_________ i_ m_ t_______,正しい全文：Improving my speaking skills will give me confidence in my teaching. / 誤答例：confidence to my teaching,1
+136,5/25 Chunk Review：前置詞チャンク,Practice can give employees [ _____ ].,confidence in the presentation,c_________ i_ t__ p___________,正しい全文：Practice can give employees confidence in the presentation. / 誤答例：confidence to the presentation,1
+137,5/25 Chunk Review：前置詞チャンク,Employees can come up with [ _____ ].,solutions to problems,s________ t_ p_______,正しい全文：Employees can come up with solutions to problems. / 誤答例：solutions for problems,1
+138,5/25 Chunk Review：前置詞チャンク,Staff members need [ _____ ].,solutions to customer complaints,s________ t_ c_______ c_________,正しい全文：Staff members need solutions to customer complaints. / 誤答例：solutions for customer complaints,1
+139,5/25 Chunk Review：前置詞チャンク,Many passengers are standing [ _____ ].,on the platform,o_ t__ p_______,正しい全文：Many passengers are standing on the platform. / 誤答例：in the platform,1
+140,5/25 Chunk Review：前置詞チャンク,A woman is sitting [ _____ ].,in front of a laptop,i_ f____ o_ a_ l_____,正しい全文：A woman is sitting in front of a laptop. / 誤答例：front of a laptop,1
+141,5/25 Chunk Review：前置詞チャンク,The employees are sitting [ _____ ].,around a table,a_____ a_ t____,正しい全文：The employees are sitting around a table. / 誤答例：at a table,1
+142,5/25 Chunk Review：前置詞チャンク,Passengers are standing [ _____ ].,in a line,i_ a_ l___,正しい全文：Passengers are standing in a line. / 誤答例：on one line,1
+143,5/25 Chunk Review：前置詞チャンク,A man is standing [ _____ ].,next to the window,n___ t_ t__ w_____,正しい全文：A man is standing next to the window. / 誤答例：near from the window,1
+144,5/25 Chunk Review：前置詞チャンク,The clerk is sitting [ _____ ].,across from the customer,a_____ f___ t__ c_______,正しい全文：The clerk is sitting across from the customer. / 誤答例：opposite of the customer,1
+145,5/25 Chunk Review：前置詞チャンク,I can think about solutions [ _____ ].,during the ride,d_____ t__ r___,正しい全文：I can think about solutions during the ride. / 誤答例：in the ride,1
+146,5/25 Chunk Review：前置詞チャンク,Companies can identify problems [ _____ ].,through training,t______ t_______,正しい全文：Companies can identify problems through training. / 誤答例：by training,1
+147,5/25 Chunk Review：前置詞チャンク,Companies should provide training programs [ _____ ].,for employees,f__ e________,正しい全文：Companies should provide training programs for employees. / 誤答例：to employees,1
+148,5/25 Chunk Review：前置詞チャンク,The system improves communication [ _____ ].,between customers and staff,b______ c________ a__ s____,正しい全文：The system improves communication between customers and staff. / 誤答例：among customers and staff,1
+149,5/25 Chunk Review：前置詞チャンク,I can analyze the situation [ _____ ].,from an objective perspective,f___ a_ o________ p__________,正しい全文：I can analyze the situation from an objective perspective. / 誤答例：by objective perspective,1
+150,5/25 Chunk Review：前置詞チャンク,Students can receive feedback [ _____ ].,in a timely manner,i_ a_ t_____ m_____,正しい全文：Students can receive feedback in a timely manner. / 誤答例：timely,1
+151,5/25 Chunk Review：前置詞チャンク,People can work on tasks [ _____ ].,instead of driving,i______ o_ d______,正しい全文：People can work on tasks instead of driving. / 誤答例：instead driving,1
+152,5/25 Chunk Review：前置詞チャンク,Employees can spend more time [ _____ ].,with their families,w___ t____ f_______,正しい全文：Employees can spend more time with their families. / 誤答例：with their family,1
+153,5/25 Chunk Review：前置詞チャンク,It may be difficult to invite clients [ _____ ].,to the meeting room,t_ t__ m______ r___,正しい全文：It may be difficult to invite clients to the meeting room. / 誤答例：in the meeting room,1
+154,5/25 Chunk Review：前置詞チャンク,Thank you [ _____ ].,for arranging the meeting,f__ a________ t__ m______,正しい全文：Thank you for arranging the meeting. / 誤答例：for your arrangement of the meeting,1
+155,5/25 Chunk Review：動詞コロケーション,AI tools can [ _____ ].,make our work more efficient,m___ o__ w___ m___ e________,正しい全文：AI tools can make our work more efficient. / 誤答例：make our work efficiently,1
+156,5/25 Chunk Review：動詞コロケーション,AI tools can [ _____ ].,improve product quality,i______ p______ q______,正しい全文：AI tools can improve product quality. / 誤答例：improve product qualities,1
+157,5/25 Chunk Review：動詞コロケーション,Companies can [ _____ ] through training.,identify potential problems,i_______ p________ p_______,正しい全文：Companies can identify potential problems through training. / 誤答例：realize potential problems,1
+158,5/25 Chunk Review：動詞コロケーション,Training programs can help [ _____ ].,maintain work quality,m_______ w___ q______,正しい全文：Training programs can help maintain work quality. / 誤答例：assure working quality,1
+159,5/25 Chunk Review：動詞コロケーション,Online meetings can [ _____ ].,reduce commuting time,r_____ c________ t___,正しい全文：Online meetings can reduce commuting time. / 誤答例：reduce time to commute,1
+160,5/25 Chunk Review：動詞コロケーション,The new system can [ _____ ].,increase customer satisfaction,i_______ c_______ s___________,正しい全文：The new system can increase customer satisfaction. / 誤答例：increase customers satisfaction,1
+161,5/25 Chunk Review：動詞コロケーション,The service can [ _____ ].,reduce response time,r_____ r_______ t___,正しい全文：The service can reduce response time. / 誤答例：reduce responding time,1
+162,5/25 Chunk Review：動詞コロケーション,Free snacks can [ _____ ].,encourage employees to communicate,e________ e________ t_ c__________,正しい全文：Free snacks can encourage employees to communicate. / 誤答例：encourage employees to have communication,1
+163,5/25 Chunk Review：動詞コロケーション,Flexible working hours may [ _____ ].,motivate employees,m_______ e________,正しい全文：Flexible working hours may motivate employees. / 誤答例：make employee motivation,1
+164,5/25 Chunk Review：動詞コロケーション,The team members are [ _____ ].,discuss business matters,d______ b_______ m______,正しい全文：The team members are discussing business matters. / 誤答例：talking about their business,1
+165,5/25 Chunk Review：動詞コロケーション,New employees will [ _____ ].,attend a training session,a_____ a_ t_______ s______,正しい全文：New employees will attend a training session. / 誤答例：join to a training session,1
+166,5/25 Chunk Review：動詞コロケーション,The company can [ _____ ] more often.,hold online meetings,h___ o_____ m_______,正しい全文：The company can hold online meetings more often. / 誤答例：do online meetings,1
+167,5/25 Chunk Review：動詞コロケーション,The staff members [ _____ ].,provide customer support,p______ c_______ s______,正しい全文：The staff members provide customer support. / 誤答例：serve customer support,1
+168,5/25 Chunk Review：動詞コロケーション,Employees need to [ _____ ].,respond to customer complaints,r______ t_ c_______ c_________,正しい全文：Employees need to respond to customer complaints. / 誤答例：answer customer complains,1
+169,5/25 Chunk Review：動詞コロケーション,The seminar will [ _____ ].,improve workplace communication,i______ w________ c____________,正しい全文：The seminar will improve workplace communication. / 誤答例：improve communication of workplace,1
+170,5/25 Chunk Review：動詞コロケーション,Online tools can [ _____ ].,save time,s___ t___,正しい全文：Online tools can save time. / 誤答例：save the time,1
+171,5/25 Chunk Review：動詞コロケーション,The new system can [ _____ ].,improve efficiency,i______ e_________,正しい全文：The new system can improve efficiency. / 誤答例：improve efficient,1
+172,5/25 Chunk Review：動詞コロケーション,Managers should [ _____ ].,support team members,s______ t___ m______,正しい全文：Managers should support team members. / 誤答例：support to team members,1
+173,5/25 Chunk Review：動詞コロケーション,Employees need to [ _____ ].,complete tasks on time,c_______ t____ o_ t___,正しい全文：Employees need to complete tasks on time. / 誤答例：finish tasks until time,1
+174,5/25 Chunk Review：動詞コロケーション,The system helps employees [ _____ ].,share information quickly,s____ i__________ q______,正しい全文：The system helps employees share information quickly. / 誤答例：share informations quickly,1
+175,5/25 Chunk Review：動詞コロケーション,The manager will [ _____ ].,arrange a team meeting,a______ a_ t___ m______,正しい全文：The manager will arrange a team meeting. / 誤答例：arrange for a team meeting,1
+176,5/25 Chunk Review：動詞コロケーション,Would it be possible to [ _____ ]?,reschedule our appointment,r_________ o__ a__________,正しい全文：Would it be possible to reschedule our appointment? / 誤答例：change our appointment schedule,1
+177,5/25 Chunk Review：動詞コロケーション,The supervisor will [ _____ ].,explain the new policy,e______ t__ n__ p_____,正しい全文：The supervisor will explain the new policy. / 誤答例：explain about the new policy,1
+178,5/25 Chunk Review：動詞コロケーション,The system helps employees [ _____ ].,reserve meeting rooms,r______ m______ r____,正しい全文：The system helps employees reserve meeting rooms. / 誤答例：reserve meeting rooms more efficiently,1
+179,5/25 Chunk Review：名詞句・不可算/複数,We should improve [ _____ ].,product quality,p______ q______,正しい全文：We should improve product quality. / 誤答例：product qualities,1
+180,5/25 Chunk Review：名詞句・不可算/複数,Customers care about [ _____ ].,service quality,s______ q______,正しい全文：Customers care about service quality. / 誤答例：quality of services,1
+181,5/25 Chunk Review：名詞句・不可算/複数,Employees can reduce [ _____ ].,commuting time,c________ t___,正しい全文：Employees can reduce commuting time. / 誤答例：time for commuting,1
+182,5/25 Chunk Review：名詞句・不可算/複数,Flexible [ _____ ] can improve satisfaction.,working hours,w______ h____,正しい全文：Flexible working hours can improve satisfaction. / 誤答例：working hour,1
+183,5/25 Chunk Review：名詞句・不可算/複数,I want to improve my [ _____ ].,speaking skills,s_______ s_____,正しい全文：I want to improve my speaking skills. / 誤答例：speaking skill,1
+184,5/25 Chunk Review：名詞句・不可算/複数,Training can improve [ _____ ].,communication skills,c____________ s_____,正しい全文：Training can improve communication skills. / 誤答例：communication skill,1
+185,5/25 Chunk Review：名詞句・不可算/複数,Staff members should handle [ _____ ] politely.,customer complaints,c_______ c_________,正しい全文：Staff members should handle customer complaints politely. / 誤答例：customer complains,1
+186,5/25 Chunk Review：名詞句・不可算/複数,They are discussing [ _____ ].,business matters,b_______ m______,正しい全文：They are discussing business matters. / 誤答例：their business,1
+187,5/25 Chunk Review：名詞句・不可算/複数,The system helps employees reserve [ _____ ].,meeting rooms,m______ r____,正しい全文：The system helps employees reserve meeting rooms. / 誤答例：meeting room,1
+188,5/25 Chunk Review：名詞句・不可算/複数,Companies should provide [ _____ ].,training programs,t_______ p_______,正しい全文：Companies should provide training programs. / 誤答例：training program,1
+189,5/25 Chunk Review：名詞句・不可算/複数,Training can help identify [ _____ ].,potential problems,p________ p_______,正しい全文：Training can help identify potential problems. / 誤答例：potential problem,1
+190,5/25 Chunk Review：名詞句・不可算/複数,Employees can spend time with [ _____ ].,their families,t____ f_______,正しい全文：Employees can spend time with their families. / 誤答例：their family,1
+191,5/25 Chunk Review：名詞句・不可算/複数,There is [ _____ ] on the table.,a laptop computer,a_ l_____ c_______,正しい全文：There is a laptop computer on the table. / 誤答例：laptop,1
+192,5/25 Chunk Review：名詞句・不可算/複数,Customer service staff need [ _____ ].,a kind attitude,a_ k___ a_______,正しい全文：Customer service staff need a kind attitude. / 誤答例：kind attitude,1
+193,5/25 Chunk Review：名詞句・不可算/複数,Could you make [ _____ ]?,an introductory video,a_ i___________ v____,正しい全文：Could you make an introductory video? / 誤答例：a introduction video,1
+194,5/25 Chunk Review：名詞句・不可算/複数,Employees should take [ _____ ].,a 15-minute break,a_ m_____ b____,正しい全文：Employees should take a 15-minute break. / 誤答例：a rest for 15 minutes,1
+195,5/25 Chunk Review：名詞句・不可算/複数,Training helps maintain [ _____ ].,work quality,w___ q______,正しい全文：Training helps maintain work quality. / 誤答例：working quality,1
+196,5/25 Chunk Review：名詞句・不可算/複数,Free snacks can improve [ _____ ].,employee satisfaction,e_______ s___________,正しい全文：Free snacks can improve employee satisfaction. / 誤答例：employees satisfaction,1
+197,5/25 Chunk Review：名詞句・不可算/複数,The service can increase [ _____ ].,customer satisfaction,c_______ s___________,正しい全文：The service can increase customer satisfaction. / 誤答例：customers satisfaction,1
+198,5/25 Chunk Review：名詞句・不可算/複数,The new system can reduce [ _____ ].,response time,r_______ t___,正しい全文：The new system can reduce response time. / 誤答例：respond time,1
+199,5/25 Chunk Review：写真描写チャンク,Several people are [ _____ ].,sitting around a table,s______ a_____ a_ t____,正しい全文：Several people are sitting around a table. / 誤答例：sitting at a table,1
+200,5/25 Chunk Review：写真描写チャンク,Passengers are [ _____ ].,standing in a line,s_______ i_ a_ l___,正しい全文：Passengers are standing in a line. / 誤答例：standing on one line,1
+201,5/25 Chunk Review：写真描写チャンク,A lot of people are [ _____ ].,waiting for a train,w______ f__ a_ t____,正しい全文：A lot of people are waiting for a train. / 誤答例：waiting for train,1
+202,5/25 Chunk Review：写真描写チャンク,[ _____ ] at the platform.,a train has arrived,a_ t____ h__ a______,正しい全文：A train has arrived at the platform. / 誤答例：there is a train,1
+203,5/25 Chunk Review：写真描写チャンク,[ _____ ].,the doors are closed,t__ d____ a__ c_____,正しい全文：The doors are closed. / 誤答例：the door is closed,1
+204,5/25 Chunk Review：写真描写チャンク,Several people are walking [ _____ ].,in the background,i_ t__ b_________,正しい全文：Several people are walking in the background. / 誤答例：at the background,1
+205,5/25 Chunk Review：写真描写チャンク,A woman is standing [ _____ ].,on the left side,o_ t__ l___ s___,正しい全文：A woman is standing on the left side. / 誤答例：in left side,1
+206,5/25 Chunk Review：写真描写チャンク,A man is holding a document [ _____ ].,on the right side,o_ t__ r____ s___,正しい全文：A man is holding a document on the right side. / 誤答例：in right side,1
+207,5/25 Chunk Review：写真描写チャンク,The manager [ _____ ] something.,appears to be explaining,a______ t_ b_ e_________,正しい全文：The manager appears to be explaining something. / 誤答例：seems explaining,1
+208,5/25 Chunk Review：写真描写チャンク,A woman [ _____ ].,is working on a laptop,i_ w______ o_ a_ l_____,正しい全文：A woman is working on a laptop. / 誤答例：is working a laptop,1
+209,5/25 Chunk Review：写真描写チャンク,A man [ _____ ].,is looking at a screen,i_ l______ a_ a_ s_____,正しい全文：A man is looking at a screen. / 誤答例：is seeing a screen,1
+210,5/25 Chunk Review：写真描写チャンク,A passenger [ _____ ].,is carrying a bag,i_ c_______ a_ b__,正しい全文：A passenger is carrying a bag. / 誤答例：has a bag,1
+211,5/25 Chunk Review：写真描写チャンク,The presenter [ _____ ].,is pointing at the chart,i_ p_______ a_ t__ c____,正しい全文：The presenter is pointing at the chart. / 誤答例：is pointing the chart,1
+212,5/25 Chunk Review：写真描写チャンク,Two people [ _____ ].,are facing each other,a__ f_____ e___ o____,正しい全文：Two people are facing each other. / 誤答例：are facing to each other,1
+213,5/25 Chunk Review：写真描写チャンク,Several customers [ _____ ].,are lined up,a__ l____ u_,正しい全文：Several customers are lined up. / 誤答例：are lining,1
+214,5/25 Chunk Review：写真描写チャンク,A man [ _____ ].,is giving a presentation,i_ g_____ a_ p___________,正しい全文：A man is giving a presentation. / 誤答例：is doing a presentation,1
+215,5/25 Chunk Review：写真描写チャンク,Some employees [ _____ ].,are taking notes,a__ t_____ n____,正しい全文：Some employees are taking notes. / 誤答例：are writing notes,1
+216,5/25 Chunk Review：写真描写チャンク,A worker [ _____ ].,is placing items on a shelf,i_ p______ i____ o_ a_ s____,正しい全文：A worker is placing items on a shelf. / 誤答例：is putting items to a shelf,1
+217,5/25 Chunk Review：写真描写チャンク,Several people [ _____ ].,are walking across the lobby,a__ w______ a_____ t__ l____,正しい全文：Several people are walking across the lobby. / 誤答例：are walking in the lobby,1
+218,5/25 Chunk Review：写真描写チャンク,A speaker [ _____ ].,is speaking into a microphone,i_ s_______ i___ a_ m_________,正しい全文：A speaker is speaking into a microphone. / 誤答例：is speaking by a microphone,1
+219,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,Thank you for arranging the meeting,T____ y__ f__ a________ t__ m______,正しい全文：Thank you for arranging the meeting. / 誤答例：Thank you for your arrangement of the meeting,1
+220,5/25 Chunk Review：Writing・丁寧表現,[ _____ ]?,Would it be possible to reschedule our meeting,W____ i_ b_ p_______ t_ r_________ o__ m______,正しい全文：Would it be possible to reschedule our meeting? / 誤答例：Would you mind rescheduling our meeting,1
+221,5/25 Chunk Review：Writing・丁寧表現,[ _____ ] send me the file.,I would appreciate it if you could,I_ w____ a_________ i_ i_ y__ c____,正しい全文：I would appreciate it if you could send me the file. / 誤答例：Please send me the file,1
+222,5/25 Chunk Review：Writing・丁寧表現,[ _____ ] with our meeting rooms.,I have noticed some problems,I_ h___ n______ s___ p_______,正しい全文：I have noticed some problems with our meeting rooms. / 誤答例：I haven't realize the trouble,1
+223,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,It may be difficult to invite clients there,I_ m__ b_ d________ t_ i_____ c______ t____,正しい全文：It may be difficult to invite clients there. / 誤答例：We cannot invite clients there,1
+224,5/25 Chunk Review：Writing・丁寧表現,[ _____ ]?,Could you make an introductory video,C____ y__ m___ a_ i___________ v____,正しい全文：Could you make an introductory video? / 誤答例：Would you make a introduction video clip,1
+225,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,I suggest having a group recreation activity,I_ s______ h_____ a_ g____ r_________ a_______,正しい全文：I suggest having a group recreation activity. / 誤答例：One of the activities is a group recreation,1
+226,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,I am happy to attend the event,I_ a_ h____ t_ a_____ t__ e____,正しい全文：I am happy to attend the event. / 誤答例：I am happy to join to the event,1
+227,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,Please let me know if this works for you,P_____ l__ m_ k___ i_ t___ w____ f__ y__,正しい全文：Please let me know if this works for you. / 誤答例：Please tell me if you can,1
+228,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,I apologize for the inconvenience,I_ a________ f__ t__ i____________,正しい全文：I apologize for the inconvenience. / 誤答例：I am sorry for your inconvenience,1
+229,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,Thank you for your contribution,T____ y__ f__ y___ c___________,正しい全文：Thank you for your contribution. / 誤答例：Thank you for contribution,1
+230,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,I appreciate your efforts,I_ a_________ y___ e______,正しい全文：I appreciate your efforts. / 誤答例：I appreciate for your efforts,1
+231,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,I believe this system would help employees,I_ b______ t___ s_____ w____ h___ e________,正しい全文：I believe this system would help employees. / 誤答例：I think the system make employees,1
+232,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,It would be better to share the instructions,I_ w____ b_ b_____ t_ s____ t__ i___________,正しい全文：It would be better to share the instructions. / 誤答例：It is better to share the way to use,1
+233,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,Please feel free to ask questions,P_____ f___ f___ t_ a__ q________,正しい全文：Please feel free to ask questions. / 誤答例：Please ask questions freely,1
+234,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,We appreciate your patience and understanding,W_ a_________ y___ p_______ a__ u____________,正しい全文：We appreciate your patience and understanding. / 誤答例：Thank you for waiting,1
+235,5/25 Chunk Review：Writing・丁寧表現,[ _____ ] next month.,Our company will launch a new service,O__ c______ w___ l_____ a_ n__ s______,正しい全文：Our company will launch a new service next month. / 誤答例：Our company will start new service,1
+236,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,The service is designed to improve communication,T__ s______ i_ d_______ t_ i______ c____________,正しい全文：The service is designed to improve communication. / 誤答例：The service is made for improving communication,1
+237,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,This can lead to better teamwork,T___ c__ l___ t_ b_____ t_______,正しい全文：This can lead to better teamwork. / 誤答例：This can make better teamwork,1
+238,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,This can lead to more efficient work,T___ c__ l___ t_ m___ e________ w___,正しい全文：This can lead to more efficient work. / 誤答例：This can lead to work efficiently,1
+239,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,They can work regardless of location,T___ c__ w___ r_________ o_ l_______,正しい全文：They can work regardless of location. / 誤答例：They can work regardless of place,1
+240,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,Employees can relax while having snacks,E________ c__ r____ w____ h_____ s_____,正しい全文：Employees can relax while having snacks. / 誤答例：Employees can be relaxed by having snacks,1
+241,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,"First, online meetings can reduce commuting time","F____, o_____ m_______ c__ r_____ c________ t___","正しい全文：First, online meetings can reduce commuting time. / 誤答例：First, they can online meetings can reduce the time to commute",1
+242,5/25 Chunk Review：Writing・丁寧表現,[ _____ ].,"In addition, people can participate in meetings","I_ a_______, p_____ c__ p__________ i_ m_______","正しい全文：In addition, people can participate in meetings. / 誤答例：In addition, people can do those kind of meetings",1
+243,5/25 Chunk Review：Respond・短く自然に言う,[ _____ ] when I feel stressed.,It helps me relax,I_ h____ m_ r____,正しい全文：It helps me relax when I feel stressed. / 誤答例：That makes me relaxed,1
+244,5/25 Chunk Review：Respond・短く自然に言う,[ _____ ].,I can better understand my situation,I_ c__ b_____ u_________ m_ s________,正しい全文：I can better understand my situation. / 誤答例：I can realize what situation I am in,1
+245,5/25 Chunk Review：Respond・短く自然に言う,[ _____ ].,I can concentrate better on my studies,I_ c__ c__________ b_____ o_ m_ s______,正しい全文：I can concentrate better on my studies. / 誤答例：I can concentrate on my study,1
+246,5/25 Chunk Review：Respond・短く自然に言う,[ _____ ].,I can choose what to study,I_ c__ c_____ w___ t_ s____,正しい全文：I can choose what to study. / 誤答例：I can choose what I will study,1
+247,5/25 Chunk Review：Respond・短く自然に言う,I can make decisions [ _____ ].,without consulting others,w______ c_________ o_____,正しい全文：I can make decisions without consulting others. / 誤答例：without consulting other people opinions,1
+248,5/25 Chunk Review：Respond・短く自然に言う,Speaking ability may influence [ _____ ].,students’ motivation to learn,s_______ m_________ t_ l____,正しい全文：Speaking ability may influence students’ motivation to learn. / 誤答例：students learning motivation,1
+249,5/25 Chunk Review：Respond・短く自然に言う,Technology can [ _____ ].,help students develop self-regulated learning skills,h___ s_______ d______ s____________ l_______ s_____,正しい全文：Technology can help students develop self-regulated learning skills. / 誤答例：develop students self-regulated learning skills,1
+250,5/25 Chunk Review：Respond・短く自然に言う,Students can [ _____ ].,receive feedback in a timely manner,r______ f_______ i_ a_ t_____ m_____,正しい全文：Students can receive feedback in a timely manner. / 誤答例：get feedback timely,1

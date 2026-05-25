@@ -96,6 +96,7 @@ const TEST_CONFIG = {
     type: "sentence",
     password: "2180",
     defaultTime: 45,
+    review: true,
     files: ["data/speaking_review/toeic_speaking_review_sentence.csv"],
     description: "これまでのSpeaking/Writingの誤答から、正しいチャンクを語順で再構成します。"
   },
@@ -105,6 +106,7 @@ const TEST_CONFIG = {
     type: "cloze",
     password: "2180",
     defaultTime: 30,
+    review: true,
     path: "data/speaking_review/toeic_speaking_review_cloze.csv",
     description: "正しい表現の一部を自分で書き出し、瞬発的に使えるチャンクを増やします。"
   },
@@ -171,12 +173,15 @@ let autoAdvanceTimerId = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
+let selectedSentenceWords = [];
+let selectedSentenceChipIndexes = [];
 
 /* =========================
    初期化・イベント登録
 ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
+  initSecurePasswordFields();
   safeAddEvent("loginButton", "click", checkLogin);
   safeAddEvent("passwordInput", "keydown", event => { if (event.key === "Enter") checkLogin(); });
   safeAddEvent("showPassword", "change", function () { togglePasswordField("passwordInput", this.checked); });
@@ -230,12 +235,35 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   safeAddEvent("logoutButton", "click", logout);
 
+  document.addEventListener("keydown", handleGlobalQuizEnter);
   restoreSession();
 });
 
 function safeAddEvent(id, event, handler) {
   const element = document.getElementById(id);
   if (element) element.addEventListener(event, handler);
+}
+
+function handleGlobalQuizEnter(event) {
+  if (event.key !== "Enter") return;
+  const quizScreen = document.getElementById("quizScreen");
+  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
+  if (event.isComposing) return;
+
+  const target = event.target;
+  if (target && target.tagName === "TEXTAREA") return;
+
+  event.preventDefault();
+  const checkButton = document.getElementById("checkButton");
+  const nextButton = document.getElementById("nextButton");
+
+  if (checkButton && !checkButton.disabled) {
+    checkAnswer();
+    return;
+  }
+  if (nextButton && !nextButton.classList.contains("hidden")) {
+    nextQuestion();
+  }
 }
 
 /* =========================
@@ -433,15 +461,29 @@ function logout() {
   localStorage.removeItem(STORAGE_KEYS.allowedMaterials);
   document.getElementById("passwordInput").value = "";
   document.getElementById("studentLoginInput").value = "";
+  const materialPassword = document.getElementById("materialPasswordInput");
+  if (materialPassword) materialPassword.value = "";
   resetPasswordVisibility();
   showOnly("loginScreen");
+}
+
+function initSecurePasswordFields() {
+  document.querySelectorAll(".secure-code").forEach(field => {
+    field.type = "password";
+    field.classList.remove("is-visible");
+    field.setAttribute("autocomplete", "new-password");
+  });
+  ["showPassword", "showStudentPassword", "showMaterialPassword"].forEach(id => {
+    const checkbox = document.getElementById(id);
+    if (checkbox) checkbox.checked = false;
+  });
 }
 
 function togglePasswordField(id, checked) {
   const field = document.getElementById(id);
   if (!field) return;
   field.type = checked ? "text" : "password";
-  field.classList.toggle("is-visible", checked);
+  field.classList.toggle("is-visible", Boolean(checked));
 }
 
 function resetPasswordVisibility() {
@@ -915,7 +957,7 @@ async function startNormalQuiz() {
 async function startReviewQuiz() {
   const config = TEST_CONFIG[testType];
   if (!config || !config.review) {
-    alert("復習機能は単語テスト用です。");
+    alert("この教材では間違い復習機能は使用できません。");
     return;
   }
 
@@ -1035,8 +1077,8 @@ function handleTimeUp() {
   const q = questions[currentIndex];
   const configType = TEST_CONFIG[testType].type;
   const correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
-  const questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
-  const typedAnswer = document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
+  const questionText = configType === "sentence" ? (q.prompt || splitSentence(q.answer).join(" / ")) : (q.prompt || q.word);
+  const typedAnswer = configType === "sentence" ? getCurrentSentenceUserAnswer() : (document.getElementById("answerInput") ? document.getElementById("answerInput").value : "");
 
   processAnswer({
     id: q.id,
@@ -1095,6 +1137,39 @@ function showSentenceQuestion() {
   q.words = shuffle(splitSentence(q.answer));
   const hint = q.hint || createInitialHint(q.answer);
   const prompt = q.prompt ? `<div class="question-prompt">${escapeHtml(q.prompt)}</div>` : "";
+  selectedSentenceWords = [];
+  selectedSentenceChipIndexes = [];
+
+  if (testType === "speakingReview") {
+    document.getElementById("questionArea").innerHTML = `
+      ${prompt}
+      <div class="answer-support"><span>チャンクヒント</span>${escapeHtml(hint)}</div>
+      <div class="tap-answer-display empty" id="sentenceAnswerDisplay">単語をタップして並べ替えてください</div>
+      <div class="words tap-word-bank" id="sentenceWords">
+        ${q.words.map((word, index) => `<button type="button" class="word-chip tap-chip" data-index="${index}">${escapeHtml(word)}</button>`).join("")}
+      </div>
+      <div class="sentence-control-row">
+        <button type="button" id="undoSentenceButton" class="secondary-button small-button">1語戻す</button>
+        <button type="button" id="clearSentenceButton" class="secondary-button small-button">最初から</button>
+      </div>
+      <p class="keyboard-note">キーボードを開かずに、単語チップだけで解答できます。Enterキーで回答を終了します。</p>
+    `;
+
+    document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const index = chip.dataset.index;
+        selectedSentenceWords.push(chip.textContent.trim());
+        selectedSentenceChipIndexes.push(index);
+        chip.disabled = true;
+        chip.classList.add("used");
+        renderSentenceTapAnswer();
+      });
+    });
+    document.getElementById("undoSentenceButton").addEventListener("click", undoSentenceTapSelection);
+    document.getElementById("clearSentenceButton").addEventListener("click", resetSentenceTapSelection);
+    renderSentenceTapAnswer();
+    return;
+  }
 
   document.getElementById("questionArea").innerHTML = `
     ${prompt}
@@ -1166,11 +1241,50 @@ function createInitialHint(sentence) {
 }
 
 function updateUsedWords() {
-  const inputWords = splitSentence(document.getElementById("answerInput").value).map(w => normalizeForCompare(w));
+  const input = document.getElementById("answerInput");
+  if (!input) return;
+  const inputWords = splitSentence(input.value).map(w => normalizeForCompare(w));
   document.querySelectorAll(".word-chip").forEach(chip => {
     const word = normalizeForCompare(chip.textContent);
     chip.classList.toggle("used", inputWords.includes(word));
   });
+}
+
+function getCurrentSentenceUserAnswer() {
+  const input = document.getElementById("answerInput");
+  if (input) return input.value;
+  return selectedSentenceWords.join(" ").trim();
+}
+
+function renderSentenceTapAnswer() {
+  const display = document.getElementById("sentenceAnswerDisplay");
+  if (!display) return;
+  display.textContent = selectedSentenceWords.length
+    ? selectedSentenceWords.join(" ")
+    : "単語をタップして並べ替えてください";
+  display.classList.toggle("empty", selectedSentenceWords.length === 0);
+}
+
+function resetSentenceTapSelection() {
+  selectedSentenceWords = [];
+  selectedSentenceChipIndexes = [];
+  document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
+    chip.disabled = false;
+    chip.classList.remove("used");
+  });
+  renderSentenceTapAnswer();
+}
+
+function undoSentenceTapSelection() {
+  const lastIndex = selectedSentenceChipIndexes.pop();
+  if (lastIndex === undefined) return;
+  selectedSentenceWords.pop();
+  const chip = document.querySelector(`#sentenceWords .word-chip[data-index="${lastIndex}"]`);
+  if (chip) {
+    chip.disabled = false;
+    chip.classList.remove("used");
+  }
+  renderSentenceTapAnswer();
 }
 
 /* =========================
@@ -1191,11 +1305,6 @@ function checkChoiceAnswer() {
   }
 
   const isCorrect = selectedChoice === q.correctAnswer;
-  if (TEST_CONFIG[testType].review) {
-    if (isCorrect && reviewMode) removeWrongWord(q.id);
-    if (!isCorrect) saveWrongWord(q.id);
-  }
-
   processAnswer({
     id: q.id,
     section: q.section,
@@ -1210,7 +1319,11 @@ function checkChoiceAnswer() {
 
 function checkSentenceAnswer() {
   const q = questions[currentIndex];
-  const userAnswer = document.getElementById("answerInput").value;
+  const userAnswer = getCurrentSentenceUserAnswer();
+  if (!userAnswer) {
+    alert("単語を並べ替えてください。");
+    return;
+  }
   const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
 
   processAnswer({
@@ -1261,7 +1374,7 @@ function processAnswer(data) {
         </div>
       </div>
     `;
-    triggerCorrectEffect(praise);
+    triggerCorrectEffect();
   } else {
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
@@ -1309,6 +1422,12 @@ function processAnswer(data) {
   answersLog.push(record);
   appendLocalHistory(record);
 
+  const config = TEST_CONFIG[testType];
+  if (config && config.review) {
+    if (data.isCorrect && reviewMode) removeWrongWord(data.id);
+    if (!data.isCorrect) saveWrongWord(data.id);
+  }
+
   document.getElementById("checkButton").disabled = true;
   const delay = Number(selectedAutoNextDelay) || 0;
   const nextButton = document.getElementById("nextButton");
@@ -1327,70 +1446,69 @@ function processAnswer(data) {
 }
 
 function getCorrectPraise() {
-  const correctCount = answersLog.filter(answer => answer.correct).length + 1;
-  const currentStreak = calculateCurrentCorrectStreak() + 1;
   const praises = [
-    { icon: "✨", title: "Perfect Output!", message: "今の表現はそのままSpeakingで使えます。" },
-    { icon: "🚀", title: "Excellent Flow!", message: "チャンクとして素早く出せる形に近づいています。" },
-    { icon: "💎", title: "Sharp Accuracy!", message: "正確さと自然さの両方を積み上げられています。" },
-    { icon: "🔥", title: "Great Streak!", message: "この調子で、使える表現をさらに増やしましょう。" }
+    { icon: "🏆", title: "Perfect chunk!", message: "その表現はTOEIC Speakingでそのまま使えます。" },
+    { icon: "🚀", title: "Output upgraded!", message: "正確なチャンクとして素早く出せる形になっています。" },
+    { icon: "✨", title: "Excellent retrieval!", message: "自然な business English が自動化に近づいています。" },
+    { icon: "🔥", title: "Great momentum!", message: "この正確さを次の問題にもつなげましょう。" }
   ];
-  const praise = praises[currentIndex % praises.length];
-  return {
-    ...praise,
-    badge: currentStreak >= 3 ? `${currentStreak}連続正解` : `${correctCount}問目クリア`
-  };
+  return praises[currentIndex % praises.length];
 }
 
-function calculateCurrentCorrectStreak() {
-  let streak = 0;
-  for (let i = answersLog.length - 1; i >= 0; i--) {
-    if (!answersLog[i].correct) break;
-    streak++;
+function playCorrectSound() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const context = new AudioContextClass();
+    const master = context.createGain();
+    master.gain.setValueAtTime(0.0001, context.currentTime);
+    master.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
+    master.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.72);
+    master.connect(context.destination);
+
+    [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
+      const osc = context.createOscillator();
+      const gain = context.createGain();
+      osc.type = index === 3 ? "triangle" : "sine";
+      osc.frequency.setValueAtTime(frequency, context.currentTime + index * 0.08);
+      gain.gain.setValueAtTime(0.0001, context.currentTime + index * 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.28, context.currentTime + index * 0.08 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + index * 0.08 + 0.2);
+      osc.connect(gain);
+      gain.connect(master);
+      osc.start(context.currentTime + index * 0.08);
+      osc.stop(context.currentTime + index * 0.08 + 0.24);
+    });
+    setTimeout(() => context.close && context.close(), 900);
+  } catch (error) {
+    console.warn("Correct sound could not be played.", error);
   }
-  return streak;
 }
 
-function triggerCorrectEffect(praise = {}) {
+function triggerCorrectEffect() {
+  playCorrectSound();
   const layer = document.createElement("div");
-  layer.className = "celebration-layer";
+  layer.className = "celebration-layer deluxe-celebration";
 
-  const toast = document.createElement("div");
-  toast.className = "celebration-toast";
-  toast.innerHTML = `
-    <span class="celebration-toast-icon">${escapeHtml(praise.icon || "✨")}</span>
-    <span>${escapeHtml(praise.badge || "Nice!")}</span>
-  `;
-  layer.appendChild(toast);
+  const burst = document.createElement("div");
+  burst.className = "celebration-burst";
+  burst.innerHTML = `<span>✨</span><strong>Great!</strong><small>Chunk mastered</small>`;
+  layer.appendChild(burst);
 
-  const marks = ["✦", "★", "●", "◆", "✓", "✧"];
-  for (let i = 0; i < 34; i++) {
+  const marks = ["★", "●", "◆", "✦", "✓", "✧", "◇", "●"];
+  for (let i = 0; i < 60; i++) {
     const piece = document.createElement("span");
-    piece.className = "confetti-piece";
+    piece.className = "confetti-piece deluxe-piece";
     piece.textContent = marks[i % marks.length];
-    piece.style.setProperty("--x", `${Math.random() * 100}vw`);
-    piece.style.setProperty("--drift", `${-80 + Math.random() * 160}px`);
-    piece.style.setProperty("--delay", `${Math.random() * 0.22}s`);
-    piece.style.setProperty("--spin", `${160 + Math.random() * 260}deg`);
-    piece.style.setProperty("--size", `${14 + Math.random() * 14}px`);
+    piece.style.left = `${4 + Math.random() * 92}%`;
+    piece.style.animationDelay = `${Math.random() * 0.28}s`;
+    piece.style.setProperty("--fall", `${180 + Math.random() * 280}px`);
+    piece.style.setProperty("--spin", `${120 + Math.random() * 480}deg`);
+    piece.style.fontSize = `${14 + Math.random() * 18}px`;
     layer.appendChild(piece);
   }
-
-  const quizScreen = document.getElementById("quizScreen");
-  if (quizScreen) {
-    quizScreen.classList.remove("correct-pulse");
-    void quizScreen.offsetWidth;
-    quizScreen.classList.add("correct-pulse");
-  }
-
-  document.body.classList.add("correct-moment");
   document.body.appendChild(layer);
-
-  setTimeout(() => {
-    layer.remove();
-    document.body.classList.remove("correct-moment");
-    if (quizScreen) quizScreen.classList.remove("correct-pulse");
-  }, 1400);
+  setTimeout(() => layer.remove(), 1800);
 }
 
 function nextQuestion() {
@@ -1728,7 +1846,7 @@ function getWrongKey() {
 }
 
 function clearStoredMistakes() {
-  if (!confirm("この学習者の単語間違い履歴を削除しますか？")) return;
+  if (!confirm("この学習者の間違い履歴を削除しますか？")) return;
   localStorage.removeItem(getWrongKey());
   updateMistakeCountInSettings();
   alert("間違い履歴を削除しました。" );

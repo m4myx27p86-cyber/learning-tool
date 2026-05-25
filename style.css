@@ -11,12 +11,14 @@
   --success: #15803d;
   --border: #e5e7eb;
   --shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+  --font-main: "Aptos", "Inter", "Noto Sans JP", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+  --font-display: "Arial Rounded MT Bold", "Aptos Display", "Noto Sans JP", "Yu Gothic UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
 
 body {
-  font-family: Arial, "Hiragino Sans", "Yu Gothic", sans-serif;
+  font-family: var(--font-main);
   color: var(--text);
   background:
     radial-gradient(circle at top left, #dbeafe 0, transparent 32%),
@@ -767,144 +769,187 @@ body::before {
 }
 #nextButton { background: linear-gradient(135deg, #0f766e, #2563eb); }
 
-
 /* =========================================================
-   20260523 update: hidden password fields + premium correct effect
+   2026-05-25 update: speaking review tap mode + deluxe effect
 ========================================================= */
-.secure-code {
-  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
-  letter-spacing: .12em;
+.tap-answer-display {
+  max-width: 820px;
+  min-height: 66px;
+  margin: 14px auto 10px;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #ecfeff, #eef2ff);
+  border: 2px solid rgba(37, 99, 235, .24);
+  color: #0f172a;
+  font-size: clamp(18px, 3vw, 26px);
+  font-weight: 900;
+  line-height: 1.6;
+  text-align: left;
+  box-shadow: 0 14px 30px rgba(37, 99, 235, .10);
+  overflow-wrap: anywhere;
+}
+.tap-answer-display.empty {
+  color: #64748b;
   font-weight: 800;
-  text-align: center;
-  background: linear-gradient(180deg, #ffffff, #f8fafc);
-  border: 2px solid #dbe3ef;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.75), 0 10px 24px rgba(15,23,42,.06);
 }
-.secure-code.is-visible {
-  letter-spacing: .04em;
-  border-color: rgba(37, 99, 235, .45);
-  background: #eff6ff;
-}
-.password-toggle {
-  width: fit-content;
-  max-width: 100%;
-  margin: 12px auto 16px;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: rgba(248, 250, 252, .94);
+.tap-word-bank {
+  max-width: 860px;
+  margin: 14px auto;
+  padding: 16px;
+  border-radius: 22px;
+  background: rgba(248, 250, 252, .88);
   border: 1px solid #e2e8f0;
-  font-weight: 800;
+}
+.tap-chip {
+  touch-action: manipulation;
   user-select: none;
 }
-.password-toggle input {
-  accent-color: var(--primary);
+.tap-chip:disabled {
+  opacity: .32;
+  cursor: not-allowed;
+  transform: scale(.96);
 }
-
-#quizScreen.correct-pulse {
-  animation: correctScreenPulse .72s ease-out;
+.sentence-control-row {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 10px auto;
 }
-.feedback-card {
-  position: relative;
-  overflow: hidden;
+.keyboard-note {
+  margin: 8px auto 0;
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 700;
 }
-.feedback-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(120deg, transparent 0%, rgba(255,255,255,.52) 45%, transparent 70%);
-  transform: translateX(-120%);
-  animation: feedbackShine .95s ease-out .05s forwards;
-}
-.feedback-correct {
+.deluxe-celebration {
   background:
-    radial-gradient(circle at 14% 20%, rgba(255,255,255,.86), transparent 24%),
-    linear-gradient(135deg, #dcfce7 0%, #ecfeff 46%, #eef2ff 100%);
-  border: 1px solid rgba(34, 197, 94, .52);
-  box-shadow: 0 20px 44px rgba(22, 163, 74, .18), 0 8px 18px rgba(37, 99, 235, .10);
+    radial-gradient(circle at center, rgba(255, 255, 255, .35), transparent 32%),
+    radial-gradient(circle at 30% 28%, rgba(250, 204, 21, .16), transparent 22%),
+    radial-gradient(circle at 70% 25%, rgba(59, 130, 246, .14), transparent 24%);
 }
-.feedback-correct .feedback-icon {
-  animation: iconBounce .78s cubic-bezier(.2, 1.45, .45, 1);
-  box-shadow: 0 10px 24px rgba(22, 163, 74, .18);
-}
-.celebration-layer {
-  pointer-events: none;
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  overflow: hidden;
-}
-.celebration-toast {
+.celebration-burst {
   position: absolute;
   left: 50%;
-  top: 12%;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 18px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.92);
-  border: 1px solid rgba(37, 99, 235, .18);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, .16);
-  color: #0f172a;
-  font-weight: 900;
-  letter-spacing: .04em;
-  animation: toastPop 1.18s ease-out forwards;
-  backdrop-filter: blur(10px);
-}
-.celebration-toast-icon {
+  top: 24%;
+  transform: translate(-50%, -50%);
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #dcfce7, #dbeafe);
+  min-width: 210px;
+  padding: 22px 28px;
+  border-radius: 30px;
+  background: rgba(255,255,255,.88);
+  border: 1px solid rgba(255,255,255,.78);
+  box-shadow: 0 30px 80px rgba(15, 23, 42, .24);
+  animation: burstPop 1.15s ease-out forwards;
 }
-.confetti-piece {
-  position: absolute;
-  top: -28px;
-  left: var(--x);
-  color: #2563eb;
-  font-size: var(--size);
+.celebration-burst span { font-size: 44px; line-height: 1; }
+.celebration-burst strong {
+  margin-top: 4px;
+  color: #1d4ed8;
+  font-size: 34px;
+  letter-spacing: .02em;
+}
+.celebration-burst small {
+  color: #0f766e;
+  font-size: 13px;
   font-weight: 900;
-  animation: premiumConfetti 1.24s cubic-bezier(.16,.72,.28,1) var(--delay) forwards;
-  text-shadow: 0 6px 16px rgba(15,23,42,.14);
+  letter-spacing: .12em;
+  text-transform: uppercase;
 }
-.confetti-piece:nth-child(3n) { color: #16a34a; }
-.confetti-piece:nth-child(3n+1) { color: #f97316; }
-.confetti-piece:nth-child(4n) { color: #9333ea; }
-.confetti-piece:nth-child(5n) { color: #0f766e; }
-@keyframes correctScreenPulse {
-  0% { box-shadow: 0 0 0 rgba(34,197,94,0); }
-  32% { box-shadow: 0 0 0 8px rgba(34,197,94,.10), 0 22px 48px rgba(37,99,235,.12); }
-  100% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+.deluxe-piece {
+  top: 6%;
+  text-shadow: 0 2px 8px rgba(15,23,42,.16);
+  animation: deluxeConfettiFall 1.55s cubic-bezier(.12,.72,.22,1) forwards;
 }
-@keyframes feedbackShine {
-  to { transform: translateX(120%); }
+@keyframes burstPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(.72); filter: blur(4px); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1.06); filter: blur(0); }
+  70% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(.9); }
 }
-@keyframes iconBounce {
-  0% { transform: scale(.78) rotate(-8deg); }
-  55% { transform: scale(1.14) rotate(4deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-@keyframes toastPop {
-  0% { opacity: 0; transform: translate(-50%, -12px) scale(.88); }
-  16% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  76% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -16px) scale(.94); }
-}
-@keyframes premiumConfetti {
-  0% { opacity: 0; transform: translate3d(0, -10px, 0) rotate(0deg) scale(.82); }
+@keyframes deluxeConfettiFall {
+  0% { transform: translateY(-28px) rotate(0deg) scale(.8); opacity: 0; }
   16% { opacity: 1; }
-  100% { opacity: 0; transform: translate3d(var(--drift), 78vh, 0) rotate(var(--spin)) scale(1.05); }
+  100% { transform: translateY(var(--fall, 320px)) rotate(var(--spin, 360deg)) scale(1.05); opacity: 0; }
 }
-@media (prefers-reduced-motion: reduce) {
-  .confetti-piece,
-  .celebration-toast,
-  .feedback-card,
-  .feedback-card::after,
-  #quizScreen.correct-pulse,
-  .feedback-correct .feedback-icon {
-    animation: none !important;
-  }
+
+@media (max-width: 820px) {
+  .sentence-control-row { flex-direction: column; }
+  .celebration-burst { top: 30%; min-width: 180px; padding: 18px 22px; }
+  .celebration-burst strong { font-size: 28px; }
+}
+
+
+/* =========================================================
+   20260525 secure password + motivational typography update
+========================================================= */
+body {
+  font-family: var(--font-main);
+  letter-spacing: .01em;
+}
+
+h1, h2, .category-title, .material-card strong, .feedback-card strong,
+.calendar-card h3, .motivation-box strong, .stat-card strong {
+  font-family: var(--font-display);
+  letter-spacing: .025em;
+}
+
+h1 {
+  font-weight: 900;
+  background: linear-gradient(90deg, #1d4ed8, #7c3aed, #0f766e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.header-message {
+  font-size: 15px;
+  color: #475569;
+}
+
+.material-card strong {
+  font-weight: 900;
+}
+
+button {
+  letter-spacing: .035em;
+}
+
+.secure-code:not(.is-visible) {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+.secure-code.is-visible {
+  -webkit-text-security: none;
+  text-security: none;
+}
+
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+  display: none;
+}
+
+.secure-code::placeholder {
+  -webkit-text-security: none;
+  text-security: none;
+  letter-spacing: .03em;
+  font-family: var(--font-main);
+}
+
+.password-toggle {
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .06);
+}
+
+.motivation-box {
+  background:
+    radial-gradient(circle at 12% 18%, rgba(255,255,255,.78), transparent 25%),
+    linear-gradient(135deg, #eef2ff, #ecfeff);
+  border: 1px solid rgba(37, 99, 235, .16);
+  box-shadow: 0 16px 34px rgba(37, 99, 235, .10);
+}
+
+.category-tip {
+  font-family: var(--font-display);
 }

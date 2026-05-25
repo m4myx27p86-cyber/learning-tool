@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>学習ツール</title>
-  <link rel="stylesheet" href="style.css?v=password-celebration-20260523" />
+  <link rel="stylesheet" href="style.css?v=learning-renewal-20260523" />
 </head>
 <body>
   <div class="app-shell">
@@ -20,10 +20,10 @@
       <section id="loginScreen">
         <h2>ログイン</h2>
         <p class="muted">管理者が発行した<strong>学習者コード</strong>を入力してください。</p>
-        <input type="password" id="passwordInput" class="secure-code" placeholder="学習者コード" inputmode="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
+        <input type="password" id="passwordInput" class="secure-code" placeholder="学習者コード" inputmode="text" maxlength="12" autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" />
         <label class="password-toggle">
           <input type="checkbox" id="showPassword" />
-          入力内容を表示
+          パスワード・コードを表示
         </label>
         <button id="loginButton">ログイン</button>
         <p id="loginMessage" class="error"></p>
@@ -32,7 +32,7 @@
       <section id="studentScreen" class="hidden">
         <h2>学習者ログイン</h2>
         <p class="muted">従来方式を使う場合は、4桁の学習者番号を入力してください。通常は管理者が発行した学習者コードを最初の画面に入力します。</p>
-        <input type="password" id="studentLoginInput" class="secure-code" placeholder="4桁の学習者番号" inputmode="numeric" maxlength="4" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
+        <input type="password" id="studentLoginInput" class="secure-code" placeholder="4桁の学習者番号" inputmode="numeric" maxlength="4" autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" />
         <label class="password-toggle">
           <input type="checkbox" id="showStudentPassword" />
           パスワードを表示
@@ -95,7 +95,7 @@
       <section id="materialPasswordScreen" class="hidden">
         <h2 id="materialPasswordTitle">教材パスワード</h2>
         <p class="muted">従来方式で利用する場合、この教材の4桁パスワードを入力してください。</p>
-        <input type="password" id="materialPasswordInput" class="secure-code" placeholder="教材パスワード" inputmode="numeric" maxlength="4" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
+        <input type="password" id="materialPasswordInput" class="secure-code" placeholder="教材パスワード" inputmode="numeric" maxlength="4" autocomplete="new-password" autocapitalize="off" spellcheck="false" data-lpignore="true" />
         <label class="password-toggle">
           <input type="checkbox" id="showMaterialPassword" />
           パスワードを表示
@@ -237,6 +237,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=password-celebration-20260523"></script>
+  <script src="script.js?v=feedback-timing-20260523"></script>
 </body>
 </html>
