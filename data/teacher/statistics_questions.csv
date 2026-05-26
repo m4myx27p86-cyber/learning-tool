@@ -1,0 +1,21 @@
+﻿id,section,question,correctAnswer,choice1,choice2,choice3,points,explanation
+ST-001,統計 Chapter 1：Population / Sample,population の説明として最も適切なものはどれですか。,研究者が結論を出したい観察の完全な集合,研究に参加した人だけの集合,平均点より高い人だけの集合,必ず全国民を意味する集合,1,King et al. Chapter 1では、populationは研究者が結論を導きたい観察の完全な集合として説明されています。
+ST-002,統計 Chapter 1：Population / Sample,sample の説明として最も適切なものはどれですか。,population の一部,population と常に同じもの,研究者の意見そのもの,測定尺度の種類,1,sampleは母集団の一部であり、推測統計ではsampleからpopulationについて推定します。
+ST-003,統計 Chapter 1：Statistic / Parameter,statistic と parameter の違いとして最も適切なものはどれですか。,statisticは標本の記述指標で、parameterは母集団の記述指標である,statisticは母集団の人数で、parameterは標本の人数である,どちらも必ずp値を意味する,どちらも質問紙の項目名である,1,statisticsでは、標本から得たstatisticを使って母集団のparameterを推定します。
+ST-004,統計 Chapter 1：Inferential statistics,推測統計の中心的な目的として最も適切なものはどれですか。,標本統計量から母集団パラメータを推定すること,すべてのデータを必ず暗記すること,グラフを使わずに結果を示すこと,研究質問を統計ソフトに決めさせること,1,Chapter 1では、推測統計はsample statisticsからpopulation parametersを推定する営みとして扱われています。
+ST-005,統計 Chapter 1：Random sampling,random sample の条件として最も適切なものはどれですか。,同じサイズのすべての可能な標本が等しい確率で選ばれること,研究者が選びやすい人を選ぶこと,得点が高い人だけを選ぶこと,参加希望者だけを必ず選ぶこと,1,random sampleでは、同サイズの各標本が等確率で選ばれる必要があります。
+ST-006,統計 Chapter 1：Stratified random sample,stratified random sample の説明として最も適切なものはどれですか。,母集団の背景特徴を考慮して層を作り、各層から無作為抽出する,一つのクラスだけを便利に選ぶ,全員の得点を高い順に並べる,外れ値だけを取り出す,1,層化無作為標本は、学年・性別・地域など背景特徴を考慮して抽出する方法です。
+ST-007,統計 Chapter 1：Applied statistics,応用統計の役割として資料に最も近い考えはどれですか。,統計は道具であり、それ自体が研究の始まりや終わりではない,統計が研究質問を自動的に決める,統計を使えばデータの一部だけ示してよい,統計は個人研究には使えない,1,Chapter 1では、統計はtoolであり、研究質問と研究結論のために使うものと整理されています。
+ST-008,統計 Chapter 1：Measurement scales,教育・心理測定の尺度を扱う際の注意として適切なものはどれですか。,極端な得点の解釈や、尺度上の異なる位置での伸びの比較に注意する,すべての尺度には完全な絶対零点があるとみなす,どの尺度でも得点差は必ず同じ意味を持つ,尺度の性質は研究結論にまったく関係しない,1,資料では、教育・心理の測定では等間隔性や絶対零点に限界があるため、極端な値や得点の伸びの比較に注意が必要とされます。
+ST-009,統計 Chapter 1：Statistics and conclusions,「統計は嘘をつくか」という論点に関して適切なものはどれですか。,誤った結論は、正直なミス・不正・一部データだけの提示などから生じうる,統計を使えば必ず正しい結論になる,統計では確率を扱わない,不正があっても統計結果は常に妥当である,1,資料では、確率に関する正直なミス、データ捏造、一部データだけの提示が問題として挙げられています。
+ST-010,統計 Chapter 2：Frequency distribution,frequency distribution の説明として最も適切なものはどれですか。,各カテゴリーや値に対する観察数を示す表や分布,標本を無作為に選ぶ手順,研究仮説の正しさそのもの,p値だけをまとめた表,1,頻度分布は、データを理解するために各値やカテゴリーの観察数を整理する方法です。
+ST-011,統計 Chapter 2：Grouped frequency distribution,grouped frequency distribution を作る目的として最も適切なものはどれですか。,数値データを少数のclass intervalsにまとめて見やすくする,すべてのローデータを隠す,標本サイズを自動的に増やす,外れ値を必ず削除する,1,数値データはclass intervalにまとめることで扱いやすくなりますが、情報の一部は失われます。
+ST-012,統計 Chapter 2：Grouping error,grouping error の説明として最も適切なものはどれですか。,class interval の幅が大きいほど失われる情報が増えること,標本抽出が常に完全になること,平均値が必ず上がること,百分位順位が必ず50になること,1,資料では、class interval widthが大きいほど情報損失が大きくなると説明されています。
+ST-013,統計 Chapter 2：Apparent / real limits,real limit の説明として最も適切なものはどれですか。,測定単位の半分だけ得点の下と上に広がる境界,得点表にそのまま印字された整数値,標本全体の人数,研究者の主観的判断,1,real limitは連続変数を離散得点として扱うとき、最小測定単位の半分を上下に取る考え方です。
+ST-014,統計 Chapter 2：Relative frequency,relative frequency distribution が特に有用な場面はどれですか。,ケース数が異なる分布を比較するとき,ケース数が非常に少ない分布を断定するとき,測定を行わないとき,母集団を定義しないとき,1,相対度数はsampleではf/n、populationではf/Nで表し、ケース数が異なる分布の比較に役立ちます。
+ST-015,統計 Chapter 2：Cumulative distribution,cumulative frequency distribution の説明として最も適切なものはどれですか。,あるclass intervalのupper real limitより下にあるケース数や割合をまとめる,各得点のスペルをまとめる,研究質問を並べる,標本の抽出手順だけを示す,1,累積度数・累積割合は、下から順に計算し、上限以下にどれだけのケースがあるかを示します。
+ST-016,統計 Chapter 2：Percentile,percentile point の説明として最も適切なものはどれですか。,分布の指定された割合がその下に位置する測定尺度上の点,常に0から100までの百分率だけ,平均値と同じ意味,得点差の等間隔性を保証する値,1,percentileは測定尺度上の点であり、たとえばP50は50%のケースがその下にある得点を表します。
+ST-017,統計 Chapter 2：Percentile rank,percentile rank の説明として最も適切なものはどれですか。,ある測定点より下にあるケースの割合,測定尺度上の得点そのもの,平均からの標準偏差単位,標本サイズそのもの,1,percentile rankはpercentageであるため0から100の値を取り、相対的位置を示します。
+ST-018,統計 Chapter 2：Percentile vs percentile rank,P50 = 81 と「81点のpercentile rank = 50」の違いとして適切なものはどれですか。,前者は割合に対応する得点を求め、後者は得点に対応する割合を求めている,どちらも必ず平均値を求めている,前者だけが標本抽出を意味する,後者だけが研究倫理を意味する,1,資料の例では、50th percentileは得点81、81点のpercentile rankは50と整理されています。
+ST-019,統計 Chapter 2：Percentile rank interpretation,percentile rank は実際の得点の距離間をそのまま反映しますか。,反映しない。相対的位置を表すが、得点間の距離が等しいとは限らない,常に完全に反映する,標本サイズが1なら必ず反映する,p値と同じなので距離を表す,1,percentile rankは順位に基づく割合であり、得点差の大きさを等間隔に表す指標ではありません。
+ST-020,統計 Chapter 2：Linear interpolation,linear interpolation を使う目的として最も適切なものはどれですか。,percentileやpercentile rankをより細かく推定するため,無作為抽出を省略するため,全データを質的データに変えるため,研究質問を削除するため,1,Chapter 2では、percentileやpercentile rankを計算する方法としてlinear interpolationが扱われています。

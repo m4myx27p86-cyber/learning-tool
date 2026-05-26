@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>学習ツール</title>
-  <link rel="stylesheet" href="style.css?v=contextual-feedback-20260525" />
+  <title>学習マップ</title>
+  <link rel="stylesheet" href="style.css?v=chapter-sound-enter-20260526" />
 </head>
 <body>
   <div class="app-shell">
     <header class="app-header">
       <div>
-        <p class="eyebrow">Practice Dashboard</p>
-        <h1>学習ツール</h1>
-        <p class="header-message">1問ずつ、使える英語と確かな知識を積み上げる</p>
+        <p class="eyebrow">Study Map</p>
+        <h1>学習マップ</h1>
+        <p class="header-message">科目・Chapterごとに、今日の学びを積み上げる</p>
       </div>
     </header>
 
@@ -90,23 +90,6 @@
           </div>
           <div id="accessCodeListArea" class="history-table-wrap"></div>
         </div>
-
-        <div id="accessMaterialEditPanel" class="panel admin-panel material-edit-panel hidden">
-          <div class="screen-head compact-head">
-            <div>
-              <h3 id="editAccessCodeTitle">教材変更</h3>
-              <p id="editAccessCodeDetail" class="muted">この学習者コードで使用できる教材を変更します。</p>
-            </div>
-            <button id="cancelAccessMaterialsButton" class="secondary-button small-button">キャンセル</button>
-          </div>
-          <div id="editAccessMaterialCheckboxes" class="checkbox-grid"></div>
-          <div class="material-edit-actions">
-            <button id="saveAccessMaterialsButton">教材を更新</button>
-            <button id="cancelAccessMaterialsBottomButton" class="secondary-button">戻る</button>
-          </div>
-          <p id="editAccessMaterialsMessage"></p>
-          <p class="muted small-note">更新後、学習者側では一度ログアウトして同じコードで再ログインすると新しい教材が反映されます。</p>
-        </div>
       </section>
 
       <section id="materialPasswordScreen" class="hidden">
@@ -136,7 +119,7 @@
 
         <div id="commonSettings" class="settings-grid">
           <label>
-            セクション
+            Chapter / 解答範囲（Chapter）
             <select id="sectionSelect"></select>
           </label>
           <label>
@@ -254,6 +237,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=contextual-feedback-20260525"></script>
+  <script src="script.js?v=chapter-sound-enter-20260526"></script>
 </body>
 </html>

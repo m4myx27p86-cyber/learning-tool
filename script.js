@@ -1,5 +1,5 @@
 /* =========================================================
-   学習ツール script.js
+   学習マップ script.js
    - 管理者ログイン: 9999
    - 学習者コード: Google Sheets / Apps Script の AccessCodes で管理
    - 許可教材だけ表示 / 1教材なら直接表示
@@ -29,7 +29,7 @@ const CATEGORY_INFO = {
   toefl: { label: "TOEFL", description: "アカデミック英語・語順アウトプット", theme: "toefl", icon: "🎓" },
   highschool: { label: "高校英語", description: "語彙・文法・英検対策", theme: "highschool", icon: "📚" },
   classics: { label: "古文", description: "古典単語・文法・古文常識", theme: "classics", icon: "🌸" },
-  teacher: { label: "教師用問題", description: "英語教育理論・授業研究用の確認問題", theme: "teacher", icon: "🧑‍🏫" },
+  teacher: { label: "理論・研究マップ", description: "SLA・ライティング理論・統計をChapterごとに整理", theme: "teacher", icon: "🧑‍🏫" },
   eiken: { label: "英検", description: "英検準一級Writing対策", theme: "eiken", icon: "✍️" }
 };
 
@@ -96,7 +96,6 @@ const TEST_CONFIG = {
     type: "sentence",
     password: "2180",
     defaultTime: 45,
-    review: true,
     files: ["data/speaking_review/toeic_speaking_review_sentence.csv"],
     description: "これまでのSpeaking/Writingの誤答から、正しいチャンクを語順で再構成します。"
   },
@@ -106,18 +105,53 @@ const TEST_CONFIG = {
     type: "cloze",
     password: "2180",
     defaultTime: 30,
-    review: true,
     path: "data/speaking_review/toeic_speaking_review_cloze.csv",
     description: "正しい表現の一部を自分で書き出し、瞬発的に使えるチャンクを増やします。"
   },
   englishTheory: {
-    title: "英語教育理論",
+    title: "SLA理論マップ",
     category: "teacher",
     type: "choice",
     password: "3303",
-    defaultTime: 30,
-    path: "data/english_theory/chapter3_theory.csv",
-    description: "SLA Chapter 3 の重要概念を四択で確認します。"
+    defaultTime: 35,
+    path: "data/english_theory/sla_theory_map.csv",
+    description: "SLAの各Chapterを選び、概念名・具体例・関連理論を確認します。"
+  },
+  grammarCorner: {
+    title: "文法解説コーナー",
+    category: "highschool",
+    type: "choice",
+    password: "4400",
+    defaultTime: 45,
+    path: "data/grammar/grammar_corner.csv",
+    description: "文法を暗記項目ではなく、意味とアウトプットのための選択として確認します。"
+  },
+  phrasalVerbs: {
+    title: "Phrasal Verb 瞬発トレーニング",
+    category: "toeic",
+    type: "choice",
+    password: "2180",
+    defaultTime: 20,
+    path: "data/speaking_review/phrasal_verbs.csv",
+    description: "TOEIC S&W・IELTS系ソースから抽出した動詞句を、短時間で思い出す練習です。"
+  },
+  statisticsTheory: {
+    title: "統計マップ",
+    category: "teacher",
+    type: "choice",
+    password: "3303",
+    defaultTime: 40,
+    path: "data/teacher/statistics_questions.csv",
+    description: "教育研究で使う統計概念をChapter・資料ごとに確認します。"
+  },
+  writingTheory: {
+    title: "ライティング理論マップ",
+    category: "teacher",
+    type: "choice",
+    password: "3303",
+    defaultTime: 40,
+    path: "data/teacher/writing_theory_map.csv",
+    description: "Writing理論をChapterごとに選び、概念と授業への接続を確認します。"
   },
   classicalWords: {
     title: "古典単語",
@@ -161,6 +195,7 @@ let questions = [];
 let currentIndex = 0;
 let score = 0;
 let selectedChoice = "";
+let lastChoiceTap = { value: "", time: 0 };
 let answersLog = [];
 let mistakes = [];
 let startTime = null;
@@ -173,17 +208,17 @@ let autoAdvanceTimerId = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
-let selectedSentenceWords = [];
-let selectedSentenceChipIndexes = [];
-let accessCodeRecordsCache = [];
-let editingAccessCode = "";
+let clozeStepTokens = [];
+let clozeStepIndex = 0;
+let clozeStepUserTokens = [];
+let clozeStepAttempts = 0;
+let clozeFinalMode = false;
 
 /* =========================
    初期化・イベント登録
 ========================= */
 
 document.addEventListener("DOMContentLoaded", () => {
-  initSecurePasswordFields();
   safeAddEvent("loginButton", "click", checkLogin);
   safeAddEvent("passwordInput", "keydown", event => { if (event.key === "Enter") checkLogin(); });
   safeAddEvent("showPassword", "change", function () { togglePasswordField("passwordInput", this.checked); });
@@ -197,9 +232,6 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("accessBackButton", "click", () => { renderMenu(); showOnly("menuScreen"); });
   safeAddEvent("createAccessCodeButton", "click", createAccessCodeFromForm);
   safeAddEvent("refreshAccessCodesButton", "click", loadAccessCodeList);
-  safeAddEvent("saveAccessMaterialsButton", "click", saveAccessMaterialsChange);
-  safeAddEvent("cancelAccessMaterialsButton", "click", closeAccessMaterialEditor);
-  safeAddEvent("cancelAccessMaterialsBottomButton", "click", closeAccessMaterialEditor);
 
   safeAddEvent("showMaterialPassword", "change", function () { togglePasswordField("materialPasswordInput", this.checked); });
   safeAddEvent("materialPasswordButton", "click", checkMaterialPassword);
@@ -226,6 +258,7 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("submitWritingButton", "click", submitWriting);
 
   safeAddEvent("checkButton", "click", checkAnswer);
+  document.addEventListener("keydown", handleGlobalQuizKeydown);
   safeAddEvent("nextButton", "click", nextQuestion);
   safeAddEvent("quitButton", "click", quitQuiz);
 
@@ -240,35 +273,23 @@ document.addEventListener("DOMContentLoaded", () => {
   });
   safeAddEvent("logoutButton", "click", logout);
 
-  document.addEventListener("keydown", handleGlobalQuizEnter);
   restoreSession();
 });
+
+function handleGlobalQuizKeydown(event) {
+  if (event.key !== "Enter") return;
+  const quizScreen = document.getElementById("quizScreen");
+  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
+  if (!TEST_CONFIG[testType] || TEST_CONFIG[testType].type !== "choice") return;
+  const checkButton = document.getElementById("checkButton");
+  if (!checkButton || checkButton.disabled) return;
+  event.preventDefault();
+  checkChoiceAnswer();
+}
 
 function safeAddEvent(id, event, handler) {
   const element = document.getElementById(id);
   if (element) element.addEventListener(event, handler);
-}
-
-function handleGlobalQuizEnter(event) {
-  if (event.key !== "Enter") return;
-  const quizScreen = document.getElementById("quizScreen");
-  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
-  if (event.isComposing) return;
-
-  const target = event.target;
-  if (target && target.tagName === "TEXTAREA") return;
-
-  event.preventDefault();
-  const checkButton = document.getElementById("checkButton");
-  const nextButton = document.getElementById("nextButton");
-
-  if (checkButton && !checkButton.disabled) {
-    checkAnswer();
-    return;
-  }
-  if (nextButton && !nextButton.classList.contains("hidden")) {
-    nextQuestion();
-  }
 }
 
 /* =========================
@@ -363,7 +384,6 @@ async function checkLogin() {
     allowedMaterials = null;
     isAdmin = false;
     if (message) message.textContent = "";
-    resetPasswordVisibility();
     showOnly("studentScreen");
     return;
   }
@@ -372,7 +392,7 @@ async function checkLogin() {
   try {
     if (message) message.textContent = "学習者コードを確認しています...";
     const result = await apiGetJsonp("validateAccessCode", { code: input });
-    if (!result || result.ok === false || !result.valid) {
+    if (!result || !result.valid) {
       if (message) message.textContent = result?.error || "この学習者コードは使えません。";
       return;
     }
@@ -466,45 +486,12 @@ function logout() {
   localStorage.removeItem(STORAGE_KEYS.allowedMaterials);
   document.getElementById("passwordInput").value = "";
   document.getElementById("studentLoginInput").value = "";
-  const materialPassword = document.getElementById("materialPasswordInput");
-  if (materialPassword) materialPassword.value = "";
-  resetPasswordVisibility();
   showOnly("loginScreen");
-}
-
-function initSecurePasswordFields() {
-  document.querySelectorAll(".secure-code").forEach(field => {
-    field.type = "password";
-    field.classList.remove("is-visible");
-    field.setAttribute("autocomplete", "new-password");
-  });
-  ["showPassword", "showStudentPassword", "showMaterialPassword"].forEach(id => {
-    const checkbox = document.getElementById(id);
-    if (checkbox) checkbox.checked = false;
-  });
 }
 
 function togglePasswordField(id, checked) {
   const field = document.getElementById(id);
-  if (!field) return;
-  field.type = checked ? "text" : "password";
-  field.classList.toggle("is-visible", Boolean(checked));
-}
-
-function resetPasswordVisibility() {
-  [
-    ["passwordInput", "showPassword"],
-    ["studentLoginInput", "showStudentPassword"],
-    ["materialPasswordInput", "showMaterialPassword"]
-  ].forEach(([fieldId, checkboxId]) => {
-    const field = document.getElementById(fieldId);
-    const checkbox = document.getElementById(checkboxId);
-    if (field) {
-      field.type = "password";
-      field.classList.remove("is-visible");
-    }
-    if (checkbox) checkbox.checked = false;
-  });
+  if (field) field.type = checked ? "text" : "password";
 }
 
 /* =========================
@@ -516,6 +503,7 @@ function renderMenu() {
   renderMaterialCategories();
   document.getElementById("adminQuickArea").classList.toggle("hidden", !isAdmin);
 }
+
 
 function getVisibleMaterials() {
   return Object.keys(TEST_CONFIG).filter(type => hasAccessToMaterial(type));
@@ -616,7 +604,6 @@ function openMaterial(type, fromDirectLogin = false) {
   document.getElementById("materialPasswordTitle").textContent = `${config.title} のパスワード`;
   document.getElementById("materialPasswordInput").value = "";
   document.getElementById("materialPasswordMessage").textContent = "";
-  resetPasswordVisibility();
   showOnly("materialPasswordScreen");
 }
 
@@ -651,48 +638,25 @@ function openAccessManager() {
   loadAccessCodeList();
 }
 
-function getAccessCategoryOrder() {
-  const preferred = ["toeic", "toefl", "highschool", "eiken", "classics", "teacher"];
-  const existing = [...new Set(Object.values(TEST_CONFIG).map(config => config.category).filter(Boolean))];
-  return [...preferred.filter(key => existing.includes(key)), ...existing.filter(key => !preferred.includes(key))];
-}
-
-function normalizeAllowedMaterials(value) {
-  if (Array.isArray(value)) return value.map(item => String(item).trim()).filter(Boolean);
-  if (typeof value === "string") {
-    return value.split(/[\n,、/]+/).map(item => item.trim()).filter(Boolean);
-  }
-  return [];
-}
-
-function renderMaterialCheckboxGroup(containerId, selectedTypes = []) {
-  const area = document.getElementById(containerId);
-  if (!area) return;
-  const selectedSet = new Set(normalizeAllowedMaterials(selectedTypes));
-  const categoryOrder = getAccessCategoryOrder();
+function renderAccessMaterialCheckboxes() {
+  const area = document.getElementById("accessMaterialCheckboxes");
+  const categoryOrder = ["toeic", "toefl", "highschool", "classics", "teacher"];
   area.innerHTML = categoryOrder.map(categoryKey => {
-    const info = CATEGORY_INFO[categoryKey] || { label: categoryKey };
+    const info = CATEGORY_INFO[categoryKey];
     const items = Object.keys(TEST_CONFIG).filter(type => TEST_CONFIG[type].category === categoryKey);
     if (items.length === 0) return "";
     return `
-      <div class="checkbox-category material-edit-category">
-        <strong>${escapeHtml(info.icon ? `${info.icon} ${info.label}` : info.label)}</strong>
+      <div class="checkbox-category">
+        <strong>${escapeHtml(info.label)}</strong>
         ${items.map(type => `
           <label class="material-check">
-            <input type="checkbox" value="${escapeHtml(type)}" ${selectedSet.has(type) ? "checked" : ""}>
-            <span>
-              <b>${escapeHtml(TEST_CONFIG[type].title)}</b>
-              <small>${escapeHtml(TEST_CONFIG[type].description || "")}</small>
-            </span>
+            <input type="checkbox" value="${escapeHtml(type)}">
+            ${escapeHtml(TEST_CONFIG[type].title)}
           </label>
         `).join("")}
       </div>
     `;
   }).join("");
-}
-
-function renderAccessMaterialCheckboxes() {
-  renderMaterialCheckboxGroup("accessMaterialCheckboxes", []);
 }
 
 async function createAccessCodeFromForm() {
@@ -754,156 +718,52 @@ async function loadAccessCodeList() {
 }
 
 function renderAccessCodeList(records) {
-  accessCodeRecordsCache = Array.isArray(records) ? records : [];
   const area = document.getElementById("accessCodeListArea");
-  closeAccessMaterialEditor(false);
-
-  if (accessCodeRecordsCache.length === 0) {
+  if (records.length === 0) {
     area.innerHTML = "<p class='muted'>発行済みコードはまだありません。</p>";
     return;
   }
 
   area.innerHTML = `
-    <table class="history-table compact-table access-code-table">
+    <table class="history-table compact-table">
       <thead>
         <tr>
           <th>コード</th><th>ID</th><th>名前</th><th>許可教材</th><th>状態</th><th>使用回数</th><th>最終使用</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
-        ${accessCodeRecordsCache.map(record => {
-          const code = String(record.code || "");
-          const allowed = normalizeAllowedMaterials(record.allowedMaterials);
-          return `
-            <tr>
-              <td><strong>${escapeHtml(code)}</strong></td>
-              <td>${escapeHtml(record.studentId || "")}</td>
-              <td>${escapeHtml(record.studentName || "")}</td>
-              <td>${escapeHtml(materialNames(allowed).join(" / "))}</td>
-              <td class="${record.active ? "correct" : "wrong"}">${record.active ? "有効" : "無効"}</td>
-              <td>${escapeHtml(record.useCount ?? 0)}</td>
-              <td>${escapeHtml(formatSheetDate(record.lastUsedAt))}</td>
-              <td>
-                <div class="access-action-row">
-                  <button class="small-button ${record.active ? "quit-button" : "secondary-button"}" data-toggle-code="${escapeHtml(code)}" data-active="${record.active ? "false" : "true"}">${record.active ? "無効化" : "有効化"}</button>
-                  <button class="small-button material-edit-button" data-edit-materials="${escapeHtml(code)}">教材変更</button>
-                </div>
-              </td>
-            </tr>
-          `;
-        }).join("")}
+        ${records.map(record => `
+          <tr>
+            <td><strong>${escapeHtml(record.code)}</strong></td>
+            <td>${escapeHtml(record.studentId)}</td>
+            <td>${escapeHtml(record.studentName)}</td>
+            <td>${escapeHtml(materialNames(record.allowedMaterials).join(" / "))}</td>
+            <td class="${record.active ? "correct" : "wrong"}">${record.active ? "有効" : "無効"}</td>
+            <td>${escapeHtml(record.useCount ?? 0)}</td>
+            <td>${escapeHtml(formatSheetDate(record.lastUsedAt))}</td>
+            <td><button class="small-button ${record.active ? "quit-button" : "secondary-button"}" data-code="${escapeHtml(record.code)}" data-active="${record.active ? "false" : "true"}">${record.active ? "無効化" : "有効化"}</button></td>
+          </tr>
+        `).join("")}
       </tbody>
     </table>
   `;
 
-  area.querySelectorAll("button[data-toggle-code]").forEach(button => {
-    button.addEventListener("click", () => updateAccessCodeActive(button.dataset.toggleCode, button.dataset.active === "true"));
-  });
-
-  area.querySelectorAll("button[data-edit-materials]").forEach(button => {
-    button.addEventListener("click", () => {
-      const record = accessCodeRecordsCache.find(item => String(item.code) === String(button.dataset.editMaterials));
-      if (record) openAccessMaterialEditor(record);
-    });
+  area.querySelectorAll("button[data-code]").forEach(button => {
+    button.addEventListener("click", () => updateAccessCodeActive(button.dataset.code, button.dataset.active === "true"));
   });
 }
 
 async function updateAccessCodeActive(code, active) {
   try {
-    const result = await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, active });
-    if (result && result.ok === false) throw new Error(result.error || "状態変更に失敗しました。");
+    await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, active });
     loadAccessCodeList();
   } catch (error) {
     alert(error.message);
   }
 }
 
-function openAccessMaterialEditor(record) {
-  editingAccessCode = String(record.code || "");
-  const panel = document.getElementById("accessMaterialEditPanel");
-  const title = document.getElementById("editAccessCodeTitle");
-  const detail = document.getElementById("editAccessCodeDetail");
-  const msg = document.getElementById("editAccessMaterialsMessage");
-  const allowed = normalizeAllowedMaterials(record.allowedMaterials);
-
-  if (!panel) return;
-  if (title) title.textContent = `教材変更：${editingAccessCode}`;
-  if (detail) {
-    const name = record.studentName ? ` / ${record.studentName}` : "";
-    detail.textContent = `学習者ID：${record.studentId || "未入力"}${name}　現在：${allowed.length}教材`;
-  }
-  if (msg) {
-    msg.className = "muted";
-    msg.textContent = "追加・削除したい教材にチェックを入れて、更新してください。";
-  }
-
-  renderMaterialCheckboxGroup("editAccessMaterialCheckboxes", allowed);
-  panel.classList.remove("hidden");
-  panel.scrollIntoView({ behavior: "smooth", block: "start" });
-}
-
-function closeAccessMaterialEditor(clearCode = true) {
-  const panel = document.getElementById("accessMaterialEditPanel");
-  const msg = document.getElementById("editAccessMaterialsMessage");
-  if (panel) panel.classList.add("hidden");
-  if (msg) msg.textContent = "";
-  if (clearCode) editingAccessCode = "";
-}
-
-async function saveAccessMaterialsChange() {
-  const msg = document.getElementById("editAccessMaterialsMessage");
-  const checked = [...document.querySelectorAll("#editAccessMaterialCheckboxes input[type='checkbox']:checked")].map(box => box.value);
-
-  if (!editingAccessCode) {
-    if (msg) {
-      msg.className = "error";
-      msg.textContent = "変更対象のコードが選択されていません。";
-    }
-    return;
-  }
-  if (checked.length === 0) {
-    if (msg) {
-      msg.className = "error";
-      msg.textContent = "使用できる教材を1つ以上選択してください。";
-    }
-    return;
-  }
-
-  try {
-    if (msg) {
-      msg.className = "muted";
-      msg.textContent = "教材の権限を更新しています...";
-    }
-
-    // Apps Script 側の既存 action="updateAccessCode" を使って allowedMaterials だけ更新します。
-    // これにより、新しい updateAccessMaterials action を追加しなくても運用できます。
-    const result = await apiGetJsonp("updateAccessCode", {
-      adminPassword: ADMIN_PASSWORD,
-      code: editingAccessCode,
-      allowedMaterials: checked
-    });
-    if (!result || result.ok === false) throw new Error(result?.error || "教材変更に失敗しました。");
-
-    if (msg) {
-      msg.className = "correct";
-      msg.textContent = "教材を更新しました。学習者は一度ログアウトして再ログインすると反映されます。";
-    }
-
-    setTimeout(() => {
-      closeAccessMaterialEditor();
-      loadAccessCodeList();
-    }, 700);
-  } catch (error) {
-    console.error(error);
-    if (msg) {
-      msg.className = "error";
-      msg.textContent = `${error.message} Apps Scriptのデプロイと updateAccessCode の動作を確認してください。`;
-    }
-  }
-}
-
 function materialNames(types) {
-  return normalizeAllowedMaterials(types).map(type => TEST_CONFIG[type]?.title || type);
+  return (types || []).map(type => TEST_CONFIG[type]?.title || type);
 }
 
 function formatSheetDate(value) {
@@ -1000,7 +860,8 @@ async function loadChoiceQuestions(filePath) {
     correctAnswer: row[3],
     choices: [row[3], row[4], row[5], row[6]].filter(Boolean),
     points: Number(row[7]) || 1,
-    explanation: row[8] || ""
+    explanation: row[8] || "",
+    source: row[9] || getSourceTag(row[8] || "")
   })).filter(q => q.id && q.section && q.word && q.correctAnswer && q.choices.length > 0);
 }
 
@@ -1089,7 +950,7 @@ async function startNormalQuiz() {
 async function startReviewQuiz() {
   const config = TEST_CONFIG[testType];
   if (!config || !config.review) {
-    alert("この教材では間違い復習機能は使用できません。");
+    alert("復習機能は単語テスト用です。");
     return;
   }
 
@@ -1153,13 +1014,16 @@ function showQuestion() {
   clearQuestionTimer();
   clearAutoAdvanceTimer();
   selectedChoice = "";
+  lastChoiceTap = { value: "", time: 0 };
   questionStartTime = new Date();
 
   document.getElementById("questionNumber").textContent = `問題 ${currentIndex + 1} / ${questions.length}`;
   document.getElementById("feedback").textContent = "";
   document.getElementById("feedback").className = "";
   document.getElementById("nextButton").classList.add("hidden");
+  document.getElementById("checkButton").classList.remove("hidden");
   document.getElementById("checkButton").disabled = false;
+  document.getElementById("checkButton").textContent = "回答する";
   document.getElementById("progressBar").style.width = `${Math.round((currentIndex / questions.length) * 100)}%`;
 
   if (TEST_CONFIG[testType].type === "choice") showChoiceQuestion();
@@ -1205,12 +1069,12 @@ function clearAutoAdvanceTimer() {
 }
 
 function handleTimeUp() {
-  if (document.getElementById("checkButton").disabled) return;
+  if (document.getElementById("checkButton").disabled && TEST_CONFIG[testType]?.type !== "cloze") return;
   const q = questions[currentIndex];
   const configType = TEST_CONFIG[testType].type;
   const correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
-  const questionText = configType === "sentence" ? (q.prompt || splitSentence(q.answer).join(" / ")) : (q.prompt || q.word);
-  const typedAnswer = configType === "sentence" ? getCurrentSentenceUserAnswer() : (document.getElementById("answerInput") ? document.getElementById("answerInput").value : "");
+  const questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
+  const typedAnswer = configType === "cloze" ? getCurrentClozeDraftAnswer() : (document.getElementById("answerInput") ? document.getElementById("answerInput").value : "");
 
   processAnswer({
     id: q.id,
@@ -1228,25 +1092,31 @@ function handleTimeUp() {
 function showChoiceQuestion() {
   const q = questions[currentIndex];
   document.getElementById("testTitle").textContent = reviewMode ? `${TEST_CONFIG[testType].title} 間違い復習` : TEST_CONFIG[testType].title;
+  document.getElementById("checkButton").textContent = "回答する";
   const area = document.getElementById("questionArea");
   area.innerHTML = "";
 
   const wordDiv = document.createElement("div");
-  wordDiv.className = "words";
+  wordDiv.className = "words choice-question-card";
+  const sourceTag = q.source || getSourceTag(q.explanation || "");
+  const sourceBadge = sourceTag ? `<span class="source-ref">Source: ${escapeHtml(sourceTag)}</span>` : "";
 
-  if (testType === "monitor") {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br><span class="monitor-label">最も自然で正確な表現を選んでください。</span><br>"${escapeHtml(q.word)}"`;
-  } else if (testType === "speakingReview") {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>より自然な表現は？<br>"${escapeHtml(q.word)}"`;
-  } else if (testType === "englishTheory") {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>説明に合う概念を選んでください。<br>"${escapeHtml(q.word)}"`;
-  } else if (testType === "eikenConnectors") {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>空欄に最も適切な表現を選んでください。<br>"${escapeHtml(q.word)}"`;
-  } else if (testType.startsWith("classical")) {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>${escapeHtml(q.word)}`;
-  } else {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | Section ${escapeHtml(q.section)}<br>"${escapeHtml(q.word)}" の意味は？`;
-  }
+  let instruction = "最も適切な答えを選んでください。";
+  if (testType === "monitor") instruction = "最も自然で正確な表現を選んでください。";
+  else if (testType === "speakingReview") instruction = "より自然な表現を選んでください。";
+  else if (testType === "englishTheory") instruction = "Choose the best answer based on the selected SLA chapter.";
+  else if (testType === "writingTheory") instruction = "Choose the best answer based on the selected writing theory chapter.";
+  else if (testType === "statisticsTheory") instruction = "資料の説明に最も合う統計概念を選んでください。";
+  else if (testType === "grammarCorner" || testType === "phrasalVerbs") instruction = "空欄・説明に最も合う表現を選んでください。";
+  else if (testType === "eikenConnectors") instruction = "空欄に最も適切な表現を選んでください。";
+
+  const promptText = testType.startsWith("classical") ? q.word : `“${q.word}”`;
+  wordDiv.innerHTML = `
+    <div class="question-meta-line">No.${escapeHtml(q.id)} | ${escapeHtml(q.section)} ${sourceBadge}</div>
+    <div class="monitor-label">${escapeHtml(instruction)}</div>
+    <div class="choice-prompt-main">${escapeHtml(promptText)}</div>
+    <div class="choice-submit-hint">選択後、Enterキーまたは同じ選択肢をもう一度押すと回答できます。</div>
+  `;
 
   area.appendChild(wordDiv);
 
@@ -1255,9 +1125,18 @@ function showChoiceQuestion() {
     btn.className = "choice-button";
     btn.textContent = choice;
     btn.addEventListener("click", () => {
+      const now = Date.now();
+      const isSecondTap = selectedChoice === choice && lastChoiceTap.value === choice && (now - lastChoiceTap.time) < 900;
       selectedChoice = choice;
+      lastChoiceTap = { value: choice, time: now };
       document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
+      if (isSecondTap && !document.getElementById("checkButton").disabled) checkChoiceAnswer();
+    });
+    btn.addEventListener("dblclick", event => {
+      event.preventDefault();
+      selectedChoice = choice;
+      if (!document.getElementById("checkButton").disabled) checkChoiceAnswer();
     });
     area.appendChild(btn);
   });
@@ -1269,39 +1148,6 @@ function showSentenceQuestion() {
   q.words = shuffle(splitSentence(q.answer));
   const hint = q.hint || createInitialHint(q.answer);
   const prompt = q.prompt ? `<div class="question-prompt">${escapeHtml(q.prompt)}</div>` : "";
-  selectedSentenceWords = [];
-  selectedSentenceChipIndexes = [];
-
-  if (testType === "speakingReview") {
-    document.getElementById("questionArea").innerHTML = `
-      ${prompt}
-      <div class="answer-support"><span>チャンクヒント</span>${escapeHtml(hint)}</div>
-      <div class="tap-answer-display empty" id="sentenceAnswerDisplay">単語をタップして並べ替えてください</div>
-      <div class="words tap-word-bank" id="sentenceWords">
-        ${q.words.map((word, index) => `<button type="button" class="word-chip tap-chip" data-index="${index}">${escapeHtml(word)}</button>`).join("")}
-      </div>
-      <div class="sentence-control-row">
-        <button type="button" id="undoSentenceButton" class="secondary-button small-button">1語戻す</button>
-        <button type="button" id="clearSentenceButton" class="secondary-button small-button">最初から</button>
-      </div>
-      <p class="keyboard-note">キーボードを開かずに、単語チップだけで解答できます。Enterキーで回答を終了します。</p>
-    `;
-
-    document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
-      chip.addEventListener("click", () => {
-        const index = chip.dataset.index;
-        selectedSentenceWords.push(chip.textContent.trim());
-        selectedSentenceChipIndexes.push(index);
-        chip.disabled = true;
-        chip.classList.add("used");
-        renderSentenceTapAnswer();
-      });
-    });
-    document.getElementById("undoSentenceButton").addEventListener("click", undoSentenceTapSelection);
-    document.getElementById("clearSentenceButton").addEventListener("click", resetSentenceTapSelection);
-    renderSentenceTapAnswer();
-    return;
-  }
 
   document.getElementById("questionArea").innerHTML = `
     ${prompt}
@@ -1334,22 +1180,48 @@ function showClozeQuestion() {
   document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
   const hint = q.hint || createInitialHint(q.answer);
   const examples = extractLearningExamples(q.explanation || "");
+  clozeStepTokens = splitSentence(q.answer);
+  clozeStepIndex = 0;
+  clozeStepUserTokens = [];
+  clozeStepAttempts = 0;
+  clozeFinalMode = clozeStepTokens.length <= 1;
+
   const originalBlock = examples.wrong
     ? `<div class="source-expression"><span>直す前の表現</span><strong>${escapeHtml(examples.wrong)}</strong></div>`
     : `<div class="source-expression"><span>学習目標</span><strong>TOEIC Speakingでそのまま使える自然なチャンクを完成させる</strong></div>`;
 
   document.getElementById("questionArea").innerHTML = `
-    <div class="question-prompt cloze-prompt">
+    <div class="question-prompt cloze-prompt story-prompt">
       <div class="task-badge">${escapeHtml(q.section || "穴埋め")}</div>
-      <p class="task-instruction">下の表現をより自然な英語に直すつもりで、空欄に入る表現を入力してください。</p>
+      <p class="task-instruction">1語ずつ入力すると自動で確認します。最後の語まで正しく入力できた時点で、この問題は正解として判定されます。</p>
       ${originalBlock}
       <div class="target-expression"><span>完成させる英文</span><strong>${escapeHtml(q.prompt)}</strong></div>
+      <div id="clozeStepStatus" class="cloze-step-status"></div>
     </div>
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
-    <input type="text" id="answerInput" class="answer-input" placeholder="空欄に入る表現を入力：${escapeHtml(hint)}" autocomplete="off" />
+    <input type="text" id="answerInput" class="answer-input" placeholder="${clozeFinalMode ? "答えを入力してEnter" : "次に来る1語を入力（自動で確認）"}" autocomplete="off" />
+    <p id="clozeLiveNote" class="micro-note">${clozeFinalMode ? "Enterまたは回答ボタンでチェックできます。" : "スペースやEnterを押さなくても、正しい語になった時点で自動的に次へ進みます。"}</p>
   `;
 
-  document.getElementById("answerInput").focus();
+  renderClozeStepStatus();
+  const checkButton = document.getElementById("checkButton");
+  checkButton.textContent = clozeFinalMode ? "回答する" : "自動確認中";
+  checkButton.disabled = !clozeFinalMode;
+  checkButton.classList.toggle("hidden", !clozeFinalMode && clozeStepTokens.length > 1);
+
+  const input = document.getElementById("answerInput");
+  input.addEventListener("input", () => handleClozeAutoCheck());
+  input.addEventListener("keydown", event => {
+    if (event.key !== "Enter") return;
+    event.preventDefault();
+    if (clozeFinalMode) {
+      checkClozeAnswer();
+    } else {
+      handleClozeAutoCheck();
+      showClozeNeutralAssist("途中ではEnterで採点しません。正しい語を入力すると自動で次へ進みます。");
+    }
+  });
+  input.focus();
 }
 
 function extractLearningExamples(explanation) {
@@ -1373,50 +1245,11 @@ function createInitialHint(sentence) {
 }
 
 function updateUsedWords() {
-  const input = document.getElementById("answerInput");
-  if (!input) return;
-  const inputWords = splitSentence(input.value).map(w => normalizeForCompare(w));
+  const inputWords = splitSentence(document.getElementById("answerInput").value).map(w => normalizeForCompare(w));
   document.querySelectorAll(".word-chip").forEach(chip => {
     const word = normalizeForCompare(chip.textContent);
     chip.classList.toggle("used", inputWords.includes(word));
   });
-}
-
-function getCurrentSentenceUserAnswer() {
-  const input = document.getElementById("answerInput");
-  if (input) return input.value;
-  return selectedSentenceWords.join(" ").trim();
-}
-
-function renderSentenceTapAnswer() {
-  const display = document.getElementById("sentenceAnswerDisplay");
-  if (!display) return;
-  display.textContent = selectedSentenceWords.length
-    ? selectedSentenceWords.join(" ")
-    : "単語をタップして並べ替えてください";
-  display.classList.toggle("empty", selectedSentenceWords.length === 0);
-}
-
-function resetSentenceTapSelection() {
-  selectedSentenceWords = [];
-  selectedSentenceChipIndexes = [];
-  document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
-    chip.disabled = false;
-    chip.classList.remove("used");
-  });
-  renderSentenceTapAnswer();
-}
-
-function undoSentenceTapSelection() {
-  const lastIndex = selectedSentenceChipIndexes.pop();
-  if (lastIndex === undefined) return;
-  selectedSentenceWords.pop();
-  const chip = document.querySelector(`#sentenceWords .word-chip[data-index="${lastIndex}"]`);
-  if (chip) {
-    chip.disabled = false;
-    chip.classList.remove("used");
-  }
-  renderSentenceTapAnswer();
 }
 
 /* =========================
@@ -1437,6 +1270,11 @@ function checkChoiceAnswer() {
   }
 
   const isCorrect = selectedChoice === q.correctAnswer;
+  if (TEST_CONFIG[testType].review) {
+    if (isCorrect && reviewMode) removeWrongWord(q.id);
+    if (!isCorrect) saveWrongWord(q.id);
+  }
+
   processAnswer({
     id: q.id,
     section: q.section,
@@ -1451,11 +1289,7 @@ function checkChoiceAnswer() {
 
 function checkSentenceAnswer() {
   const q = questions[currentIndex];
-  const userAnswer = getCurrentSentenceUserAnswer();
-  if (!userAnswer) {
-    alert("単語を並べ替えてください。");
-    return;
-  }
+  const userAnswer = document.getElementById("answerInput").value;
   const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
 
   processAnswer({
@@ -1470,11 +1304,129 @@ function checkSentenceAnswer() {
   });
 }
 
+function handleClozeAutoCheck() {
+  if (clozeFinalMode || clozeStepTokens.length <= 1) return;
+
+  const input = document.getElementById("answerInput");
+  if (!input) return;
+
+  const rawValue = input.value.replace(/\u3000/g, " ");
+  if (!rawValue.trim()) return;
+
+  let inputTokens = splitSentence(rawValue);
+  let progressed = false;
+
+  while (inputTokens.length > 0 && clozeStepIndex < clozeStepTokens.length) {
+    const expected = clozeStepTokens[clozeStepIndex];
+    const typed = inputTokens[0];
+
+    if (normalizeSentence(typed) !== normalizeSentence(expected)) break;
+
+    clozeStepUserTokens.push(expected);
+    clozeStepIndex++;
+    clozeStepAttempts = 0;
+    progressed = true;
+    inputTokens.shift();
+  }
+
+  if (progressed) {
+    renderClozeStepStatus();
+    updateClozeLiveNote(clozeStepIndex >= clozeStepTokens.length ? "最後の語まで確認できました。" : "OK。次の語を入力してください。", true);
+
+    if (clozeStepIndex >= clozeStepTokens.length) {
+      const q = questions[currentIndex];
+      input.value = clozeStepUserTokens.join(" ");
+      processAnswer({
+        id: q.id,
+        section: q.section,
+        question: q.prompt,
+        userAnswer: clozeStepUserTokens.join(" "),
+        correctAnswer: q.answer,
+        explanation: q.explanation || "",
+        isCorrect: true,
+        points: q.points || 1
+      });
+      return;
+    }
+
+    input.value = inputTokens.join(" ");
+    input.placeholder = `次の語を入力（${clozeStepIndex + 1}/${clozeStepTokens.length}）`;
+    input.focus();
+    if (input.value.trim()) setTimeout(() => handleClozeAutoCheck(), 0);
+    return;
+  }
+
+  // 認知負荷を下げるため、途中の自動確認では「不正解」扱いにしない。
+  // 語を入力中の段階では赤いフィードバックを出さず、スペースで別語に進もうとした時だけ中立的な支援を出す。
+  const expected = clozeStepTokens[clozeStepIndex] || "";
+  const hasMovedToAnotherToken = /\s$/.test(rawValue) || inputTokens.length >= 2;
+  if (hasMovedToAnotherToken) {
+    clozeStepAttempts++;
+    showClozeNeutralAssist(`${clozeStepIndex + 1}語目をもう一度確認しましょう。ヒント：${createInitialHint(expected)}`);
+  }
+}
+
+function enterClozeFinalMode() {
+  clozeFinalMode = true;
+  const input = document.getElementById("answerInput");
+  const checkButton = document.getElementById("checkButton");
+  const cue = document.getElementById("clozeFinalCue");
+  const note = document.getElementById("clozeLiveNote");
+
+  if (input) {
+    input.value = "";
+    input.placeholder = "完成したチャンクを全文入力してEnter";
+    input.classList.add("cloze-final-input");
+    input.focus();
+  }
+  if (checkButton) {
+    checkButton.disabled = false;
+    checkButton.textContent = "最終回答を送信";
+  }
+  if (cue) cue.classList.remove("hidden");
+  if (note) note.textContent = "ここからは全文でアウトプットします。Enterまたはボタンで最終回答を送信できます。";
+}
+
+function showClozeNeutralAssist(message) {
+  const feedback = document.getElementById("feedback");
+  if (!feedback) return;
+  feedback.className = "feedback-visible cloze-assist";
+  feedback.innerHTML = `
+    <div class="feedback-card feedback-assist mini-feedback cloze-soft-feedback">
+      <div class="feedback-icon">💡</div>
+      <div>
+        <strong>確認中</strong>
+        <p>${escapeHtml(message)}</p>
+      </div>
+    </div>
+  `;
+}
+
+function getCurrentClozeDraftAnswer() {
+  const input = document.getElementById("answerInput");
+  const currentInput = input ? input.value.trim() : "";
+  if (clozeFinalMode) return currentInput;
+  return [...clozeStepUserTokens, currentInput].filter(Boolean).join(" ").trim();
+}
+
 function checkClozeAnswer() {
   const q = questions[currentIndex];
-  const userAnswer = document.getElementById("answerInput").value;
-  const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
+  const input = document.getElementById("answerInput");
+  const userAnswer = input ? input.value.trim() : "";
 
+  if (clozeStepTokens.length > 1 && !clozeFinalMode) {
+    handleClozeAutoCheck();
+    showClozeNeutralAssist("まずは1語ずつの自動確認を続けてください。最後の語まで正しく入力できると自動で正解になります。");
+    return;
+  }
+
+  if (!userAnswer) {
+    alert("答えを入力してください。");
+    if (input) input.focus();
+    return;
+  }
+
+  const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
   processAnswer({
     id: q.id,
     section: q.section,
@@ -1492,41 +1444,40 @@ function processAnswer(data) {
   const now = new Date();
   const responseSeconds = questionStartTime ? Math.max(0, Math.round((now - questionStartTime) / 1000)) : 0;
   const feedback = document.getElementById("feedback");
-  const feedbackContext = getMaterialFeedbackContext(testType);
 
   if (data.isCorrect) {
     score += data.points;
-    const praise = getCorrectPraise(data);
-    feedback.className = `correct feedback-visible feedback-${feedbackContext.slug}`;
+    const praise = getMaterialFeedback(data, true);
+    feedback.className = "correct feedback-visible";
     feedback.innerHTML = `
-      <div class="feedback-card feedback-correct feedback-${feedbackContext.slug}-card">
+      <div class="feedback-card feedback-correct">
         <div class="feedback-icon">${praise.icon}</div>
         <div>
           <strong>${escapeHtml(praise.title)}</strong>
           <p>${escapeHtml(praise.message)}</p>
         </div>
       </div>
-      ${buildAnswerDetailHtml(data, feedbackContext, true)}
     `;
-    triggerCorrectEffect(praise);
+    triggerCorrectEffect({ label: "正解！", subLabel: `+${data.points || 1}` });
   } else {
-    const wrongFeedback = getWrongFeedback(data);
-    feedback.className = `wrong feedback-visible feedback-${feedbackContext.slug}`;
+    const guidance = getMaterialFeedback(data, false);
+    feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
-      <div class="feedback-card feedback-wrong feedback-${feedbackContext.slug}-card">
-        <div class="feedback-icon">${wrongFeedback.icon}</div>
+      <div class="feedback-card feedback-wrong">
+        <div class="feedback-icon">${data.timedOut ? "⏰" : guidance.icon}</div>
         <div>
-          <strong>${escapeHtml(wrongFeedback.title)}</strong>
-          <p>${escapeHtml(wrongFeedback.message)}</p>
+          <strong>${data.timedOut ? "時間切れ" : escapeHtml(guidance.title)}</strong>
+          <p>${escapeHtml(guidance.message)}</p>
+          <p>正解：${escapeHtml(data.correctAnswer)}</p>
         </div>
       </div>
-      ${buildAnswerDetailHtml(data, feedbackContext, false)}
     `;
     mistakes.push(data);
   }
 
-  const explanationHtml = buildExplanationHtml(data, feedbackContext);
-  if (explanationHtml) feedback.innerHTML += explanationHtml;
+  if (data.explanation) {
+    feedback.innerHTML += `<div class="explanation-box">解説：${escapeHtml(data.explanation)}</div>`;
+  }
 
   const record = {
     date: now.toLocaleString("ja-JP"),
@@ -1557,12 +1508,6 @@ function processAnswer(data) {
   answersLog.push(record);
   appendLocalHistory(record);
 
-  const config = TEST_CONFIG[testType];
-  if (config && config.review) {
-    if (data.isCorrect && reviewMode) removeWrongWord(data.id);
-    if (!data.isCorrect) saveWrongWord(data.id);
-  }
-
   document.getElementById("checkButton").disabled = true;
   const delay = Number(selectedAutoNextDelay) || 0;
   const nextButton = document.getElementById("nextButton");
@@ -1580,345 +1525,142 @@ function processAnswer(data) {
   }
 }
 
-function isClassicalTest(type = testType) {
-  return ["classicalWords", "classicalGrammar", "classicalKnowledge"].includes(type);
+function getCorrectPraise() {
+  const praises = [
+    { icon: "🎉", title: "Great!", message: "その表現はそのままSpeakingで使えます。" },
+    { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" },
+    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。" },
+    { icon: "🔥", title: "Keep going!", message: "この調子で使える表現を増やしましょう。" }
+  ];
+  return praises[currentIndex % praises.length];
 }
 
-function getMaterialFeedbackContext(type = testType) {
-  const config = TEST_CONFIG[type] || {};
-  const base = {
-    slug: "general",
-    icon: "✅",
-    wrongIcon: "💡",
-    correctLabel: "正解",
-    userLabel: "あなたの答え",
-    questionLabel: "問題",
-    explanationLabel: "解説",
-    timeUpMessage: "制限時間内に答えられませんでした。正解と解説を確認しましょう。",
-    correctPraises: [
-      { icon: "✅", title: "正解です", message: "この問題のポイントを正確に押さえられています。", burstTitle: "Correct!", burstSubtitle: "Point confirmed" },
-      { icon: "🌟", title: "よくできました", message: "次の問題でも同じ判断基準を使ってみましょう。", burstTitle: "Nice!", burstSubtitle: "Keep going" }
-    ],
-    wrongTitle: "確認しましょう",
-    wrongMessage: "正解と解説を確認し、次に同じポイントを選べるようにしましょう。",
-    resultMessages: {
-      high: "かなり安定しています。次は制限時間を少し短くすると、さらに実戦力が上がります。",
-      mid: "良いペースです。ミスした問題の根拠を確認すると定着しやすくなります。",
-      low: "復習の価値が高い回です。今日は間違いの原因を見つけられたこと自体が成果です。"
-    }
-  };
+function getMaterialFeedback(data, isCorrect) {
+  const config = TEST_CONFIG[testType] || {};
+  const category = config.category || "";
+  const title = config.title || "";
 
-  const contexts = {
-    vocab: {
-      slug: "vocab",
-      icon: "📘",
-      wrongIcon: "🔎",
-      correctLabel: "正しい意味",
-      userLabel: "選んだ意味",
-      questionLabel: "単語",
-      explanationLabel: "語義メモ",
-      timeUpMessage: "時間切れです。単語を見て意味を即答できるように、正しい意味を確認しましょう。",
-      correctPraises: [
-        { icon: "📘", title: "語義OK!", message: "単語と意味の対応を正確に押さえられています。", burstTitle: "Word OK!", burstSubtitle: "Meaning fixed" },
-        { icon: "⚡", title: "即答力アップ", message: "この反応速度を次の語彙にもつなげましょう。", burstTitle: "Fast!", burstSubtitle: "Vocabulary" }
-      ],
-      wrongTitle: "語義を確認",
-      wrongMessage: "選んだ意味と正しい意味の違いを確認しましょう。"
-    },
-    sokudokuVocab: {
-      slug: "vocab",
-      icon: "📗",
-      wrongIcon: "🔎",
-      correctLabel: "正しい意味",
-      userLabel: "選んだ意味",
-      questionLabel: "単語",
-      explanationLabel: "語義メモ",
-      timeUpMessage: "時間切れです。速読中に意味をすぐ出せるように確認しましょう。",
-      correctPraises: [
-        { icon: "📗", title: "読解語彙OK!", message: "速読で必要な語義を正確に選べています。", burstTitle: "Good!", burstSubtitle: "Reading vocab" }
-      ],
-      wrongTitle: "読解語彙を確認",
-      wrongMessage: "本文中でその語がどの意味になるかを意識して復習しましょう。"
-    },
-    monitor: {
-      slug: "toeic",
-      icon: "🎙️",
-      wrongIcon: "🧩",
-      correctLabel: "自然な表現",
-      userLabel: "選んだ表現",
-      questionLabel: "出題表現",
-      explanationLabel: "TOEIC S&W メモ",
-      timeUpMessage: "時間切れです。TOEIC S&Wでは短時間で自然な表現を選ぶ練習が重要です。",
-      correctPraises: [
-        { icon: "🎙️", title: "Natural choice!", message: "TOEIC S&Wで使いやすい自然な表現を選べています。", burstTitle: "Great!", burstSubtitle: "Natural English" },
-        { icon: "🚀", title: "Output ready!", message: "実際のSpeaking/Writingでそのまま使える形です。", burstTitle: "Ready!", burstSubtitle: "TOEIC S&W" }
-      ],
-      wrongTitle: "自然な表現を確認",
-      wrongMessage: "TOEIC S&Wでは、意味だけでなく自然なコロケーションを優先しましょう。",
-      resultMessages: {
-        high: "TOEIC S&Wらしい自然な表現選択がかなり安定しています。",
-        mid: "良いペースです。ミスした表現をチャンクとして言い直すと定着します。",
-        low: "復習価値が高い回です。誤答を自然なchunkに置き換える練習をしましょう。"
-      }
-    },
-    speakingReview: {
-      slug: "toeic",
-      icon: "🧠",
-      wrongIcon: "🧩",
-      correctLabel: "正しいチャンク",
-      userLabel: "組み立てた答え",
-      questionLabel: "復習ポイント",
-      explanationLabel: "チャンク解説",
-      timeUpMessage: "時間切れです。正しい語順とチャンクを確認して、次はより速く組み立てましょう。",
-      correctPraises: [
-        { icon: "🏆", title: "Perfect chunk!", message: "その表現はTOEIC Speakingでそのまま使えます。", burstTitle: "Great!", burstSubtitle: "Chunk mastered" },
-        { icon: "✨", title: "Excellent retrieval!", message: "自然な business English が自動化に近づいています。", burstTitle: "Nice!", burstSubtitle: "Output speed" }
-      ],
-      wrongTitle: "チャンクを修正",
-      wrongMessage: "語順・前置詞・コロケーションのどこで崩れたかを確認しましょう。",
-      resultMessages: {
-        high: "business chunk の再生がかなり安定しています。次はより短い制限時間で自動化しましょう。",
-        mid: "良い流れです。ミスしたchunkだけを声に出して復習すると効果的です。",
-        low: "復習価値が高い回です。誤答を正しいchunkに置き換えることが今日の成果です。"
-      }
-    },
-    speakingReviewCloze: {
-      slug: "toeic",
-      icon: "✍️",
-      wrongIcon: "🧩",
-      correctLabel: "空欄の正解",
-      userLabel: "入力した表現",
-      questionLabel: "完成させる英文",
-      explanationLabel: "チャンク解説",
-      timeUpMessage: "時間切れです。空欄に入る自然なchunkを確認しましょう。",
-      correctPraises: [
-        { icon: "✍️", title: "Chunk completed!", message: "空欄に入る自然な表現を正確に出せています。", burstTitle: "Complete!", burstSubtitle: "Cloze chunk" },
-        { icon: "⚡", title: "Fast retrieval!", message: "Speakingで必要な瞬発的な表現検索が強くなっています。", burstTitle: "Fast!", burstSubtitle: "Retrieval" }
-      ],
-      wrongTitle: "空欄のchunkを確認",
-      wrongMessage: "正解の前置詞・名詞形・語のまとまりを確認しましょう。"
-    },
-    sentence: {
-      slug: "sentence",
-      icon: "🔤",
-      wrongIcon: "🧱",
-      correctLabel: "正しい語順",
-      userLabel: "あなたの語順",
-      questionLabel: "語順問題",
-      explanationLabel: "語順メモ",
-      timeUpMessage: "時間切れです。主語・動詞・目的語・修飾語の順番を確認しましょう。",
-      correctPraises: [
-        { icon: "🔤", title: "語順OK!", message: "文の骨格を正確に組み立てられています。", burstTitle: "Order OK!", burstSubtitle: "Sentence" }
-      ],
-      wrongTitle: "語順を確認",
-      wrongMessage: "文の中心となる主語・動詞から確認し、修飾語の位置を見直しましょう。"
-    },
-    eikenConnectors: {
-      slug: "eiken",
-      icon: "🔗",
-      wrongIcon: "🔁",
-      correctLabel: "適切な接続表現",
-      userLabel: "選んだ表現",
-      questionLabel: "英文穴埋め",
-      explanationLabel: "接続関係メモ",
-      timeUpMessage: "時間切れです。前後の文の論理関係を確認しましょう。",
-      correctPraises: [
-        { icon: "🔗", title: "論理関係OK!", message: "前後のつながりに合う接続表現を選べています。", burstTitle: "Logic OK!", burstSubtitle: "Connector" }
-      ],
-      wrongTitle: "接続関係を確認",
-      wrongMessage: "逆接・因果・追加・譲歩のどの関係かを見直しましょう。"
-    },
-    englishTheory: {
-      slug: "theory",
-      icon: "🧑‍🏫",
-      wrongIcon: "📌",
-      correctLabel: "正しい概念",
-      userLabel: "選んだ概念",
-      questionLabel: "説明文",
-      explanationLabel: "概念解説",
-      timeUpMessage: "時間切れです。定義とキーワードを対応させて確認しましょう。",
-      correctPraises: [
-        { icon: "🧑‍🏫", title: "Concept clear!", message: "説明と概念の対応を正確に捉えられています。", burstTitle: "Clear!", burstSubtitle: "Theory" }
-      ],
-      wrongTitle: "概念を確認",
-      wrongMessage: "定義・キーワード・具体例の対応を見直しましょう。"
-    },
-    classicalWords: {
-      slug: "classics",
-      icon: "🌸",
-      wrongIcon: "📖",
-      correctLabel: "正しい現代語訳",
-      userLabel: "選んだ訳",
-      questionLabel: "古典単語",
-      explanationLabel: "語義・用法メモ",
-      timeUpMessage: "時間切れです。古典単語は中心義を素早く出せるように確認しましょう。",
-      correctPraises: [
-        { icon: "🌸", title: "語義OK!", message: "古典単語の中心となる意味を正確に押さえられています。", burstTitle: "Good!", burstSubtitle: "古典単語" },
-        { icon: "📖", title: "現代語訳に強くなっています", message: "この語義判断は読解のスピードにもつながります。", burstTitle: "Nice!", burstSubtitle: "語義確認" }
-      ],
-      wrongTitle: "語義を確認",
-      wrongMessage: "選んだ訳と正しい現代語訳の違いを確認し、中心義で覚え直しましょう。",
-      resultMessages: {
-        high: "古典単語の語義判断がかなり安定しています。次は制限時間を短くして読解速度につなげましょう。",
-        mid: "良いペースです。ミスした単語は中心義と文脈上の訳をセットで確認しましょう。",
-        low: "復習価値が高い回です。今日は覚え直すべき語を発見できたことが成果です。"
-      }
-    },
-    classicalGrammar: {
-      slug: "classics",
-      icon: "🏯",
-      wrongIcon: "📖",
-      correctLabel: "正しい文法判断",
-      userLabel: "選んだ答え",
-      questionLabel: "古典文法",
-      explanationLabel: "文法ポイント",
-      timeUpMessage: "時間切れです。接続・活用・意味・識別の順で確認しましょう。",
-      correctPraises: [
-        { icon: "🏯", title: "文法判断OK!", message: "助動詞・敬語・識別などの判断が正確です。", burstTitle: "Good!", burstSubtitle: "古典文法" },
-        { icon: "🌸", title: "根拠を選べています", message: "文法問題では、意味だけでなく接続や活用の根拠が重要です。", burstTitle: "Nice!", burstSubtitle: "文法根拠" }
-      ],
-      wrongTitle: "文法判断を確認",
-      wrongMessage: "正解を確認したら、接続・活用・意味・識別のどれがポイントだったかを見直しましょう。",
-      resultMessages: {
-        high: "古典文法の判断がかなり安定しています。次は根拠を言語化できるか確認しましょう。",
-        mid: "良いペースです。ミスは接続・活用・意味・識別のどこで迷ったか分類しましょう。",
-        low: "復習価値が高い回です。今日は文法判断の弱点を見つける回として意味があります。"
-      }
-    },
-    classicalKnowledge: {
-      slug: "classics",
-      icon: "🎎",
-      wrongIcon: "📖",
-      correctLabel: "正しい古文常識",
-      userLabel: "選んだ答え",
-      questionLabel: "古文常識",
-      explanationLabel: "背景知識メモ",
-      timeUpMessage: "時間切れです。人物関係・年中行事・生活習慣などの背景知識を確認しましょう。",
-      correctPraises: [
-        { icon: "🎎", title: "古文常識OK!", message: "読解に必要な背景知識を正確に押さえられています。", burstTitle: "Good!", burstSubtitle: "古文常識" },
-        { icon: "🌸", title: "読解の土台ができています", message: "背景知識があると、本文の状況理解がかなり速くなります。", burstTitle: "Nice!", burstSubtitle: "背景知識" }
-      ],
-      wrongTitle: "背景知識を確認",
-      wrongMessage: "正解の知識が本文理解にどう関係するかを確認しましょう。",
-      resultMessages: {
-        high: "古文常識がかなり安定しています。本文中で知識を使えるかも確認しましょう。",
-        mid: "良いペースです。ミスした常識事項は、場面や人物関係とセットで復習しましょう。",
-        low: "復習価値が高い回です。古文常識は読解の前提知識なので、ミスを発見できたことが成果です。"
-      }
-    }
-  };
-
-  return { ...base, ...(contexts[type] || {}) };
+  if (testType === "speakingReview" || testType === "speakingReviewCloze") {
+    return isCorrect
+      ? { icon: "⚡", title: "Output ready!", message: "このチャンクはPicture descriptionやOpinionで素早く出せる形です。" }
+      : { icon: "🎯", title: "Chunk check", message: "正解を意味のまとまりで覚えると、次の発話で取り出しやすくなります。" };
+  }
+  if (testType === "phrasalVerbs") {
+    return isCorrect
+      ? { icon: "🚀", title: "Fast retrieval!", message: "動詞句としてまとまりで思い出せています。発話の検索時間が短くなります。" }
+      : { icon: "🔎", title: "Verb + particle", message: "動詞だけでなく、後ろの前置詞・副詞までセットで確認しましょう。" };
+  }
+  if (testType === "englishTheory" || title.includes("Chapter 3")) {
+    return isCorrect
+      ? { icon: "🧠", title: "Concept linked", message: "概念名と具体例を結びつけられています。別理論との違いも確認しましょう。" }
+      : { icon: "🧭", title: "Theory map", message: "選択肢は同じ章の関連理論です。解説で境界線を確認しましょう。" };
+  }
+  if (category === "teacher") {
+    return isCorrect
+      ? { icon: "📘", title: "Teaching map updated", message: "教師用マップに新しい概念を追加できています。" }
+      : { icon: "📝", title: "Check the source", message: "教科書・ハンドアウトの該当節に戻って、概念の役割を確認しましょう。" };
+  }
+  if (category === "classics") {
+    return isCorrect
+      ? { icon: "🌸", title: "古文OK", message: "意味・識別をテンポよく取り出せています。" }
+      : { icon: "🍃", title: "識別ポイント", message: "訳だけでなく、文中での働きも合わせて確認しましょう。" };
+  }
+  return isCorrect ? getCorrectPraise() : { icon: "💡", title: "あと少し", message: "正解と自分の答えの違いを短く確認しましょう。" };
 }
 
-function getCorrectPraise(data = {}) {
-  const context = getMaterialFeedbackContext(testType);
-  const praises = context.correctPraises && context.correctPraises.length ? context.correctPraises : [];
-  return praises[currentIndex % praises.length] || {
-    icon: context.icon || "✅",
-    title: "正解です",
-    message: "この問題のポイントを正確に押さえられています。",
-    burstTitle: "Correct!",
-    burstSubtitle: "Point confirmed"
-  };
+function renderClozeStepStatus() {
+  const area = document.getElementById("clozeStepStatus");
+  if (!area) return;
+  const chips = clozeStepTokens.map((token, index) => {
+    const state = index < clozeStepIndex ? "done" : index === clozeStepIndex ? "current" : "locked";
+    const label = index < clozeStepIndex ? token : index === clozeStepIndex ? "?" : "・";
+    return `<span class="cloze-token ${state}">${escapeHtml(label)}</span>`;
+  }).join("");
+  area.innerHTML = `<div class="cloze-progress-label">自動確認 ${Math.min(clozeStepIndex + 1, clozeStepTokens.length)} / ${clozeStepTokens.length}</div><div class="cloze-token-row">${chips}</div>`;
 }
 
-function getWrongFeedback(data = {}) {
-  const context = getMaterialFeedbackContext(testType);
-  return {
-    icon: data.timedOut ? "⏰" : (context.wrongIcon || "💡"),
-    title: data.timedOut ? "時間切れ" : (context.wrongTitle || "確認しましょう"),
-    message: data.timedOut ? context.timeUpMessage : context.wrongMessage
-  };
+function updateClozeLiveNote(message, positive = false) {
+  const note = document.getElementById("clozeLiveNote");
+  if (!note) return;
+  note.textContent = message;
+  note.classList.toggle("cloze-note-ok", Boolean(positive));
+  window.setTimeout(() => note.classList.remove("cloze-note-ok"), 420);
 }
 
-function buildAnswerDetailHtml(data, context, isCorrect) {
-  const userAnswer = data.userAnswer === undefined || data.userAnswer === null || data.userAnswer === "" ? "未回答" : data.userAnswer;
-  const userRow = isCorrect ? "" : `
-    <div class="feedback-answer-row">
-      <span>${escapeHtml(context.userLabel || "あなたの答え")}</span>
-      <strong>${escapeHtml(userAnswer)}</strong>
-    </div>
-  `;
-  return `
-    <div class="feedback-detail-grid feedback-detail-${escapeHtml(context.slug || "general")}">
-      ${userRow}
-      <div class="feedback-answer-row">
-        <span>${escapeHtml(context.correctLabel || "正解")}</span>
-        <strong>${escapeHtml(data.correctAnswer)}</strong>
-      </div>
-    </div>
-  `;
-}
-
-function buildExplanationHtml(data, context) {
-  if (!data.explanation) return "";
-  return `
-    <div class="explanation-box explanation-${escapeHtml(context.slug || "general")}">
-      <strong>${escapeHtml(context.explanationLabel || "解説")}：</strong>${escapeHtml(data.explanation)}
-    </div>
-  `;
+function flashClozeStep(message, isCorrect) {
+  const feedback = document.getElementById("feedback");
+  feedback.className = isCorrect ? "correct feedback-visible" : "wrong feedback-visible";
+  feedback.innerHTML = `<div class="feedback-card ${isCorrect ? "feedback-correct" : "feedback-wrong"} mini-feedback"><div class="feedback-icon">${isCorrect ? "✓" : "💡"}</div><div><strong>${escapeHtml(message)}</strong></div></div>`;
 }
 
 function playCorrectSound() {
   try {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
     if (!AudioContextClass) return;
-    const context = new AudioContextClass();
-    const master = context.createGain();
-    master.gain.setValueAtTime(0.0001, context.currentTime);
-    master.gain.exponentialRampToValueAtTime(0.18, context.currentTime + 0.02);
-    master.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.72);
-    master.connect(context.destination);
-
-    [523.25, 659.25, 783.99, 1046.5].forEach((frequency, index) => {
-      const osc = context.createOscillator();
-      const gain = context.createGain();
-      osc.type = index === 3 ? "triangle" : "sine";
-      osc.frequency.setValueAtTime(frequency, context.currentTime + index * 0.08);
-      gain.gain.setValueAtTime(0.0001, context.currentTime + index * 0.08);
-      gain.gain.exponentialRampToValueAtTime(0.28, context.currentTime + index * 0.08 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + index * 0.08 + 0.2);
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+    const master = ctx.createGain();
+    master.gain.setValueAtTime(0.0001, now);
+    master.gain.exponentialRampToValueAtTime(0.075, now + 0.015);
+    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+    master.connect(ctx.destination);
+    [523.25, 659.25, 783.99].forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + index * 0.055);
+      gain.gain.setValueAtTime(0.0001, now + index * 0.055);
+      gain.gain.exponentialRampToValueAtTime(0.22, now + index * 0.055 + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.055 + 0.24);
       osc.connect(gain);
       gain.connect(master);
-      osc.start(context.currentTime + index * 0.08);
-      osc.stop(context.currentTime + index * 0.08 + 0.24);
+      osc.start(now + index * 0.055);
+      osc.stop(now + index * 0.055 + 0.28);
     });
-    setTimeout(() => context.close && context.close(), 900);
+    setTimeout(() => ctx.close && ctx.close(), 650);
   } catch (error) {
-    console.warn("Correct sound could not be played.", error);
+    // Some browsers block audio until user interaction. Visual feedback remains active.
   }
 }
 
-function triggerCorrectEffect(praise = {}) {
-  playCorrectSound();
+function triggerCorrectEffect(options = {}) {
+  const mini = Boolean(options.mini);
+  const label = options.label || (mini ? "OK" : "正解！");
+  const subLabel = options.subLabel || (mini ? "次の語" : "+1");
+
   const layer = document.createElement("div");
-  layer.className = "celebration-layer deluxe-celebration";
+  layer.className = mini ? "celebration-layer celebration-mini" : "celebration-layer celebration-full";
 
   const burst = document.createElement("div");
-  burst.className = "celebration-burst";
-  const burstIcon = praise.icon || "✨";
-  const burstTitle = praise.burstTitle || praise.title || "Correct!";
-  const burstSubtitle = praise.burstSubtitle || "Point confirmed";
-  burst.innerHTML = `<span>${escapeHtml(burstIcon)}</span><strong>${escapeHtml(burstTitle)}</strong><small>${escapeHtml(burstSubtitle)}</small>`;
+  burst.className = "correct-burst";
+  burst.innerHTML = `
+    <div class="correct-burst-ring"></div>
+    <div class="correct-burst-glow"></div>
+    <div class="correct-burst-badge">
+      <span>${escapeHtml(label)}</span>
+      <small>${escapeHtml(subLabel)}</small>
+    </div>
+  `;
   layer.appendChild(burst);
 
-  const marks = isClassicalTest(testType)
-    ? ["桜", "◆", "✦", "〇", "✓", "◇", "花", "●"]
-    : ["★", "●", "◆", "✦", "✓", "✧", "◇", "●"];
-  for (let i = 0; i < 60; i++) {
+  const marks = mini ? ["✓", "✦", "★"] : ["★", "✦", "◆", "●", "✓", "+"];
+  const total = mini ? 12 : 34;
+  for (let i = 0; i < total; i++) {
     const piece = document.createElement("span");
-    piece.className = "confetti-piece deluxe-piece";
+    piece.className = "confetti-piece confetti-burst";
     piece.textContent = marks[i % marks.length];
-    piece.style.left = `${4 + Math.random() * 92}%`;
-    piece.style.animationDelay = `${Math.random() * 0.28}s`;
-    piece.style.setProperty("--fall", `${180 + Math.random() * 280}px`);
-    piece.style.setProperty("--spin", `${120 + Math.random() * 480}deg`);
-    piece.style.fontSize = `${14 + Math.random() * 18}px`;
+
+    const angle = (Math.PI * 2 * i) / total + Math.random() * 0.38;
+    const distance = (mini ? 66 : 126) + Math.random() * (mini ? 30 : 72);
+    piece.style.setProperty("--x", `${(Math.cos(angle) * distance).toFixed(1)}px`);
+    piece.style.setProperty("--y", `${(Math.sin(angle) * distance).toFixed(1)}px`);
+    piece.style.setProperty("--r", `${Math.floor(Math.random() * 360)}deg`);
+    piece.style.animationDelay = `${Math.random() * 0.08}s`;
     layer.appendChild(piece);
   }
+
   document.body.appendChild(layer);
-  setTimeout(() => layer.remove(), 1800);
+  setTimeout(() => layer.remove(), mini ? 820 : 1300);
 }
 
 function nextQuestion() {
@@ -1966,31 +1708,28 @@ async function showResult(isQuit) {
 }
 
 function getMotivationMessage(accuracy, answeredCount) {
-  const context = getMaterialFeedbackContext(testType);
   if (answeredCount === 0) return "<strong>今日は準備だけでもOKです。</strong><br>次は1問だけ始めてみましょう。";
-  const messages = context.resultMessages || {};
-  if (accuracy >= 90) return `<strong>すばらしい安定感です。</strong><br>${escapeHtml(messages.high || "次は制限時間を少し短くすると、さらに実戦力が上がります。")}`;
-  if (accuracy >= 70) return `<strong>かなり良いペースです。</strong><br>${escapeHtml(messages.mid || "ミスした問題だけをもう一度解くと定着しやすくなります。")}`;
-  return `<strong>復習の価値が高い回です。</strong><br>${escapeHtml(messages.low || "今日はミスを見つけられたこと自体が成果です。")}`;
+  if (accuracy >= 90) return "<strong>すばらしい安定感です。</strong><br>次は制限時間を少し短くすると、さらに実戦力が上がります。";
+  if (accuracy >= 70) return "<strong>かなり良いペースです。</strong><br>ミスした問題だけをもう一度解くと定着しやすくなります。";
+  return "<strong>復習の価値が高い回です。</strong><br>今日はミスを見つけられたこと自体が成果です。";
 }
 
 function showMistakes() {
   const area = document.getElementById("mistakeArea");
-  const context = getMaterialFeedbackContext(testType);
   if (mistakes.length === 0) {
     area.innerHTML = "<p class='correct'>ミスはありません。</p>";
     return;
   }
 
   area.innerHTML = `
-    <div class="mistake-list mistake-${escapeHtml(context.slug || "general")}">
+    <div class="mistake-list">
       <h3>今回ミスした問題</h3>
       ${mistakes.map(m => `
         <div class="mistake-item">
-          <strong>${escapeHtml(context.questionLabel || "問題")}：</strong>${escapeHtml(m.question)}<br>
-          <strong>${escapeHtml(context.userLabel || "あなたの答え")}：</strong>${escapeHtml(m.userAnswer)}<br>
-          <strong>${escapeHtml(context.correctLabel || "正解")}：</strong>${escapeHtml(m.correctAnswer)}<br>
-          ${m.explanation ? `<strong>${escapeHtml(context.explanationLabel || "解説")}：</strong>${escapeHtml(m.explanation)}` : ""}
+          <strong>問題：</strong>${escapeHtml(m.question)}<br>
+          <strong>あなたの答え：</strong>${escapeHtml(m.userAnswer)}<br>
+          <strong>正解：</strong>${escapeHtml(m.correctAnswer)}<br>
+          ${m.explanation ? `<strong>解説：</strong>${escapeHtml(m.explanation)}` : ""}
         </div>
       `).join("")}
     </div>
@@ -2259,7 +1998,7 @@ function getWrongKey() {
 }
 
 function clearStoredMistakes() {
-  if (!confirm("この学習者の間違い履歴を削除しますか？")) return;
+  if (!confirm("この学習者の単語間違い履歴を削除しますか？")) return;
   localStorage.removeItem(getWrongKey());
   updateMistakeCountInSettings();
   alert("間違い履歴を削除しました。" );
@@ -2414,6 +2153,11 @@ function shuffle(array) {
 
 function escapeHtml(text) {
   return String(text ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+function getSourceTag(explanation) {
+  const match = String(explanation || "").match(/Source:\s*([^\.。]+(?:p{1,2}\.\s*\d+(?:[-–]\d+)?|page\s*\d+(?:[-–]\d+)?)[^\.。]*)/i);
+  return match ? `Source: ${match[1].trim()}` : "";
 }
 
 function getDateKey(date) {
