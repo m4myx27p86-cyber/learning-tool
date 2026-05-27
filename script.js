@@ -1,5 +1,5 @@
 /* =========================================================
-   学習マップ script.js
+   学習ツール script.js
    - 管理者ログイン: 9999
    - 学習者コード: Google Sheets / Apps Script の AccessCodes で管理
    - 許可教材だけ表示 / 1教材なら直接表示
@@ -27,9 +27,9 @@ const SENTENCE_FILES = [
 const CATEGORY_INFO = {
   toeic: { label: "TOEIC", description: "Speaking/Writingで使う表現を瞬発的に出す", theme: "toeic", icon: "🎙️" },
   toefl: { label: "TOEFL", description: "アカデミック英語・語順アウトプット", theme: "toefl", icon: "🎓" },
-  highschool: { label: "高校英語", description: "語彙・文法・英検対策", theme: "highschool", icon: "📚" },
+  highschool: { label: "高校英語", description: "語彙・文法・読解・英検対策", theme: "highschool", icon: "📚" },
   classics: { label: "古文", description: "古典単語・文法・古文常識", theme: "classics", icon: "🌸" },
-  teacher: { label: "理論・研究マップ", description: "SLA・ライティング理論・統計をChapterごとに整理", theme: "teacher", icon: "🧑‍🏫" },
+  teacher: { label: "教師用問題", description: "英語教育理論・授業研究用の確認問題", theme: "teacher", icon: "🧑‍🏫" },
   eiken: { label: "英検", description: "英検準一級Writing対策", theme: "eiken", icon: "✍️" }
 };
 
@@ -53,6 +53,16 @@ const TEST_CONFIG = {
     path: "data/vocab/sokudoku_vocab.csv",
     review: true,
     description: "速読英単語の単語ページから作成した語彙問題を練習します。"
+  },
+  polaris3: {
+    title: "ポラリス3",
+    category: "highschool",
+    type: "choice",
+    password: "3103",
+    defaultTime: 60,
+    path: "data/highschool/polaris3_questions.csv",
+    keepOrder: true,
+    description: "SATレベルを意識した英語長文の語彙・事実発問・推論発問・要約穴埋めを文章ごとに練習します。"
   },
   sentence: {
     title: "語順並べ替えテスト",
@@ -109,49 +119,13 @@ const TEST_CONFIG = {
     description: "正しい表現の一部を自分で書き出し、瞬発的に使えるチャンクを増やします。"
   },
   englishTheory: {
-    title: "SLA理論マップ",
+    title: "英語教育理論",
     category: "teacher",
     type: "choice",
     password: "3303",
-    defaultTime: 35,
-    path: "data/english_theory/sla_theory_map.csv",
-    description: "SLAの各Chapterを選び、概念名・具体例・関連理論を確認します。"
-  },
-  grammarCorner: {
-    title: "文法解説コーナー",
-    category: "highschool",
-    type: "choice",
-    password: "4400",
-    defaultTime: 45,
-    path: "data/grammar/grammar_corner.csv",
-    description: "文法を暗記項目ではなく、意味とアウトプットのための選択として確認します。"
-  },
-  phrasalVerbs: {
-    title: "Phrasal Verb 瞬発トレーニング",
-    category: "toeic",
-    type: "choice",
-    password: "2180",
-    defaultTime: 20,
-    path: "data/speaking_review/phrasal_verbs.csv",
-    description: "TOEIC S&W・IELTS系ソースから抽出した動詞句を、短時間で思い出す練習です。"
-  },
-  statisticsTheory: {
-    title: "統計マップ",
-    category: "teacher",
-    type: "choice",
-    password: "3303",
-    defaultTime: 40,
-    path: "data/teacher/statistics_questions.csv",
-    description: "教育研究で使う統計概念をChapter・資料ごとに確認します。"
-  },
-  writingTheory: {
-    title: "ライティング理論マップ",
-    category: "teacher",
-    type: "choice",
-    password: "3303",
-    defaultTime: 40,
-    path: "data/teacher/writing_theory_map.csv",
-    description: "Writing理論をChapterごとに選び、概念と授業への接続を確認します。"
+    defaultTime: 30,
+    path: "data/english_theory/chapter3_theory.csv",
+    description: "SLA Chapter 3 の重要概念を四択で確認します。"
   },
   classicalWords: {
     title: "古典単語",
@@ -195,7 +169,6 @@ let questions = [];
 let currentIndex = 0;
 let score = 0;
 let selectedChoice = "";
-let lastChoiceTap = { value: "", time: 0 };
 let answersLog = [];
 let mistakes = [];
 let startTime = null;
@@ -208,11 +181,6 @@ let autoAdvanceTimerId = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
-let clozeStepTokens = [];
-let clozeStepIndex = 0;
-let clozeStepUserTokens = [];
-let clozeStepAttempts = 0;
-let clozeFinalMode = false;
 
 /* =========================
    初期化・イベント登録
@@ -258,7 +226,6 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("submitWritingButton", "click", submitWriting);
 
   safeAddEvent("checkButton", "click", checkAnswer);
-  document.addEventListener("keydown", handleGlobalQuizKeydown);
   safeAddEvent("nextButton", "click", nextQuestion);
   safeAddEvent("quitButton", "click", quitQuiz);
 
@@ -275,17 +242,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   restoreSession();
 });
-
-function handleGlobalQuizKeydown(event) {
-  if (event.key !== "Enter") return;
-  const quizScreen = document.getElementById("quizScreen");
-  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
-  if (!TEST_CONFIG[testType] || TEST_CONFIG[testType].type !== "choice") return;
-  const checkButton = document.getElementById("checkButton");
-  if (!checkButton || checkButton.disabled) return;
-  event.preventDefault();
-  checkChoiceAnswer();
-}
 
 function safeAddEvent(id, event, handler) {
   const element = document.getElementById(id);
@@ -503,7 +459,6 @@ function renderMenu() {
   renderMaterialCategories();
   document.getElementById("adminQuickArea").classList.toggle("hidden", !isAdmin);
 }
-
 
 function getVisibleMaterials() {
   return Object.keys(TEST_CONFIG).filter(type => hasAccessToMaterial(type));
@@ -822,11 +777,16 @@ function setupSectionSelect(sourceQuestions) {
     .filter(Boolean)
     .sort((a, b) => String(a).localeCompare(String(b), "ja", { numeric: true }));
 
-  select.innerHTML = `<option value="all">すべてのセクション</option>`;
+  const allLabel = testType === "polaris3" ? "すべての文章" : "すべてのセクション";
+  select.innerHTML = `<option value="all">${allLabel}</option>`;
   sections.forEach(section => {
     const option = document.createElement("option");
     option.value = section;
-    option.textContent = isNaN(Number(section)) ? section : `Section ${section}`;
+    if (testType === "polaris3") {
+      option.textContent = isNaN(Number(section)) ? section : `Passage ${section}`;
+    } else {
+      option.textContent = isNaN(Number(section)) ? section : `Section ${section}`;
+    }
     select.appendChild(option);
   });
 }
@@ -861,7 +821,8 @@ async function loadChoiceQuestions(filePath) {
     choices: [row[3], row[4], row[5], row[6]].filter(Boolean),
     points: Number(row[7]) || 1,
     explanation: row[8] || "",
-    source: row[9] || getSourceTag(row[8] || "")
+    questionType: row[9] || "",
+    passage: row[10] || ""
   })).filter(q => q.id && q.section && q.word && q.correctAnswer && q.choices.length > 0);
 }
 
@@ -976,7 +937,10 @@ function prepareQuiz(sourceQuestions) {
     ? [...sourceQuestions]
     : sourceQuestions.filter(q => q.section === selectedSection);
 
-  pool = shuffle(pool);
+  const config = TEST_CONFIG[testType] || {};
+  if (!config.keepOrder) {
+    pool = shuffle(pool);
+  }
 
   if (countValue === "custom") {
     const customCount = Number(document.getElementById("customQuestionCountInput").value);
@@ -1014,16 +978,13 @@ function showQuestion() {
   clearQuestionTimer();
   clearAutoAdvanceTimer();
   selectedChoice = "";
-  lastChoiceTap = { value: "", time: 0 };
   questionStartTime = new Date();
 
   document.getElementById("questionNumber").textContent = `問題 ${currentIndex + 1} / ${questions.length}`;
   document.getElementById("feedback").textContent = "";
   document.getElementById("feedback").className = "";
   document.getElementById("nextButton").classList.add("hidden");
-  document.getElementById("checkButton").classList.remove("hidden");
   document.getElementById("checkButton").disabled = false;
-  document.getElementById("checkButton").textContent = "回答する";
   document.getElementById("progressBar").style.width = `${Math.round((currentIndex / questions.length) * 100)}%`;
 
   if (TEST_CONFIG[testType].type === "choice") showChoiceQuestion();
@@ -1069,12 +1030,12 @@ function clearAutoAdvanceTimer() {
 }
 
 function handleTimeUp() {
-  if (document.getElementById("checkButton").disabled && TEST_CONFIG[testType]?.type !== "cloze") return;
+  if (document.getElementById("checkButton").disabled) return;
   const q = questions[currentIndex];
   const configType = TEST_CONFIG[testType].type;
   const correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
   const questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
-  const typedAnswer = configType === "cloze" ? getCurrentClozeDraftAnswer() : (document.getElementById("answerInput") ? document.getElementById("answerInput").value : "");
+  const typedAnswer = document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
 
   processAnswer({
     id: q.id,
@@ -1092,31 +1053,35 @@ function handleTimeUp() {
 function showChoiceQuestion() {
   const q = questions[currentIndex];
   document.getElementById("testTitle").textContent = reviewMode ? `${TEST_CONFIG[testType].title} 間違い復習` : TEST_CONFIG[testType].title;
-  document.getElementById("checkButton").textContent = "回答する";
   const area = document.getElementById("questionArea");
   area.innerHTML = "";
 
   const wordDiv = document.createElement("div");
-  wordDiv.className = "words choice-question-card";
-  const sourceTag = q.source || getSourceTag(q.explanation || "");
-  const sourceBadge = sourceTag ? `<span class="source-ref">Source: ${escapeHtml(sourceTag)}</span>` : "";
+  wordDiv.className = "words";
 
-  let instruction = "最も適切な答えを選んでください。";
-  if (testType === "monitor") instruction = "最も自然で正確な表現を選んでください。";
-  else if (testType === "speakingReview") instruction = "より自然な表現を選んでください。";
-  else if (testType === "englishTheory") instruction = "Choose the best answer based on the selected SLA chapter.";
-  else if (testType === "writingTheory") instruction = "Choose the best answer based on the selected writing theory chapter.";
-  else if (testType === "statisticsTheory") instruction = "資料の説明に最も合う統計概念を選んでください。";
-  else if (testType === "grammarCorner" || testType === "phrasalVerbs") instruction = "空欄・説明に最も合う表現を選んでください。";
-  else if (testType === "eikenConnectors") instruction = "空欄に最も適切な表現を選んでください。";
-
-  const promptText = testType.startsWith("classical") ? q.word : `“${q.word}”`;
-  wordDiv.innerHTML = `
-    <div class="question-meta-line">No.${escapeHtml(q.id)} | ${escapeHtml(q.section)} ${sourceBadge}</div>
-    <div class="monitor-label">${escapeHtml(instruction)}</div>
-    <div class="choice-prompt-main">${escapeHtml(promptText)}</div>
-    <div class="choice-submit-hint">選択後、Enterキーまたは同じ選択肢をもう一度押すと回答できます。</div>
-  `;
+  if (testType === "monitor") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br><span class="monitor-label">最も自然で正確な表現を選んでください。</span><br>"${escapeHtml(q.word)}"`;
+  } else if (testType === "speakingReview") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>より自然な表現は？<br>"${escapeHtml(q.word)}"`;
+  } else if (testType === "englishTheory") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>説明に合う概念を選んでください。<br>"${escapeHtml(q.word)}"`;
+  } else if (testType === "eikenConnectors") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>空欄に最も適切な表現を選んでください。<br>"${escapeHtml(q.word)}"`;
+  } else if (testType === "polaris3") {
+    const typeLabel = q.questionType ? `<span class="reading-type-badge">${escapeHtml(q.questionType)}</span>` : `<span class="reading-type-badge">Reading</span>`;
+    const passageBox = q.passage ? `<div class="reading-passage-box">${escapeHtml(q.passage).replace(/\n/g, "<br>")}</div>` : "";
+    wordDiv.className = "words reading-question-card";
+    wordDiv.innerHTML = `
+      <div class="question-meta-line">No.${escapeHtml(q.id)} | ${escapeHtml(q.section)} ${typeLabel}</div>
+      ${passageBox}
+      <div class="reading-question-text">${escapeHtml(q.word).replace(/\n/g, "<br>")}</div>
+      <div class="choice-submit-hint">Choose the best answer.</div>
+    `;
+  } else if (testType.startsWith("classical")) {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>${escapeHtml(q.word)}`;
+  } else {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | Section ${escapeHtml(q.section)}<br>"${escapeHtml(q.word)}" の意味は？`;
+  }
 
   area.appendChild(wordDiv);
 
@@ -1125,18 +1090,9 @@ function showChoiceQuestion() {
     btn.className = "choice-button";
     btn.textContent = choice;
     btn.addEventListener("click", () => {
-      const now = Date.now();
-      const isSecondTap = selectedChoice === choice && lastChoiceTap.value === choice && (now - lastChoiceTap.time) < 900;
       selectedChoice = choice;
-      lastChoiceTap = { value: choice, time: now };
       document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
-      if (isSecondTap && !document.getElementById("checkButton").disabled) checkChoiceAnswer();
-    });
-    btn.addEventListener("dblclick", event => {
-      event.preventDefault();
-      selectedChoice = choice;
-      if (!document.getElementById("checkButton").disabled) checkChoiceAnswer();
     });
     area.appendChild(btn);
   });
@@ -1180,48 +1136,22 @@ function showClozeQuestion() {
   document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
   const hint = q.hint || createInitialHint(q.answer);
   const examples = extractLearningExamples(q.explanation || "");
-  clozeStepTokens = splitSentence(q.answer);
-  clozeStepIndex = 0;
-  clozeStepUserTokens = [];
-  clozeStepAttempts = 0;
-  clozeFinalMode = clozeStepTokens.length <= 1;
-
   const originalBlock = examples.wrong
     ? `<div class="source-expression"><span>直す前の表現</span><strong>${escapeHtml(examples.wrong)}</strong></div>`
     : `<div class="source-expression"><span>学習目標</span><strong>TOEIC Speakingでそのまま使える自然なチャンクを完成させる</strong></div>`;
 
   document.getElementById("questionArea").innerHTML = `
-    <div class="question-prompt cloze-prompt story-prompt">
+    <div class="question-prompt cloze-prompt">
       <div class="task-badge">${escapeHtml(q.section || "穴埋め")}</div>
-      <p class="task-instruction">1語ずつ入力すると自動で確認します。最後の語まで正しく入力できた時点で、この問題は正解として判定されます。</p>
+      <p class="task-instruction">下の表現をより自然な英語に直すつもりで、空欄に入る表現を入力してください。</p>
       ${originalBlock}
       <div class="target-expression"><span>完成させる英文</span><strong>${escapeHtml(q.prompt)}</strong></div>
-      <div id="clozeStepStatus" class="cloze-step-status"></div>
     </div>
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
-    <input type="text" id="answerInput" class="answer-input" placeholder="${clozeFinalMode ? "答えを入力してEnter" : "次に来る1語を入力（自動で確認）"}" autocomplete="off" />
-    <p id="clozeLiveNote" class="micro-note">${clozeFinalMode ? "Enterまたは回答ボタンでチェックできます。" : "スペースやEnterを押さなくても、正しい語になった時点で自動的に次へ進みます。"}</p>
+    <input type="text" id="answerInput" class="answer-input" placeholder="空欄に入る表現を入力：${escapeHtml(hint)}" autocomplete="off" />
   `;
 
-  renderClozeStepStatus();
-  const checkButton = document.getElementById("checkButton");
-  checkButton.textContent = clozeFinalMode ? "回答する" : "自動確認中";
-  checkButton.disabled = !clozeFinalMode;
-  checkButton.classList.toggle("hidden", !clozeFinalMode && clozeStepTokens.length > 1);
-
-  const input = document.getElementById("answerInput");
-  input.addEventListener("input", () => handleClozeAutoCheck());
-  input.addEventListener("keydown", event => {
-    if (event.key !== "Enter") return;
-    event.preventDefault();
-    if (clozeFinalMode) {
-      checkClozeAnswer();
-    } else {
-      handleClozeAutoCheck();
-      showClozeNeutralAssist("途中ではEnterで採点しません。正しい語を入力すると自動で次へ進みます。");
-    }
-  });
-  input.focus();
+  document.getElementById("answerInput").focus();
 }
 
 function extractLearningExamples(explanation) {
@@ -1304,129 +1234,11 @@ function checkSentenceAnswer() {
   });
 }
 
-function handleClozeAutoCheck() {
-  if (clozeFinalMode || clozeStepTokens.length <= 1) return;
-
-  const input = document.getElementById("answerInput");
-  if (!input) return;
-
-  const rawValue = input.value.replace(/\u3000/g, " ");
-  if (!rawValue.trim()) return;
-
-  let inputTokens = splitSentence(rawValue);
-  let progressed = false;
-
-  while (inputTokens.length > 0 && clozeStepIndex < clozeStepTokens.length) {
-    const expected = clozeStepTokens[clozeStepIndex];
-    const typed = inputTokens[0];
-
-    if (normalizeSentence(typed) !== normalizeSentence(expected)) break;
-
-    clozeStepUserTokens.push(expected);
-    clozeStepIndex++;
-    clozeStepAttempts = 0;
-    progressed = true;
-    inputTokens.shift();
-  }
-
-  if (progressed) {
-    renderClozeStepStatus();
-    updateClozeLiveNote(clozeStepIndex >= clozeStepTokens.length ? "最後の語まで確認できました。" : "OK。次の語を入力してください。", true);
-
-    if (clozeStepIndex >= clozeStepTokens.length) {
-      const q = questions[currentIndex];
-      input.value = clozeStepUserTokens.join(" ");
-      processAnswer({
-        id: q.id,
-        section: q.section,
-        question: q.prompt,
-        userAnswer: clozeStepUserTokens.join(" "),
-        correctAnswer: q.answer,
-        explanation: q.explanation || "",
-        isCorrect: true,
-        points: q.points || 1
-      });
-      return;
-    }
-
-    input.value = inputTokens.join(" ");
-    input.placeholder = `次の語を入力（${clozeStepIndex + 1}/${clozeStepTokens.length}）`;
-    input.focus();
-    if (input.value.trim()) setTimeout(() => handleClozeAutoCheck(), 0);
-    return;
-  }
-
-  // 認知負荷を下げるため、途中の自動確認では「不正解」扱いにしない。
-  // 語を入力中の段階では赤いフィードバックを出さず、スペースで別語に進もうとした時だけ中立的な支援を出す。
-  const expected = clozeStepTokens[clozeStepIndex] || "";
-  const hasMovedToAnotherToken = /\s$/.test(rawValue) || inputTokens.length >= 2;
-  if (hasMovedToAnotherToken) {
-    clozeStepAttempts++;
-    showClozeNeutralAssist(`${clozeStepIndex + 1}語目をもう一度確認しましょう。ヒント：${createInitialHint(expected)}`);
-  }
-}
-
-function enterClozeFinalMode() {
-  clozeFinalMode = true;
-  const input = document.getElementById("answerInput");
-  const checkButton = document.getElementById("checkButton");
-  const cue = document.getElementById("clozeFinalCue");
-  const note = document.getElementById("clozeLiveNote");
-
-  if (input) {
-    input.value = "";
-    input.placeholder = "完成したチャンクを全文入力してEnter";
-    input.classList.add("cloze-final-input");
-    input.focus();
-  }
-  if (checkButton) {
-    checkButton.disabled = false;
-    checkButton.textContent = "最終回答を送信";
-  }
-  if (cue) cue.classList.remove("hidden");
-  if (note) note.textContent = "ここからは全文でアウトプットします。Enterまたはボタンで最終回答を送信できます。";
-}
-
-function showClozeNeutralAssist(message) {
-  const feedback = document.getElementById("feedback");
-  if (!feedback) return;
-  feedback.className = "feedback-visible cloze-assist";
-  feedback.innerHTML = `
-    <div class="feedback-card feedback-assist mini-feedback cloze-soft-feedback">
-      <div class="feedback-icon">💡</div>
-      <div>
-        <strong>確認中</strong>
-        <p>${escapeHtml(message)}</p>
-      </div>
-    </div>
-  `;
-}
-
-function getCurrentClozeDraftAnswer() {
-  const input = document.getElementById("answerInput");
-  const currentInput = input ? input.value.trim() : "";
-  if (clozeFinalMode) return currentInput;
-  return [...clozeStepUserTokens, currentInput].filter(Boolean).join(" ").trim();
-}
-
 function checkClozeAnswer() {
   const q = questions[currentIndex];
-  const input = document.getElementById("answerInput");
-  const userAnswer = input ? input.value.trim() : "";
-
-  if (clozeStepTokens.length > 1 && !clozeFinalMode) {
-    handleClozeAutoCheck();
-    showClozeNeutralAssist("まずは1語ずつの自動確認を続けてください。最後の語まで正しく入力できると自動で正解になります。");
-    return;
-  }
-
-  if (!userAnswer) {
-    alert("答えを入力してください。");
-    if (input) input.focus();
-    return;
-  }
-
+  const userAnswer = document.getElementById("answerInput").value;
   const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
+
   processAnswer({
     id: q.id,
     section: q.section,
@@ -1447,7 +1259,7 @@ function processAnswer(data) {
 
   if (data.isCorrect) {
     score += data.points;
-    const praise = getMaterialFeedback(data, true);
+    const praise = getCorrectPraise();
     feedback.className = "correct feedback-visible";
     feedback.innerHTML = `
       <div class="feedback-card feedback-correct">
@@ -1458,16 +1270,14 @@ function processAnswer(data) {
         </div>
       </div>
     `;
-    triggerCorrectEffect({ label: "正解！", subLabel: `+${data.points || 1}` });
+    triggerCorrectEffect();
   } else {
-    const guidance = getMaterialFeedback(data, false);
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
       <div class="feedback-card feedback-wrong">
-        <div class="feedback-icon">${data.timedOut ? "⏰" : guidance.icon}</div>
+        <div class="feedback-icon">${data.timedOut ? "⏰" : "💡"}</div>
         <div>
-          <strong>${data.timedOut ? "時間切れ" : escapeHtml(guidance.title)}</strong>
-          <p>${escapeHtml(guidance.message)}</p>
+          <strong>${data.timedOut ? "時間切れ" : "あと少し"}</strong>
           <p>正解：${escapeHtml(data.correctAnswer)}</p>
         </div>
       </div>
@@ -1535,132 +1345,21 @@ function getCorrectPraise() {
   return praises[currentIndex % praises.length];
 }
 
-function getMaterialFeedback(data, isCorrect) {
-  const config = TEST_CONFIG[testType] || {};
-  const category = config.category || "";
-  const title = config.title || "";
-
-  if (testType === "speakingReview" || testType === "speakingReviewCloze") {
-    return isCorrect
-      ? { icon: "⚡", title: "Output ready!", message: "このチャンクはPicture descriptionやOpinionで素早く出せる形です。" }
-      : { icon: "🎯", title: "Chunk check", message: "正解を意味のまとまりで覚えると、次の発話で取り出しやすくなります。" };
-  }
-  if (testType === "phrasalVerbs") {
-    return isCorrect
-      ? { icon: "🚀", title: "Fast retrieval!", message: "動詞句としてまとまりで思い出せています。発話の検索時間が短くなります。" }
-      : { icon: "🔎", title: "Verb + particle", message: "動詞だけでなく、後ろの前置詞・副詞までセットで確認しましょう。" };
-  }
-  if (testType === "englishTheory" || title.includes("Chapter 3")) {
-    return isCorrect
-      ? { icon: "🧠", title: "Concept linked", message: "概念名と具体例を結びつけられています。別理論との違いも確認しましょう。" }
-      : { icon: "🧭", title: "Theory map", message: "選択肢は同じ章の関連理論です。解説で境界線を確認しましょう。" };
-  }
-  if (category === "teacher") {
-    return isCorrect
-      ? { icon: "📘", title: "Teaching map updated", message: "教師用マップに新しい概念を追加できています。" }
-      : { icon: "📝", title: "Check the source", message: "教科書・ハンドアウトの該当節に戻って、概念の役割を確認しましょう。" };
-  }
-  if (category === "classics") {
-    return isCorrect
-      ? { icon: "🌸", title: "古文OK", message: "意味・識別をテンポよく取り出せています。" }
-      : { icon: "🍃", title: "識別ポイント", message: "訳だけでなく、文中での働きも合わせて確認しましょう。" };
-  }
-  return isCorrect ? getCorrectPraise() : { icon: "💡", title: "あと少し", message: "正解と自分の答えの違いを短く確認しましょう。" };
-}
-
-function renderClozeStepStatus() {
-  const area = document.getElementById("clozeStepStatus");
-  if (!area) return;
-  const chips = clozeStepTokens.map((token, index) => {
-    const state = index < clozeStepIndex ? "done" : index === clozeStepIndex ? "current" : "locked";
-    const label = index < clozeStepIndex ? token : index === clozeStepIndex ? "?" : "・";
-    return `<span class="cloze-token ${state}">${escapeHtml(label)}</span>`;
-  }).join("");
-  area.innerHTML = `<div class="cloze-progress-label">自動確認 ${Math.min(clozeStepIndex + 1, clozeStepTokens.length)} / ${clozeStepTokens.length}</div><div class="cloze-token-row">${chips}</div>`;
-}
-
-function updateClozeLiveNote(message, positive = false) {
-  const note = document.getElementById("clozeLiveNote");
-  if (!note) return;
-  note.textContent = message;
-  note.classList.toggle("cloze-note-ok", Boolean(positive));
-  window.setTimeout(() => note.classList.remove("cloze-note-ok"), 420);
-}
-
-function flashClozeStep(message, isCorrect) {
-  const feedback = document.getElementById("feedback");
-  feedback.className = isCorrect ? "correct feedback-visible" : "wrong feedback-visible";
-  feedback.innerHTML = `<div class="feedback-card ${isCorrect ? "feedback-correct" : "feedback-wrong"} mini-feedback"><div class="feedback-icon">${isCorrect ? "✓" : "💡"}</div><div><strong>${escapeHtml(message)}</strong></div></div>`;
-}
-
-function playCorrectSound() {
-  try {
-    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContextClass) return;
-    const ctx = new AudioContextClass();
-    const now = ctx.currentTime;
-    const master = ctx.createGain();
-    master.gain.setValueAtTime(0.0001, now);
-    master.gain.exponentialRampToValueAtTime(0.075, now + 0.015);
-    master.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
-    master.connect(ctx.destination);
-    [523.25, 659.25, 783.99].forEach((freq, index) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now + index * 0.055);
-      gain.gain.setValueAtTime(0.0001, now + index * 0.055);
-      gain.gain.exponentialRampToValueAtTime(0.22, now + index * 0.055 + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + index * 0.055 + 0.24);
-      osc.connect(gain);
-      gain.connect(master);
-      osc.start(now + index * 0.055);
-      osc.stop(now + index * 0.055 + 0.28);
-    });
-    setTimeout(() => ctx.close && ctx.close(), 650);
-  } catch (error) {
-    // Some browsers block audio until user interaction. Visual feedback remains active.
-  }
-}
-
-function triggerCorrectEffect(options = {}) {
-  const mini = Boolean(options.mini);
-  const label = options.label || (mini ? "OK" : "正解！");
-  const subLabel = options.subLabel || (mini ? "次の語" : "+1");
-
+function triggerCorrectEffect() {
   const layer = document.createElement("div");
-  layer.className = mini ? "celebration-layer celebration-mini" : "celebration-layer celebration-full";
-
-  const burst = document.createElement("div");
-  burst.className = "correct-burst";
-  burst.innerHTML = `
-    <div class="correct-burst-ring"></div>
-    <div class="correct-burst-glow"></div>
-    <div class="correct-burst-badge">
-      <span>${escapeHtml(label)}</span>
-      <small>${escapeHtml(subLabel)}</small>
-    </div>
-  `;
-  layer.appendChild(burst);
-
-  const marks = mini ? ["✓", "✦", "★"] : ["★", "✦", "◆", "●", "✓", "+"];
-  const total = mini ? 12 : 34;
-  for (let i = 0; i < total; i++) {
+  layer.className = "celebration-layer";
+  const marks = ["★", "●", "◆", "✦", "✓"];
+  for (let i = 0; i < 22; i++) {
     const piece = document.createElement("span");
-    piece.className = "confetti-piece confetti-burst";
+    piece.className = "confetti-piece";
     piece.textContent = marks[i % marks.length];
-
-    const angle = (Math.PI * 2 * i) / total + Math.random() * 0.38;
-    const distance = (mini ? 66 : 126) + Math.random() * (mini ? 30 : 72);
-    piece.style.setProperty("--x", `${(Math.cos(angle) * distance).toFixed(1)}px`);
-    piece.style.setProperty("--y", `${(Math.sin(angle) * distance).toFixed(1)}px`);
-    piece.style.setProperty("--r", `${Math.floor(Math.random() * 360)}deg`);
-    piece.style.animationDelay = `${Math.random() * 0.08}s`;
+    piece.style.left = `${8 + Math.random() * 84}%`;
+    piece.style.animationDelay = `${Math.random() * 0.18}s`;
+    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
     layer.appendChild(piece);
   }
-
   document.body.appendChild(layer);
-  setTimeout(() => layer.remove(), mini ? 820 : 1300);
+  setTimeout(() => layer.remove(), 1100);
 }
 
 function nextQuestion() {
@@ -2153,11 +1852,6 @@ function shuffle(array) {
 
 function escapeHtml(text) {
   return String(text ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-}
-
-function getSourceTag(explanation) {
-  const match = String(explanation || "").match(/Source:\s*([^\.。]+(?:p{1,2}\.\s*\d+(?:[-–]\d+)?|page\s*\d+(?:[-–]\d+)?)[^\.。]*)/i);
-  return match ? `Source: ${match[1].trim()}` : "";
 }
 
 function getDateKey(date) {
