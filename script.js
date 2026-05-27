@@ -178,6 +178,7 @@ let selectedAutoNextDelay = AUTO_NEXT_DELAY_MS;
 let timerId = null;
 let remainingSeconds = 0;
 let autoAdvanceTimerId = null;
+let audioContext = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
@@ -228,6 +229,7 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("checkButton", "click", checkAnswer);
   safeAddEvent("nextButton", "click", nextQuestion);
   safeAddEvent("quitButton", "click", quitQuiz);
+  document.addEventListener("keydown", handleQuizKeyboard);
 
   safeAddEvent("restartButton", "click", () => {
     resetQuizState();
@@ -242,6 +244,40 @@ document.addEventListener("DOMContentLoaded", () => {
 
   restoreSession();
 });
+
+function handleQuizKeyboard(event) {
+  const quizScreen = document.getElementById("quizScreen");
+  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
+  if (event.isComposing) return;
+
+  const config = TEST_CONFIG[testType];
+  const checkButton = document.getElementById("checkButton");
+  const nextButton = document.getElementById("nextButton");
+  const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (checkButton && !checkButton.disabled) {
+      checkAnswer();
+      return;
+    }
+    if (nextButton && !nextButton.classList.contains("hidden")) {
+      nextQuestion();
+      return;
+    }
+  }
+
+  if (config?.type !== "choice") return;
+  if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") return;
+
+  if (/^[1-4]$/.test(event.key)) {
+    const index = Number(event.key) - 1;
+    const buttons = Array.from(document.querySelectorAll(".choice-button"));
+    const target = buttons[index];
+    if (!target || checkButton?.disabled) return;
+    target.click();
+  }
+}
 
 function safeAddEvent(id, event, handler) {
   const element = document.getElementById(id);
@@ -1085,14 +1121,24 @@ function showChoiceQuestion() {
 
   area.appendChild(wordDiv);
 
-  shuffle(q.choices).forEach(choice => {
+  shuffle(q.choices).forEach((choice, index) => {
     const btn = document.createElement("button");
     btn.className = "choice-button";
-    btn.textContent = choice;
+    btn.type = "button";
+    btn.dataset.choiceIndex = String(index + 1);
+    btn.setAttribute("aria-label", `${index + 1}. ${choice}`);
+    btn.innerHTML = `<span class="choice-index">${index + 1}</span><span>${escapeHtml(choice)}</span>`;
     btn.addEventListener("click", () => {
       selectedChoice = choice;
       document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
+    });
+    btn.addEventListener("dblclick", () => {
+      if (document.getElementById("checkButton")?.disabled) return;
+      selectedChoice = choice;
+      document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
+      btn.classList.add("selected");
+      checkChoiceAnswer();
     });
     area.appendChild(btn);
   });
@@ -1270,7 +1316,8 @@ function processAnswer(data) {
         </div>
       </div>
     `;
-    triggerCorrectEffect();
+    playCorrectSound();
+    triggerCorrectEffect(praise);
   } else {
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
@@ -1283,6 +1330,7 @@ function processAnswer(data) {
       </div>
     `;
     mistakes.push(data);
+    triggerWrongEffect(data.timedOut);
   }
 
   if (data.explanation) {
@@ -1337,29 +1385,89 @@ function processAnswer(data) {
 
 function getCorrectPraise() {
   const praises = [
-    { icon: "🎉", title: "Great!", message: "その表現はそのままSpeakingで使えます。" },
-    { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" },
-    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。" },
-    { icon: "🔥", title: "Keep going!", message: "この調子で使える表現を増やしましょう。" }
+    { icon: "🎉", title: "Brilliant!", message: "正確に処理できています。次もこの調子です。" },
+    { icon: "⚡", title: "Sharp answer!", message: "速く、正確に判断できています。" },
+    { icon: "🌟", title: "Excellent!", message: "読解・語彙・アウトプットの土台が積み上がっています。" },
+    { icon: "🔥", title: "Great focus!", message: "集中が続いています。小さな正解を重ねましょう。" },
+    { icon: "🚀", title: "Keep the streak!", message: "この一問が次の得点につながります。" }
   ];
   return praises[currentIndex % praises.length];
 }
 
-function triggerCorrectEffect() {
+function playCorrectSound() {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    if (!audioContext) audioContext = new AudioCtx();
+
+    const play = () => {
+      const now = audioContext.currentTime;
+      playTone(523.25, now, 0.08, "sine", 0.045);
+      playTone(659.25, now + 0.08, 0.09, "sine", 0.050);
+      playTone(783.99, now + 0.17, 0.12, "triangle", 0.055);
+    };
+
+    if (audioContext.state === "suspended") audioContext.resume().then(play).catch(() => {});
+    else play();
+  } catch (error) {
+    console.warn("Correct sound could not be played.", error);
+  }
+}
+
+function playTone(frequency, startTime, duration, type = "sine", volume = 0.04) {
+  if (!audioContext) return;
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, startTime);
+  gain.gain.setValueAtTime(0.0001, startTime);
+  gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+  oscillator.connect(gain);
+  gain.connect(audioContext.destination);
+  oscillator.start(startTime);
+  oscillator.stop(startTime + duration + 0.03);
+}
+
+function triggerCorrectEffect(praise = { title: "Great!", icon: "🎉" }) {
   const layer = document.createElement("div");
   layer.className = "celebration-layer";
-  const marks = ["★", "●", "◆", "✦", "✓"];
-  for (let i = 0; i < 22; i++) {
+
+  const burst = document.createElement("div");
+  burst.className = "success-burst";
+  burst.innerHTML = `<span>${escapeHtml(praise.icon || "🎉")}</span><strong>+1</strong><em>${escapeHtml(praise.title || "Great!")}</em>`;
+  layer.appendChild(burst);
+
+  const marks = ["★", "✦", "◆", "●", "✓", "+1"];
+  for (let i = 0; i < 34; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
     piece.textContent = marks[i % marks.length];
-    piece.style.left = `${8 + Math.random() * 84}%`;
-    piece.style.animationDelay = `${Math.random() * 0.18}s`;
-    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+    piece.style.left = `${6 + Math.random() * 88}%`;
+    piece.style.setProperty("--delay", `${Math.random() * 0.16}s`);
+    piece.style.setProperty("--duration", `${0.92 + Math.random() * 0.52}s`);
+    piece.style.setProperty("--drift", `${-70 + Math.random() * 140}px`);
+    piece.style.setProperty("--spin", `${160 + Math.random() * 260}deg`);
     layer.appendChild(piece);
   }
+
   document.body.appendChild(layer);
-  setTimeout(() => layer.remove(), 1100);
+  const quizScreen = document.getElementById("quizScreen");
+  quizScreen?.classList.add("quiz-success-pulse");
+  document.body.classList.add("answer-correct-flash");
+
+  setTimeout(() => quizScreen?.classList.remove("quiz-success-pulse"), 720);
+  setTimeout(() => document.body.classList.remove("answer-correct-flash"), 620);
+  setTimeout(() => layer.remove(), 1450);
+}
+
+function triggerWrongEffect(timedOut = false) {
+  const feedback = document.getElementById("feedback");
+  const quizScreen = document.getElementById("quizScreen");
+  feedback?.classList.add("feedback-shake");
+  quizScreen?.classList.add(timedOut ? "quiz-timeout-pulse" : "quiz-wrong-pulse");
+  setTimeout(() => feedback?.classList.remove("feedback-shake"), 420);
+  setTimeout(() => quizScreen?.classList.remove("quiz-wrong-pulse", "quiz-timeout-pulse"), 620);
 }
 
 function nextQuestion() {
