@@ -3,7 +3,7 @@
    - 管理者ログイン: 9999
    - 学習者コード: Google Sheets / Apps Script の AccessCodes で管理
    - 許可教材だけ表示 / 1教材なら直接表示
-   - CSV教材、語順並べ替え、穴埋め、Writing提出、履歴送信に対応
+   - CSV教材、語順並べ替え、穴埋め、Writing提出、履歴送信、間違い復習に対応
 ========================================================= */
 
 const ADMIN_PASSWORD = "9999";
@@ -27,7 +27,7 @@ const SENTENCE_FILES = [
 const CATEGORY_INFO = {
   toeic: { label: "TOEIC", description: "Speaking/Writingで使う表現を瞬発的に出す", theme: "toeic", icon: "🎙️" },
   toefl: { label: "TOEFL", description: "アカデミック英語・語順アウトプット", theme: "toefl", icon: "🎓" },
-  highschool: { label: "高校英語", description: "語彙・文法・読解・英検対策", theme: "highschool", icon: "📚" },
+  highschool: { label: "高校英語", description: "語彙・文法・英検対策", theme: "highschool", icon: "📚" },
   classics: { label: "古文", description: "古典単語・文法・古文常識", theme: "classics", icon: "🌸" },
   teacher: { label: "教師用問題", description: "英語教育理論・授業研究用の確認問題", theme: "teacher", icon: "🧑‍🏫" },
   eiken: { label: "英検", description: "英検準一級Writing対策", theme: "eiken", icon: "✍️" }
@@ -60,9 +60,10 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3103",
     defaultTime: 60,
-    path: "data/highschool/polaris3_questions.csv",
+    manifest: "data/highschool/polaris3_manifest.csv",
     keepOrder: true,
-    description: "SATレベルを意識した英語長文の語彙・事実発問・推論発問・要約穴埋めを文章ごとに練習します。"
+    sectionLabel: "文章",
+    description: "文章ごとのCSVを読み込み、段落ごとにVocabulary・Factual・Inference・Summary Clozeを順番に練習します。"
   },
   sentence: {
     title: "語順並べ替えテスト",
@@ -128,22 +129,24 @@ const TEST_CONFIG = {
     description: "SLA Chapter 3 の重要概念を四択で確認します。"
   },
   classicalWords: {
-    title: "古典単語",
+    title: "古文単語",
     category: "classics",
     type: "choice",
     password: "1110",
     defaultTime: 15,
     path: "data/classics/classical_words.csv",
-    description: "古典単語の意味をテンポよく確認します。"
+    review: true,
+    description: "古文単語の意味をテンポよく確認します。間違えた問題は復習に保存されます。"
   },
   classicalGrammar: {
-    title: "古典文法",
+    title: "古文文法",
     category: "classics",
     type: "choice",
     password: "2220",
     defaultTime: 30,
     path: "data/classics/classical_grammar.csv",
-    description: "助動詞・敬語・識別などを確認します。"
+    review: true,
+    description: "助動詞・敬語・識別などを確認します。間違えた問題は復習に保存されます。"
   },
   classicalKnowledge: {
     title: "古文常識",
@@ -178,7 +181,6 @@ let selectedAutoNextDelay = AUTO_NEXT_DELAY_MS;
 let timerId = null;
 let remainingSeconds = 0;
 let autoAdvanceTimerId = null;
-let audioContext = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
@@ -244,40 +246,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   restoreSession();
 });
-
-function handleQuizKeyboard(event) {
-  const quizScreen = document.getElementById("quizScreen");
-  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
-  if (event.isComposing) return;
-
-  const config = TEST_CONFIG[testType];
-  const checkButton = document.getElementById("checkButton");
-  const nextButton = document.getElementById("nextButton");
-  const activeTag = (document.activeElement?.tagName || "").toLowerCase();
-
-  if (event.key === "Enter") {
-    event.preventDefault();
-    if (checkButton && !checkButton.disabled) {
-      checkAnswer();
-      return;
-    }
-    if (nextButton && !nextButton.classList.contains("hidden")) {
-      nextQuestion();
-      return;
-    }
-  }
-
-  if (config?.type !== "choice") return;
-  if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") return;
-
-  if (/^[1-4]$/.test(event.key)) {
-    const index = Number(event.key) - 1;
-    const buttons = Array.from(document.querySelectorAll(".choice-button"));
-    const target = buttons[index];
-    if (!target || checkButton?.disabled) return;
-    target.click();
-  }
-}
 
 function safeAddEvent(id, event, handler) {
   const element = document.getElementById(id);
@@ -800,6 +768,10 @@ async function ensureQuestionsLoaded(type) {
     loadedQuestions[type] = await loadClozeQuestions(config.path);
   } else if (config.type === "writing") {
     loadedQuestions[type] = await loadWritingTasks(config.path);
+  } else if (config.manifest) {
+    loadedQuestions[type] = await loadChoiceQuestionsFromManifest(config.manifest);
+  } else if (config.files) {
+    loadedQuestions[type] = await loadChoiceQuestionsFromFiles(config.files);
   } else {
     loadedQuestions[type] = await loadChoiceQuestions(config.path);
   }
@@ -813,16 +785,13 @@ function setupSectionSelect(sourceQuestions) {
     .filter(Boolean)
     .sort((a, b) => String(a).localeCompare(String(b), "ja", { numeric: true }));
 
-  const allLabel = testType === "polaris3" ? "すべての文章" : "すべてのセクション";
-  select.innerHTML = `<option value="all">${allLabel}</option>`;
+  const config = TEST_CONFIG[testType] || {};
+  const label = config.sectionLabel || "セクション";
+  select.innerHTML = `<option value="all">すべての${escapeHtml(label)}</option>`;
   sections.forEach(section => {
     const option = document.createElement("option");
     option.value = section;
-    if (testType === "polaris3") {
-      option.textContent = isNaN(Number(section)) ? section : `Passage ${section}`;
-    } else {
-      option.textContent = isNaN(Number(section)) ? section : `Section ${section}`;
-    }
+    option.textContent = isNaN(Number(section)) ? section : `Section ${section}`;
     select.appendChild(option);
   });
 }
@@ -838,7 +807,7 @@ function toggleCustomQuestionInput() {
    CSV読み込み
 ========================= */
 
-async function loadChoiceQuestions(filePath) {
+async function loadChoiceQuestions(filePath, sectionOverride = "") {
   const response = await fetch(filePath);
   if (!response.ok) {
     alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
@@ -851,17 +820,48 @@ async function loadChoiceQuestions(filePath) {
 
   return rows.map(row => ({
     id: row[0],
-    section: row[1],
+    section: sectionOverride || row[1],
     word: row[2],
     correctAnswer: row[3],
     choices: [row[3], row[4], row[5], row[6]].filter(Boolean),
     points: Number(row[7]) || 1,
     explanation: row[8] || "",
     questionType: row[9] || "",
-    passage: row[10] || ""
+    passage: row[10] || "",
+    sourceFile: filePath
   })).filter(q => q.id && q.section && q.word && q.correctAnswer && q.choices.length > 0);
 }
 
+async function loadChoiceQuestionsFromFiles(files) {
+  const all = [];
+  for (const file of files || []) {
+    const loaded = await loadChoiceQuestions(file);
+    all.push(...loaded);
+  }
+  return all;
+}
+
+async function loadChoiceQuestionsFromManifest(manifestPath) {
+  const response = await fetch(manifestPath);
+  if (!response.ok) {
+    alert(`${manifestPath} を読み込めませんでした。ポラリス3の文章一覧CSVを確認してください。`);
+    return [];
+  }
+
+  const text = await response.text();
+  const rows = parseCSV(text);
+  rows.shift();
+
+  const all = [];
+  for (const row of rows) {
+    const sectionName = row[0];
+    const filePath = row[1];
+    if (!sectionName || !filePath) continue;
+    const loaded = await loadChoiceQuestions(filePath, sectionName);
+    all.push(...loaded);
+  }
+  return all;
+}
 async function loadSentenceQuestions(files) {
   const all = [];
   for (const file of files) {
@@ -947,7 +947,7 @@ async function startNormalQuiz() {
 async function startReviewQuiz() {
   const config = TEST_CONFIG[testType];
   if (!config || !config.review) {
-    alert("復習機能は単語テスト用です。");
+    alert("この教材では復習機能は利用できません。");
     return;
   }
 
@@ -973,8 +973,7 @@ function prepareQuiz(sourceQuestions) {
     ? [...sourceQuestions]
     : sourceQuestions.filter(q => q.section === selectedSection);
 
-  const config = TEST_CONFIG[testType] || {};
-  if (!config.keepOrder) {
+  if (!TEST_CONFIG[testType]?.keepOrder) {
     pool = shuffle(pool);
   }
 
@@ -1086,6 +1085,31 @@ function handleTimeUp() {
   });
 }
 
+function handleQuizKeyboard(event) {
+  if (event.key !== "Enter") return;
+  const quizScreen = document.getElementById("quizScreen");
+  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
+  if (event.isComposing) return;
+
+  const active = document.activeElement;
+  if (active && active.tagName === "TEXTAREA") return;
+
+  const nextButton = document.getElementById("nextButton");
+  const checkButton = document.getElementById("checkButton");
+
+  if (nextButton && !nextButton.classList.contains("hidden")) {
+    event.preventDefault();
+    nextQuestion();
+    return;
+  }
+
+  if (checkButton && !checkButton.disabled) {
+    if (TEST_CONFIG[testType]?.type === "choice" && !selectedChoice) return;
+    event.preventDefault();
+    checkAnswer();
+  }
+}
+
 function showChoiceQuestion() {
   const q = questions[currentIndex];
   document.getElementById("testTitle").textContent = reviewMode ? `${TEST_CONFIG[testType].title} 間違い復習` : TEST_CONFIG[testType].title;
@@ -1093,9 +1117,20 @@ function showChoiceQuestion() {
   area.innerHTML = "";
 
   const wordDiv = document.createElement("div");
-  wordDiv.className = "words";
+  wordDiv.className = testType === "polaris3" ? "reading-question" : "words";
 
-  if (testType === "monitor") {
+  if (testType === "polaris3") {
+    const typeLabel = q.questionType || detectPolarisQuestionType(q.id);
+    const paragraphLabel = extractParagraphLabel(q.id);
+    const passageBlock = q.passage
+      ? `<div class="passage-card"><span>Passage ${escapeHtml(paragraphLabel)}</span><p>${escapeHtml(q.passage)}</p></div>`
+      : "";
+    wordDiv.innerHTML = `
+      <div class="question-meta-line">${escapeHtml(q.section)} | ${escapeHtml(paragraphLabel)} | ${escapeHtml(typeLabel)}</div>
+      ${passageBlock}
+      <div class="reading-prompt">${escapeHtml(q.word)}</div>
+    `;
+  } else if (testType === "monitor") {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br><span class="monitor-label">最も自然で正確な表現を選んでください。</span><br>"${escapeHtml(q.word)}"`;
   } else if (testType === "speakingReview") {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>より自然な表現は？<br>"${escapeHtml(q.word)}"`;
@@ -1103,16 +1138,6 @@ function showChoiceQuestion() {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>説明に合う概念を選んでください。<br>"${escapeHtml(q.word)}"`;
   } else if (testType === "eikenConnectors") {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>空欄に最も適切な表現を選んでください。<br>"${escapeHtml(q.word)}"`;
-  } else if (testType === "polaris3") {
-    const typeLabel = q.questionType ? `<span class="reading-type-badge">${escapeHtml(q.questionType)}</span>` : `<span class="reading-type-badge">Reading</span>`;
-    const passageBox = q.passage ? `<div class="reading-passage-box">${escapeHtml(q.passage).replace(/\n/g, "<br>")}</div>` : "";
-    wordDiv.className = "words reading-question-card";
-    wordDiv.innerHTML = `
-      <div class="question-meta-line">No.${escapeHtml(q.id)} | ${escapeHtml(q.section)} ${typeLabel}</div>
-      ${passageBox}
-      <div class="reading-question-text">${escapeHtml(q.word).replace(/\n/g, "<br>")}</div>
-      <div class="choice-submit-hint">Choose the best answer.</div>
-    `;
   } else if (testType.startsWith("classical")) {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>${escapeHtml(q.word)}`;
   } else {
@@ -1121,29 +1146,36 @@ function showChoiceQuestion() {
 
   area.appendChild(wordDiv);
 
-  shuffle(q.choices).forEach((choice, index) => {
+  shuffle([...q.choices]).forEach((choice, index) => {
     const btn = document.createElement("button");
     btn.className = "choice-button";
-    btn.type = "button";
-    btn.dataset.choiceIndex = String(index + 1);
-    btn.setAttribute("aria-label", `${index + 1}. ${choice}`);
-    btn.innerHTML = `<span class="choice-index">${index + 1}</span><span>${escapeHtml(choice)}</span>`;
+    btn.innerHTML = `<span class="choice-index">${index + 1}</span>${escapeHtml(choice)}`;
     btn.addEventListener("click", () => {
+      if (selectedChoice === choice && !document.getElementById("checkButton").disabled) {
+        checkAnswer();
+        return;
+      }
       selectedChoice = choice;
       document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
       btn.classList.add("selected");
-    });
-    btn.addEventListener("dblclick", () => {
-      if (document.getElementById("checkButton")?.disabled) return;
-      selectedChoice = choice;
-      document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      checkChoiceAnswer();
     });
     area.appendChild(btn);
   });
 }
 
+function detectPolarisQuestionType(id) {
+  const text = String(id || "");
+  if (text.includes("-V")) return "Vocabulary";
+  if (text.includes("-F")) return "Factual";
+  if (text.includes("-I")) return "Inference";
+  if (text.includes("-S")) return "Summary Cloze";
+  return "Question";
+}
+
+function extractParagraphLabel(id) {
+  const match = String(id || "").match(/P(\d{1,2})/i);
+  return match ? `Paragraph ${Number(match[1])}` : "Paragraph";
+}
 function showSentenceQuestion() {
   const q = questions[currentIndex];
   document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
@@ -1246,10 +1278,6 @@ function checkChoiceAnswer() {
   }
 
   const isCorrect = selectedChoice === q.correctAnswer;
-  if (TEST_CONFIG[testType].review) {
-    if (isCorrect && reviewMode) removeWrongWord(q.id);
-    if (!isCorrect) saveWrongWord(q.id);
-  }
 
   processAnswer({
     id: q.id,
@@ -1303,6 +1331,11 @@ function processAnswer(data) {
   const responseSeconds = questionStartTime ? Math.max(0, Math.round((now - questionStartTime) / 1000)) : 0;
   const feedback = document.getElementById("feedback");
 
+  if (TEST_CONFIG[testType]?.review && TEST_CONFIG[testType]?.type === "choice") {
+    if (data.isCorrect && reviewMode) removeWrongWord(data.id);
+    if (!data.isCorrect) saveWrongWord(data.id);
+  }
+
   if (data.isCorrect) {
     score += data.points;
     const praise = getCorrectPraise();
@@ -1316,8 +1349,7 @@ function processAnswer(data) {
         </div>
       </div>
     `;
-    playCorrectSound();
-    triggerCorrectEffect(praise);
+    triggerCorrectEffect();
   } else {
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
@@ -1330,7 +1362,6 @@ function processAnswer(data) {
       </div>
     `;
     mistakes.push(data);
-    triggerWrongEffect(data.timedOut);
   }
 
   if (data.explanation) {
@@ -1385,89 +1416,64 @@ function processAnswer(data) {
 
 function getCorrectPraise() {
   const praises = [
-    { icon: "🎉", title: "Brilliant!", message: "正確に処理できています。次もこの調子です。" },
-    { icon: "⚡", title: "Sharp answer!", message: "速く、正確に判断できています。" },
-    { icon: "🌟", title: "Excellent!", message: "読解・語彙・アウトプットの土台が積み上がっています。" },
-    { icon: "🔥", title: "Great focus!", message: "集中が続いています。小さな正解を重ねましょう。" },
-    { icon: "🚀", title: "Keep the streak!", message: "この一問が次の得点につながります。" }
+    { icon: "🎉", title: "Great!", message: "その表現はそのままSpeakingで使えます。" },
+    { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" },
+    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。" },
+    { icon: "🔥", title: "Keep going!", message: "この調子で使える表現を増やしましょう。" }
   ];
   return praises[currentIndex % praises.length];
 }
 
-function playCorrectSound() {
-  try {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    if (!audioContext) audioContext = new AudioCtx();
+function triggerCorrectEffect() {
+  playCorrectSound();
 
-    const play = () => {
-      const now = audioContext.currentTime;
-      playTone(523.25, now, 0.08, "sine", 0.045);
-      playTone(659.25, now + 0.08, 0.09, "sine", 0.050);
-      playTone(783.99, now + 0.17, 0.12, "triangle", 0.055);
-    };
+  const pop = document.createElement("div");
+  pop.className = "score-pop";
+  pop.textContent = "+1";
+  document.body.appendChild(pop);
+  setTimeout(() => pop.remove(), 950);
 
-    if (audioContext.state === "suspended") audioContext.resume().then(play).catch(() => {});
-    else play();
-  } catch (error) {
-    console.warn("Correct sound could not be played.", error);
-  }
-}
-
-function playTone(frequency, startTime, duration, type = "sine", volume = 0.04) {
-  if (!audioContext) return;
-  const oscillator = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-  oscillator.type = type;
-  oscillator.frequency.setValueAtTime(frequency, startTime);
-  gain.gain.setValueAtTime(0.0001, startTime);
-  gain.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
-  gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
-  oscillator.connect(gain);
-  gain.connect(audioContext.destination);
-  oscillator.start(startTime);
-  oscillator.stop(startTime + duration + 0.03);
-}
-
-function triggerCorrectEffect(praise = { title: "Great!", icon: "🎉" }) {
   const layer = document.createElement("div");
   layer.className = "celebration-layer";
-
-  const burst = document.createElement("div");
-  burst.className = "success-burst";
-  burst.innerHTML = `<span>${escapeHtml(praise.icon || "🎉")}</span><strong>+1</strong><em>${escapeHtml(praise.title || "Great!")}</em>`;
-  layer.appendChild(burst);
-
-  const marks = ["★", "✦", "◆", "●", "✓", "+1"];
-  for (let i = 0; i < 34; i++) {
+  const marks = ["★", "●", "◆", "✦", "✓", "＋"];
+  for (let i = 0; i < 28; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
     piece.textContent = marks[i % marks.length];
-    piece.style.left = `${6 + Math.random() * 88}%`;
-    piece.style.setProperty("--delay", `${Math.random() * 0.16}s`);
-    piece.style.setProperty("--duration", `${0.92 + Math.random() * 0.52}s`);
-    piece.style.setProperty("--drift", `${-70 + Math.random() * 140}px`);
-    piece.style.setProperty("--spin", `${160 + Math.random() * 260}deg`);
+    piece.style.left = `${8 + Math.random() * 84}%`;
+    piece.style.animationDelay = `${Math.random() * 0.2}s`;
+    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
     layer.appendChild(piece);
   }
-
   document.body.appendChild(layer);
-  const quizScreen = document.getElementById("quizScreen");
-  quizScreen?.classList.add("quiz-success-pulse");
-  document.body.classList.add("answer-correct-flash");
-
-  setTimeout(() => quizScreen?.classList.remove("quiz-success-pulse"), 720);
-  setTimeout(() => document.body.classList.remove("answer-correct-flash"), 620);
-  setTimeout(() => layer.remove(), 1450);
+  setTimeout(() => layer.remove(), 1200);
 }
 
-function triggerWrongEffect(timedOut = false) {
-  const feedback = document.getElementById("feedback");
-  const quizScreen = document.getElementById("quizScreen");
-  feedback?.classList.add("feedback-shake");
-  quizScreen?.classList.add(timedOut ? "quiz-timeout-pulse" : "quiz-wrong-pulse");
-  setTimeout(() => feedback?.classList.remove("feedback-shake"), 420);
-  setTimeout(() => quizScreen?.classList.remove("quiz-wrong-pulse", "quiz-timeout-pulse"), 620);
+function playCorrectSound() {
+  try {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return;
+    const ctx = new AudioContextClass();
+    const now = ctx.currentTime;
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(0.08, now + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.42);
+    gain.connect(ctx.destination);
+
+    [523.25, 659.25, 783.99].forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(freq, now + index * 0.08);
+      osc.connect(gain);
+      osc.start(now + index * 0.08);
+      osc.stop(now + index * 0.08 + 0.18);
+    });
+
+    setTimeout(() => ctx.close(), 650);
+  } catch (error) {
+    console.warn("正解音を再生できませんでした", error);
+  }
 }
 
 function nextQuestion() {
@@ -1805,7 +1811,7 @@ function getWrongKey() {
 }
 
 function clearStoredMistakes() {
-  if (!confirm("この学習者の単語間違い履歴を削除しますか？")) return;
+  if (!confirm("この学習者の間違い履歴を削除しますか？")) return;
   localStorage.removeItem(getWrongKey());
   updateMistakeCountInSettings();
   alert("間違い履歴を削除しました。" );
