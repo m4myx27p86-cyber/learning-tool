@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>学習ツール</title>
-  <link rel="stylesheet" href="style.css?v=classics-review-20260527" />
+  <link rel="stylesheet" href="style.css?v=restored-materials-20260529" />
 </head>
 <body>
   <div class="app-shell">
@@ -12,7 +12,7 @@
       <div>
         <p class="eyebrow">Practice Dashboard</p>
         <h1>学習ツール</h1>
-        <p class="header-message">1問ずつ、使える英語と確かな知識を積み上げる</p>
+        <p class="header-message">1問ずつ、使える表現と確かな知識を積み上げる</p>
       </div>
     </header>
 
@@ -20,7 +20,7 @@
       <section id="loginScreen">
         <h2>ログイン</h2>
         <p class="muted">管理者が発行した<strong>学習者コード</strong>を入力してください。</p>
-        <input type="text" id="passwordInput" class="secure-code" placeholder="学習者コード" inputmode="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
+        <input type="password" id="passwordInput" class="secure-code" placeholder="学習者コード" inputmode="text" maxlength="12" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
         <label class="password-toggle">
           <input type="checkbox" id="showPassword" />
           パスワード・コードを表示
@@ -32,7 +32,7 @@
       <section id="studentScreen" class="hidden">
         <h2>学習者ログイン</h2>
         <p class="muted">従来方式を使う場合は、4桁の学習者番号を入力してください。通常は管理者が発行した学習者コードを最初の画面に入力します。</p>
-        <input type="text" id="studentLoginInput" class="secure-code" placeholder="4桁の学習者番号" inputmode="numeric" maxlength="4" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
+        <input type="password" id="studentLoginInput" class="secure-code" placeholder="4桁の学習者番号" inputmode="numeric" maxlength="4" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
         <label class="password-toggle">
           <input type="checkbox" id="showStudentPassword" />
           パスワードを表示
@@ -59,6 +59,7 @@
 
         <div id="adminQuickArea" class="admin-quick hidden">
           <button id="accessManagerButton" class="admin-card">学習者コード発行・確認</button>
+          <button id="adminHistoryButton" class="admin-card">解答履歴を確認</button>
         </div>
 
         <div id="materialCategoryArea"></div>
@@ -95,7 +96,7 @@
       <section id="materialPasswordScreen" class="hidden">
         <h2 id="materialPasswordTitle">教材パスワード</h2>
         <p class="muted">従来方式で利用する場合、この教材の4桁パスワードを入力してください。</p>
-        <input type="text" id="materialPasswordInput" class="secure-code" placeholder="教材パスワード" inputmode="numeric" maxlength="4" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
+        <input type="password" id="materialPasswordInput" class="secure-code" placeholder="教材パスワード" inputmode="numeric" maxlength="4" autocomplete="off" autocapitalize="off" spellcheck="false" data-lpignore="true" />
         <label class="password-toggle">
           <input type="checkbox" id="showMaterialPassword" />
           パスワードを表示
@@ -119,7 +120,7 @@
 
         <div id="commonSettings" class="settings-grid">
           <label>
-            文章・セクション
+            セクション
             <select id="sectionSelect"></select>
           </label>
           <label>
@@ -214,6 +215,7 @@
         <p id="timeDisplay"></p>
         <p id="sendStatusDisplay"></p>
         <div id="mistakeArea"></div>
+        <button id="retryMistakesButton" class="secondary-button hidden">今回のミスを解き直す</button>
         <button id="restartButton">同じ教材の問題選択へ戻る</button>
         <button id="resultMenuButton" class="secondary-button">教材選択へ戻る</button>
       </section>
@@ -237,6 +239,6 @@
     </main>
   </div>
 
-  <script src="script.js?v=classics-review-20260527"></script>
+  <script src="script.js?v=restored-materials-20260529"></script>
 </body>
 </html>
