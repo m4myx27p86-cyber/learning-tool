@@ -57,6 +57,17 @@ const TEST_CONFIG = {
     review: true,
     description: "単語の意味を素早く確認します。迷った問題は間違い復習に保存されます。"
   },
+  target1900Vocab: {
+    title: "ターゲット1900 単語テスト",
+    category: "highschool",
+    type: "choice",
+    password: "1900",
+    defaultTime: 15,
+    path: "data/vocab/target_1900.csv",
+    review: true,
+    choiceInstruction: "単語の意味として最も適切なものを選んでください。",
+    description: "ターゲット1900の語彙をテンポよく確認します。"
+  },
   sokudokuVocab: {
     title: "速読英単語",
     category: "highschool",
@@ -1312,7 +1323,7 @@ function getChoiceInstruction(q) {
 }
 
 function shouldQuoteChoicePrompt(type) {
-  return ["vocab", "sokudokuVocab", "monitor", "speakingReview", "eikenConnectors", "phrasalVerbs"].includes(type);
+  return ["vocab", "target1900Vocab", "sokudokuVocab", "monitor", "speakingReview", "eikenConnectors", "phrasalVerbs"].includes(type);
 }
 
 function formatSectionLabel(section) {
@@ -1335,35 +1346,55 @@ function extractParagraphLabel(id) {
 
 function showSentenceQuestion() {
   const q = questions[currentIndex];
-  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
+  const config = TEST_CONFIG[testType];
+  const noKeyboardMode = testType === "speakingReview";
+
+  document.getElementById("testTitle").textContent = config.title;
   q.words = shuffle(splitSentence(q.answer));
   const hint = q.hint || createInitialHint(q.answer);
   const prompt = q.prompt ? `<div class="question-prompt">${escapeHtml(q.prompt)}</div>` : "";
+  const inputAttributes = noKeyboardMode
+    ? 'readonly inputmode="none" aria-readonly="true" data-no-keyboard="true"'
+    : 'inputmode="text"';
+  const placeholder = noKeyboardMode
+    ? `単語ボタンをタップして英文を作ります：${escapeHtml(hint)}`
+    : `ヒント: ${escapeHtml(hint)}`;
 
   document.getElementById("questionArea").innerHTML = `
     ${prompt}
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
     <div class="words" id="sentenceWords">${q.words.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
-    <input type="text" id="answerInput" class="answer-input" placeholder="ヒント: ${escapeHtml(hint)}" autocomplete="off" />
+    <input type="text" id="answerInput" class="answer-input" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ${inputAttributes} />
     <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
   `;
 
+  const input = document.getElementById("answerInput");
+
+  if (noKeyboardMode) {
+    // Speaking Reviewの並び替えはタップ操作専用にし、スマホのソフトキーボードを開かない。
+    ["focus", "touchstart", "mousedown", "click"].forEach(eventName => {
+      input.addEventListener(eventName, event => {
+        if (eventName !== "focus") event.preventDefault();
+        input.blur();
+      }, { passive: false });
+    });
+  }
+
   document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
     chip.addEventListener("click", () => {
-      const input = document.getElementById("answerInput");
       input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
       updateUsedWords();
-      input.focus();
+      if (!noKeyboardMode) input.focus();
     });
   });
   document.getElementById("clearSentenceButton").addEventListener("click", () => {
-    const input = document.getElementById("answerInput");
     input.value = "";
     updateUsedWords();
-    input.focus();
+    if (noKeyboardMode) input.blur();
+    else input.focus();
   });
-  document.getElementById("answerInput").addEventListener("input", updateUsedWords);
-  document.getElementById("answerInput").focus();
+  input.addEventListener("input", updateUsedWords);
+  if (!noKeyboardMode) input.focus();
 }
 
 function showClozeQuestion() {
