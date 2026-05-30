@@ -842,8 +842,9 @@ body::before {
 }
 
 .incremental-input {
+  display: block;
   max-width: 360px;
-  margin-left: 0;
+  margin: 12px auto 0;
   text-align: center;
   font-size: 22px;
   font-weight: 800;

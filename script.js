@@ -26,6 +26,17 @@ const SENTENCE_FILES = [
   "data/sentence_order/sentence_order_101_200.csv"
 ];
 
+// Polaris 3 は manifest を基本に読み込み、古い manifest が残っていても
+// Lesson 9 以降を拾えるように既知の Lesson CSV を補助リストとして持つ。
+const POLARIS3_FILES = [
+  "data/highschool/polaris3_lesson7.csv",
+  "data/highschool/polaris3_lesson8.csv",
+  "data/highschool/polaris3_lesson9.csv",
+  "data/highschool/polaris3_lesson10.csv",
+  "data/highschool/polaris3_lesson11.csv",
+  "data/highschool/polaris3_lesson12.csv"
+];
+
 const CATEGORY_INFO = {
   toeic: { label: "TOEIC", description: "Speaking/Writingで使う表現を瞬発的に出す", theme: "toeic", icon: "🎙️" },
   toefl: { label: "TOEFL", description: "アカデミック英語・語順アウトプット", theme: "toefl", icon: "🎓" },
@@ -64,11 +75,12 @@ const TEST_CONFIG = {
     defaultTime: 60,
     review: true,
     manifest: "data/highschool/polaris3_manifest.csv",
+    files: POLARIS3_FILES,
     keepOrder: true,
     sectionLabel: "Lesson",
     choiceInstruction: "本文を読んで、設問に最も適切に答えてください。",
     passageDisplay: true,
-    description: "Lesson 7・Lesson 8 の読解問題を、本文・設問タイプ付きで練習します。"
+    description: "Lesson 7〜Lesson 12 の読解問題を、本文・設問タイプ付きで練習します。"
   },
   sentence: {
     title: "語順並べ替えテスト",
@@ -908,7 +920,7 @@ async function ensureQuestionsLoaded(type) {
   } else if (config.type === "writing") {
     loadedQuestions[type] = await loadWritingTasks(config.path);
   } else if (config.manifest) {
-    loadedQuestions[type] = await loadChoiceQuestionsFromManifest(config.manifest);
+    loadedQuestions[type] = await loadChoiceQuestionsFromManifest(config.manifest, config.files || []);
   } else {
     loadedQuestions[type] = await loadChoiceQuestions(config.path);
   }
@@ -942,14 +954,25 @@ function toggleCustomQuestionInput() {
    CSV読み込み
 ========================= */
 
-async function loadChoiceQuestions(filePath) {
+async function loadChoiceQuestions(filePath, options = {}) {
+  const silent = Boolean(options.silent);
   if (!filePath) {
-    alert("教材CSVのpathが設定されていません。TEST_CONFIGを確認してください。");
+    if (!silent) alert("教材CSVのpathが設定されていません。TEST_CONFIGを確認してください。");
     return [];
   }
-  const response = await fetch(filePath);
+
+  let response;
+  try {
+    response = await fetch(filePath);
+  } catch (error) {
+    console.warn(`読み込み失敗: ${filePath}`, error);
+    if (!silent) alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
+    return [];
+  }
+
   if (!response.ok) {
-    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
+    console.warn(`読み込み失敗: ${filePath}`);
+    if (!silent) alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
     return [];
   }
 
@@ -972,24 +995,40 @@ async function loadChoiceQuestions(filePath) {
 }
 
 
-async function loadChoiceQuestionsFromManifest(manifestPath) {
-  const response = await fetch(manifestPath);
-  if (!response.ok) {
-    alert(`${manifestPath} を読み込めませんでした。manifestの場所を確認してください。`);
-    return [];
+async function loadChoiceQuestionsFromManifest(manifestPath, fallbackFiles = []) {
+  const files = [];
+
+  try {
+    const response = await fetch(manifestPath);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+    const rows = parseCSV(await response.text());
+    rows.shift();
+    files.push(...rows
+      .map(row => row.find(cell => String(cell).toLowerCase().includes(".csv")) || row[0] || row[1])
+      .filter(Boolean));
+  } catch (error) {
+    console.warn(`${manifestPath} を読み込めませんでした。fallbackFilesを確認します。`, error);
+    if (!fallbackFiles.length) {
+      alert(`${manifestPath} を読み込めませんでした。manifestの場所を確認してください。`);
+      return [];
+    }
   }
 
-  const rows = parseCSV(await response.text());
-  rows.shift();
-  const files = rows
-    .map(row => row.find(cell => String(cell).toLowerCase().includes(".csv")) || row[0] || row[1])
-    .filter(Boolean);
+  // 古い manifest が Lesson 7・8 までの場合でも、TEST_CONFIG 側の補助リストから
+  // Lesson 9 以降を追加で読み込む。重複は除外する。
+  const mergedFiles = [...new Set([...files, ...fallbackFiles].map(file => String(file).trim()).filter(Boolean))];
   const all = [];
 
-  for (const file of files) {
-    const loaded = await loadChoiceQuestions(file);
+  for (const file of mergedFiles) {
+    const loaded = await loadChoiceQuestions(file, { silent: true });
     all.push(...loaded);
   }
+
+  if (all.length === 0) {
+    alert(`${manifestPath} または各Lesson CSVを読み込めませんでした。data/highschool/ 内のファイル名を確認してください。`);
+  }
+
   return all;
 }
 
