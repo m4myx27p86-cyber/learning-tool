@@ -4690,3 +4690,624 @@ button:not(.material-card):not(.choice-button):not(.word-chip):disabled {
   }
   .integrated-settings-block { padding: 14px; }
 }
+
+
+/* =========================================================
+   2026-05-31 Eye-friendly simple interaction patch
+   目的:
+   - 教材カードを触れた時に濃い緑で塗りつぶされる問題を解消
+   - 長時間見ても疲れにくい低彩度・低コントラストの画面へ調整
+   - 操作ボタンは参考画像に近い黒系のシンプルな形に統一
+   - CSSのみ。HTML / JavaScript / 問題判定ロジックは変更しない。
+========================================================= */
+:root {
+  --bg1: #f4f7f5;
+  --bg2: #f8fbff;
+  --card: rgba(255, 255, 255, 0.97);
+  --text: #111827;
+  --muted: #647067;
+  --primary: #1f6f5b;
+  --primary-dark: #111827;
+  --secondary: #303946;
+  --success: #2f7d4a;
+  --danger: #b45309;
+  --border: #dfe8e1;
+  --shadow: 0 6px 18px rgba(15, 23, 42, 0.055);
+
+  --material-accent: #1f6f5b;
+  --material-accent-2: #3b82f6;
+  --material-soft: #f6faf7;
+  --material-soft-2: #f8fbff;
+  --material-border: #dfe8e1;
+  --material-ink: #111827;
+  --material-muted: #647067;
+}
+
+html { background: #f6f8f7; }
+
+body {
+  color: var(--text) !important;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(219, 234, 254, 0.30), transparent 32%),
+    radial-gradient(circle at 92% 8%, rgba(220, 252, 231, 0.22), transparent 30%),
+    linear-gradient(135deg, #f6f8f7 0%, #fbfcfb 52%, #f4f8fb 100%) !important;
+}
+
+body::before {
+  opacity: .55;
+  background:
+    radial-gradient(circle at 86% 10%, rgba(59, 130, 246, 0.08), transparent 25%),
+    radial-gradient(circle at 14% 82%, rgba(47, 125, 74, 0.08), transparent 27%) !important;
+}
+
+.container,
+.category-section,
+.unified-card,
+.integrated-setting-review-card,
+.integrated-settings-block,
+.integrated-status-grid,
+.panel,
+.notice-banner,
+.growth-home-card,
+.home-learning-calendar,
+.result-hero,
+.review-plant-card,
+.review-chart-card,
+.local-insight-card,
+#questionArea,
+.quiz-top {
+  background: rgba(255, 255, 255, 0.96) !important;
+  border-color: #e1e8e3 !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.045) !important;
+}
+
+.container::before {
+  height: 4px !important;
+  background: linear-gradient(90deg, #3b82f6, #1f6f5b) !important;
+}
+
+/* 操作ボタン: 黒系・低刺激・シンプル。ホバーしても派手に変色させない */
+button:not(.material-card):not(.choice-button):not(.word-chip),
+.admin-quick button:not(.material-card),
+.admin-card:not(.material-card),
+.sound-toggle-button:not(.material-card),
+#checkButton,
+#nextButton,
+#startButton,
+#quitButton,
+.start-action-row button,
+.integrated-review-actions button,
+.integrated-start-actions button,
+.unified-head-actions button,
+.review-head-actions button,
+.result-actions button {
+  border: 1px solid rgba(255, 255, 255, .28) !important;
+  border-radius: 12px !important;
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 5px 12px rgba(15, 23, 42, .13) !important;
+  transform: none !important;
+}
+
+button:not(.material-card):not(.choice-button):not(.word-chip):hover,
+button:not(.material-card):not(.choice-button):not(.word-chip):focus-visible,
+.admin-quick button:not(.material-card):hover,
+.admin-card:not(.material-card):hover,
+.sound-toggle-button:not(.material-card):hover,
+#checkButton:hover,
+#nextButton:hover,
+#startButton:hover,
+#quitButton:hover,
+.start-action-row button:hover,
+.integrated-review-actions button:hover,
+.integrated-start-actions button:hover,
+.unified-head-actions button:hover,
+.review-head-actions button:hover,
+.result-actions button:hover {
+  background: linear-gradient(180deg, #273244 0%, #172033 100%) !important;
+  color: #ffffff !important;
+  transform: none !important;
+  box-shadow: 0 6px 14px rgba(15, 23, 42, .15) !important;
+  outline: 2px solid rgba(59, 130, 246, .16) !important;
+  outline-offset: 2px;
+}
+
+button:not(.material-card):not(.choice-button):not(.word-chip):active,
+#checkButton:active,
+#nextButton:active,
+#startButton:active,
+#quitButton:active {
+  transform: translateY(1px) !important;
+  box-shadow: 0 3px 8px rgba(15, 23, 42, .12) !important;
+}
+
+button:disabled,
+button:not(.material-card):not(.choice-button):not(.word-chip):disabled {
+  background: #9aa4af !important;
+  color: #f8fafc !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+/* 教材カード: button要素でも黒/緑で塗りつぶさない。触れても白いカードのまま */
+.material-card,
+button.material-card,
+.material-card[data-material],
+button.material-card[data-material] {
+  color: #111827 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(248,250,252,.96)) !important;
+  border: 1px solid #dbe5df !important;
+  border-left: 6px solid var(--material-accent) !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, .045) !important;
+  transform: none !important;
+}
+
+.material-card:hover,
+.material-card:focus-visible,
+.material-card:active,
+button.material-card:hover,
+button.material-card:focus-visible,
+button.material-card:active,
+.material-card[data-material]:hover,
+.material-card[data-material]:focus-visible,
+.material-card[data-material]:active,
+button.material-card[data-material]:hover,
+button.material-card[data-material]:focus-visible,
+button.material-card[data-material]:active {
+  color: #111827 !important;
+  background: linear-gradient(180deg, rgba(255,255,255,1), rgba(247,250,248,.98)) !important;
+  border-color: #c9d7d0 !important;
+  border-left-color: var(--material-accent) !important;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, .055) !important;
+  transform: none !important;
+  outline: 2px solid rgba(59, 130, 246, .12) !important;
+  outline-offset: 2px;
+}
+
+.material-card span,
+button.material-card span,
+.material-card[data-material] span {
+  color: #255f72 !important;
+}
+
+.material-card strong,
+button.material-card strong {
+  color: #111827 !important;
+}
+
+.material-card small,
+button.material-card small {
+  color: #5f6f67 !important;
+}
+
+.material-card::after {
+  color: #94a3b8 !important;
+}
+
+.material-card-wrap .material-progress-button,
+.material-progress-note {
+  display: none !important;
+}
+
+/* カテゴリ・見出し: 青と緑を控えめなアクセントにする */
+.eyebrow,
+.category-title,
+.panel-label,
+.result-card-label,
+.task-badge,
+.polaris-summary-label {
+  color: #1f6f5b !important;
+}
+
+.category-tip,
+.accordion-marker,
+.panel-label,
+.result-card-label,
+.task-badge,
+.polaris-summary-label,
+.timer,
+.quiz-progress-note {
+  background: #f3f8f5 !important;
+  border-color: #dfe8e3 !important;
+  color: #1f6f5b !important;
+}
+
+.progress-wrap {
+  background: #edf2ef !important;
+  border-color: #e1e8e3 !important;
+  box-shadow: none !important;
+}
+
+.progress-bar,
+.quest-xp i {
+  background: linear-gradient(90deg, #3b82f6, #1f6f5b) !important;
+  box-shadow: none !important;
+}
+
+/* 選択肢: Bulletなし、白基調、選択状態も薄い色で目に優しく */
+.choice-button,
+.material-polaris3 .choice-button,
+.error-choice-grid .choice-button {
+  display: block !important;
+  padding: 13px 16px !important;
+  min-height: 54px;
+  border: 1px solid #dfe7e2 !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #172033 !important;
+  box-shadow: none !important;
+  text-align: left;
+  overflow: visible !important;
+  transform: none !important;
+}
+
+.choice-button::before,
+.choice-button::after,
+.material-polaris3 .choice-button::before,
+.material-polaris3 .choice-button::after,
+.error-choice-grid .choice-button::before,
+.error-choice-grid .choice-button::after {
+  content: none !important;
+  display: none !important;
+}
+
+.choice-button:hover,
+.choice-button:focus-visible,
+.material-polaris3 .choice-button:hover,
+.material-polaris3 .choice-button:focus-visible,
+.error-choice-grid .choice-button:hover,
+.error-choice-grid .choice-button:focus-visible {
+  background: #f7faf8 !important;
+  border-color: #cbd8d1 !important;
+  color: #111827 !important;
+  transform: none !important;
+  outline: 2px solid rgba(59, 130, 246, .12) !important;
+  outline-offset: 2px;
+}
+
+.choice-button.selected,
+.choice-button.ready-to-submit,
+.material-polaris3 .choice-button.selected,
+.material-polaris3 .choice-button.ready-to-submit,
+.error-choice-grid .choice-button.selected,
+.error-choice-grid .choice-button.ready-to-submit {
+  background: linear-gradient(180deg, #ffffff, #f0f7f3) !important;
+  border-color: #86b99a !important;
+  color: #111827 !important;
+  outline: 2px solid rgba(47, 125, 74, .18) !important;
+  outline-offset: 2px;
+  animation: none !important;
+}
+
+.word-chip {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border-color: #dfe7e2 !important;
+  box-shadow: none !important;
+}
+
+.word-chip:hover,
+.word-chip:focus-visible {
+  background: #f7faf8 !important;
+  color: #1f6f5b !important;
+  outline: 2px solid rgba(47, 125, 74, .14) !important;
+}
+
+/* 正解・復習・成長は緑、集中・進行は青。ただし低彩度で統一 */
+.correct,
+#feedback.correct,
+#feedback .correct,
+.growth-stats strong,
+.growth-next strong,
+.sync-result-card strong {
+  color: #2f7d4a !important;
+}
+
+.main-result-card strong b,
+.calendar-motivation strong {
+  color: #2563eb !important;
+}
+
+.feedback-card {
+  box-shadow: 0 5px 14px rgba(15, 23, 42, .055) !important;
+}
+
+.feedback-correct {
+  background: linear-gradient(180deg, #ffffff, #f4fbf6) !important;
+  border-color: #cce7d4 !important;
+}
+
+.feedback-wrong {
+  background: linear-gradient(180deg, #ffffff, #fff8f1) !important;
+  border-color: #f3d7bd !important;
+}
+
+/* ポラリス3とSpeaking Reviewの可読性は維持 */
+.material-polaris3 .polaris-passage-card,
+.material-polaris3 .polaris-question-card,
+.error-correction-card,
+.question-prompt,
+.cloze-prompt,
+.source-expression,
+.target-expression,
+.answer-support {
+  background: rgba(255, 255, 255, .94) !important;
+  border-color: #e1e8e3 !important;
+  box-shadow: none !important;
+}
+
+.material-polaris3 .polaris-passage-body {
+  color: #172033 !important;
+  line-height: 1.9;
+}
+
+.material-polaris3 .polaris-summary-text {
+  background: #ffffff !important;
+  border-color: #dfe7e2 !important;
+}
+
+/* 目の疲れを減らすため、ホバー時の大きな動きと派手な演出を弱める */
+.material-card,
+.category-section,
+.stat-card,
+.choice-button,
+.word-chip,
+button {
+  transition: background-color .12s ease, border-color .12s ease, box-shadow .12s ease, color .12s ease !important;
+}
+
+.category-section:hover,
+.stat-card:hover {
+  transform: none !important;
+}
+
+.celebration-layer { opacity: .42 !important; }
+.confetti-piece,
+.combo-layer .confetti-piece {
+  font-size: 16px !important;
+  animation-duration: .75s !important;
+}
+.celebration-badge {
+  background: rgba(17, 24, 39, .76) !important;
+  box-shadow: 0 5px 14px rgba(15, 23, 42, .13) !important;
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    background: linear-gradient(180deg, #fbfcfb 0%, #f4f8fb 100%) !important;
+  }
+
+  .choice-button,
+  .material-polaris3 .choice-button,
+  .error-choice-grid .choice-button {
+    padding: 12px 14px !important;
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+
+  .material-card,
+  button.material-card,
+  .material-card[data-material] {
+    border-radius: 18px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* =========================================================
+   2026-05-31 Correct Effect Clear Luxury Patch
+   目的:
+   - 正解時だけ、少し豪華でクリアな達成感を出す
+   - 通常画面は目に優しいまま維持
+   - HTML / JavaScript / 問題判定ロジックは変更しない
+========================================================= */
+:root {
+  --clear-success: #16a34a;
+  --clear-success-deep: #0f766e;
+  --clear-blue: #2563eb;
+  --clear-sky: #38bdf8;
+  --clear-glass: rgba(255, 255, 255, 0.82);
+  --clear-glow-green: rgba(34, 197, 94, 0.30);
+  --clear-glow-blue: rgba(37, 99, 235, 0.22);
+}
+
+/* 正解カード：白くクリアなガラス感＋緑と青の達成アクセント */
+.feedback-card.feedback-correct,
+.feedback-correct {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.98), transparent 34%),
+    radial-gradient(circle at 92% 0%, rgba(56, 189, 248, 0.20), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(236, 253, 245, 0.94) 58%, rgba(239, 246, 255, 0.92)) !important;
+  border: 1px solid rgba(34, 197, 94, 0.45) !important;
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(255, 255, 255, 0.72) inset,
+    0 0 28px rgba(34, 197, 94, 0.18) !important;
+  backdrop-filter: blur(10px);
+}
+
+.feedback-card.feedback-correct::before,
+.feedback-correct::before {
+  content: "";
+  position: absolute;
+  inset: -45% auto -45% -34%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  transform: rotate(16deg);
+  animation: correctCrystalSweep 1.15s ease-out forwards;
+  pointer-events: none;
+}
+
+.feedback-card.feedback-correct::after,
+.feedback-correct::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.92) 0 18%, rgba(34,197,94,.20) 19% 42%, transparent 43%),
+    conic-gradient(from 40deg, rgba(34,197,94,.0), rgba(34,197,94,.40), rgba(56,189,248,.36), rgba(34,197,94,.0));
+  opacity: .78;
+  animation: correctCrystalRing 1.05s ease-out forwards;
+  pointer-events: none;
+}
+
+.feedback-card.feedback-correct strong,
+.feedback-correct strong,
+#feedback.correct strong,
+#feedback .correct strong {
+  color: #0f5132 !important;
+  letter-spacing: -0.02em;
+}
+
+.feedback-card.feedback-correct p,
+.feedback-correct p {
+  color: #334155 !important;
+}
+
+.feedback-card.feedback-correct .feedback-icon,
+.feedback-correct .feedback-icon {
+  background:
+    radial-gradient(circle at 30% 20%, #ffffff, rgba(255,255,255,.72) 44%, rgba(236,253,245,.72)),
+    linear-gradient(135deg, rgba(34,197,94,.22), rgba(56,189,248,.18)) !important;
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  box-shadow:
+    0 8px 18px rgba(15, 118, 110, 0.14),
+    0 0 0 5px rgba(34, 197, 94, 0.09);
+  animation: correctIconPop .62s cubic-bezier(.2, .9, .25, 1.25) both;
+}
+
+/* 画面全体の正解フラッシュ：派手すぎないクリアな光 */
+.correct-flash .app-shell {
+  animation: correctClearGlow 1.05s ease-out !important;
+}
+
+.correct-flash #questionArea {
+  border-color: rgba(34, 197, 94, 0.50) !important;
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.08),
+    0 0 0 4px rgba(34, 197, 94, 0.08),
+    0 0 34px rgba(56, 189, 248, 0.12) !important;
+}
+
+/* 正解時のバッジ：黒系は維持しつつ、ガラス感と緑の達成感を追加 */
+.celebration-badge {
+  min-width: min(340px, calc(100vw - 42px));
+  padding: 16px 22px !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(15, 118, 110, 0.84), rgba(37, 99, 235, 0.78)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 16px 42px rgba(15, 23, 42, 0.26),
+    0 0 32px rgba(34, 197, 94, 0.22) !important;
+  backdrop-filter: blur(14px);
+  animation: badgePopClear 1.25s ease forwards !important;
+}
+
+.celebration-badge strong {
+  font-size: clamp(20px, 5vw, 30px);
+  letter-spacing: -0.03em;
+}
+
+.celebration-badge span {
+  color: rgba(255,255,255,.84);
+  font-weight: 750;
+}
+
+/* コンフェッティ：少し豪華に。ただし粒は細く透明感を出す */
+.celebration-layer {
+  opacity: .88 !important;
+}
+
+.confetti-piece,
+.combo-layer .confetti-piece {
+  font-size: 22px !important;
+  text-shadow: 0 4px 12px rgba(15, 23, 42, .14);
+  animation-duration: 1.15s !important;
+}
+
+.confetti-piece { color: #16a34a !important; }
+.confetti-piece:nth-child(3n) { color: #38bdf8 !important; }
+.confetti-piece:nth-child(3n+1) { color: #facc15 !important; }
+.confetti-piece:nth-child(4n) { color: #2563eb !important; }
+.confetti-piece:nth-child(5n) { color: #86efac !important; }
+
+@keyframes correctCrystalSweep {
+  0% { left: -38%; opacity: 0; }
+  16% { opacity: .82; }
+  100% { left: 122%; opacity: 0; }
+}
+
+@keyframes correctCrystalRing {
+  0% { transform: scale(.62) rotate(-28deg); opacity: 0; }
+  26% { opacity: .82; }
+  100% { transform: scale(1.28) rotate(24deg); opacity: 0; }
+}
+
+@keyframes correctIconPop {
+  0% { transform: scale(.78); opacity: .72; }
+  58% { transform: scale(1.10); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes correctClearGlow {
+  0%, 100% { filter: none; }
+  42% { filter: drop-shadow(0 0 18px rgba(34, 197, 94, .22)) drop-shadow(0 0 14px rgba(56, 189, 248, .14)); }
+}
+
+@keyframes badgePopClear {
+  0% { opacity: 0; transform: translateX(-50%) scale(.86) translateY(10px); }
+  16% { opacity: 1; transform: translateX(-50%) scale(1.03) translateY(0); }
+  72% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) scale(.98) translateY(-12px); }
+}
+
+@media (max-width: 720px) {
+  .feedback-card.feedback-correct,
+  .feedback-correct {
+    border-radius: 20px !important;
+    box-shadow:
+      0 10px 24px rgba(15, 23, 42, 0.09),
+      0 0 22px rgba(34, 197, 94, 0.15) !important;
+  }
+
+  .feedback-card.feedback-correct::after,
+  .feedback-correct::after {
+    width: 42px;
+    height: 42px;
+    right: 10px;
+    top: 10px;
+  }
+
+  .confetti-piece,
+  .combo-layer .confetti-piece {
+    font-size: 19px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-card.feedback-correct::before,
+  .feedback-correct::before,
+  .feedback-card.feedback-correct::after,
+  .feedback-correct::after,
+  .feedback-card.feedback-correct .feedback-icon,
+  .feedback-correct .feedback-icon,
+  .correct-flash .app-shell,
+  .celebration-badge,
+  .confetti-piece,
+  .combo-layer .confetti-piece {
+    animation: none !important;
+  }
+}
