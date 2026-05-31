@@ -26,8 +26,6 @@ const SENTENCE_FILES = [
   "data/sentence_order/sentence_order_101_200.csv"
 ];
 
-// Polaris 3 は manifest を基本に読み込み、古い manifest が残っていても
-// Lesson 9 以降を拾えるように既知の Lesson CSV を補助リストとして持つ。
 const POLARIS3_FILES = [
   "data/highschool/polaris3_lesson7.csv",
   "data/highschool/polaris3_lesson8.csv",
@@ -57,17 +55,6 @@ const TEST_CONFIG = {
     review: true,
     description: "単語の意味を素早く確認します。迷った問題は間違い復習に保存されます。"
   },
-  target1900Vocab: {
-    title: "ターゲット1900 単語テスト",
-    category: "highschool",
-    type: "choice",
-    password: "1900",
-    defaultTime: 15,
-    path: "data/vocab/target_1900.csv",
-    review: true,
-    choiceInstruction: "単語の意味として最も適切なものを選んでください。",
-    description: "ターゲット1900の語彙をテンポよく確認します。"
-  },
   sokudokuVocab: {
     title: "速読英単語",
     category: "highschool",
@@ -78,20 +65,27 @@ const TEST_CONFIG = {
     review: true,
     description: "速読英単語の単語ページから作成した語彙問題を練習します。"
   },
+  target1900Vocab: {
+    title: "ターゲット1900 単語テスト",
+    category: "highschool",
+    type: "choice",
+    password: "1900",
+    defaultTime: 15,
+    path: "data/vocab/target_1900.csv",
+    review: true,
+    description: "ターゲット1900の語彙をテンポよく確認します。"
+  },
   polaris3: {
     title: "ポラリス3 読解問題",
     category: "highschool",
     type: "choice",
     password: "3103",
     defaultTime: 60,
-    review: true,
     manifest: "data/highschool/polaris3_manifest.csv",
     files: POLARIS3_FILES,
+    review: true,
     keepOrder: true,
-    sectionLabel: "Lesson",
-    choiceInstruction: "本文を読んで、設問に最も適切に答えてください。",
-    passageDisplay: true,
-    description: "Lesson 7〜Lesson 12 の読解問題を、本文・設問タイプ付きで練習します。"
+    description: "ポラリス3 Lesson 7〜12 の読解問題を練習します。"
   },
   sentence: {
     title: "語順並べ替えテスト",
@@ -99,7 +93,6 @@ const TEST_CONFIG = {
     type: "sentence",
     password: "1200",
     defaultTime: 45,
-    review: true,
     files: SENTENCE_FILES,
     description: "TOEFL型の英語アウトプット準備として、語順を正確に組み立てます。"
   },
@@ -109,7 +102,6 @@ const TEST_CONFIG = {
     type: "choice",
     password: "1790",
     defaultTime: 30,
-    review: true,
     path: "data/eiken/eiken_connectors.csv",
     description: "英検準一級Writingで使いやすい接続詞・因果表現を英文穴埋めで確認します。"
   },
@@ -128,7 +120,6 @@ const TEST_CONFIG = {
     type: "choice",
     password: "2180",
     defaultTime: 45,
-    review: true,
     path: "data/monitor/monitor_questions.csv",
     description: "TOEIC S&Wで使いやすい自然な表現を選びます。"
   },
@@ -138,7 +129,6 @@ const TEST_CONFIG = {
     type: "sentence",
     password: "2180",
     defaultTime: 45,
-    review: true,
     files: ["data/speaking_review/toeic_speaking_review_sentence.csv"],
     description: "これまでのSpeaking/Writingの誤答から、正しいチャンクを語順で再構成します。"
   },
@@ -146,12 +136,19 @@ const TEST_CONFIG = {
     title: "TOEIC Speaking 復習（穴埋め）",
     category: "toeic",
     type: "cloze",
-    clozeMode: "incremental",
     password: "2180",
     defaultTime: 30,
     path: "data/speaking_review/toeic_speaking_review_cloze.csv",
-    review: true,
-    description: "正しい表現を一語ずつ確認しながら、瞬発的に使えるチャンクを増やします。"
+    description: "正しい表現の一部を自分で書き出し、瞬発的に使えるチャンクを増やします。"
+  },
+  speakingErrorCorrection: {
+    title: "TOEIC Speaking 復習（誤り発見→修正）",
+    category: "toeic",
+    type: "errorCorrection",
+    password: "2180",
+    defaultTime: 45,
+    path: "data/speaking_review/toeic_error_correction.csv",
+    description: "昨日から今日のSpeaking/Writingの誤りを、誤り発見→修正入力の2段階で直します。"
   },
   phrasalVerbs: {
     title: "Phrasal Verbs / 実用チャンク",
@@ -159,9 +156,8 @@ const TEST_CONFIG = {
     type: "choice",
     password: "2180",
     defaultTime: 25,
-    review: true,
     path: "data/speaking_review/phrasal_verbs.csv",
-    choiceInstruction: "空欄に最も自然に入る句動詞・チャンクを選んでください。",
+    review: true,
     description: "TOEIC/IELTSソースから、アウトプットで使える句動詞・定型表現を確認します。"
   },
   englishTheory: {
@@ -170,7 +166,6 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 30,
-    review: true,
     path: "data/english_theory/chapter3_theory.csv",
     description: "SLA Chapter 3 の重要概念を四択で確認します。"
   },
@@ -180,10 +175,9 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 35,
-    review: true,
     path: "data/teacher/statistics_questions.csv",
-    choiceInstruction: "統計用語・研究法の説明として最も適切なものを選んでください。",
-    description: "Population / Sample など、研究で必要な統計概念を確認します。"
+    review: true,
+    description: "研究で必要な統計概念を確認します。"
   },
   writingTheoryChapter4: {
     title: "ライティング理論 Chapter 4",
@@ -191,10 +185,9 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 35,
-    review: true,
     path: "data/teacher/writing_theory_chapter4.csv",
-    choiceInstruction: "L2 writing / literacy 理論の説明として最も適切なものを選んでください。",
-    description: "Socioliterate approach と reading-writing relationship を確認します。"
+    review: true,
+    description: "L2 writing / literacy 理論を確認します。"
   },
   writingTheoryMap: {
     title: "ライティング理論 詳細マップ",
@@ -202,10 +195,9 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 40,
-    review: true,
     path: "data/teacher/writing_theory_map.csv",
-    choiceInstruction: "資料のポイントに基づいて、最も適切な説明を選んでください。",
-    description: "Chapter 4 の論点をページ・概念ごとに細かく復習します。"
+    review: true,
+    description: "Chapter 4 の論点をページ・概念ごとに復習します。"
   },
   presentationBuilderTasks: {
     title: "プレゼン作成トレーニング",
@@ -213,9 +205,8 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 30,
-    review: true,
     path: "data/teacher/presentation_builder_tasks.csv",
-    choiceInstruction: "発表準備・資料確認の手順として最も適切なものを選んでください。",
+    review: true,
     description: "資料読解からスライド化する流れを確認します。"
   },
   classicalWords: {
@@ -242,7 +233,6 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3330",
     defaultTime: 20,
-    review: true,
     path: "data/classics/classical_knowledge.csv",
     description: "古文常識を選択問題で確認します。"
   }
@@ -273,9 +263,10 @@ let autoAdvanceTimerId = null;
 let toeicCalendar = [];
 let writingTasks = [];
 let writingStartTime = null;
+let errorCorrectionPhase = "identify";
 let lastMistakeQuestions = [];
-let incrementalClozeState = null;
-let correctSoundContext = null;
+let quizCorrectStreak = 0;
+let bestCorrectStreak = 0;
 
 /* =========================
    初期化・イベント登録
@@ -283,7 +274,6 @@ let correctSoundContext = null;
 
 document.addEventListener("DOMContentLoaded", () => {
   initializeUiEnhancements();
-
   safeAddEvent("loginButton", "click", checkLogin);
   safeAddEvent("passwordInput", "keydown", event => { if (event.key === "Enter") checkLogin(); });
   safeAddEvent("showPassword", "change", function () { togglePasswordField("passwordInput", this.checked); });
@@ -336,23 +326,16 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMenu();
     showOnly("menuScreen");
   });
-  safeAddEvent("retryMistakesButton", "click", retryCurrentMistakes);
   safeAddEvent("logoutButton", "click", logout);
+  safeAddEvent("retryMistakesButton", "click", retryCurrentMistakes);
   document.addEventListener("keydown", handleQuizKeyboard);
 
   restoreSession();
 });
 
-function safeAddEvent(id, event, handler) {
-  const element = document.getElementById(id);
-  if (element) element.addEventListener(event, handler);
-}
 
 function initializeUiEnhancements() {
-  // パスワード・コード欄は、HTMLが text のままでも初期状態で非表示に統一する。
   ["passwordInput", "studentLoginInput", "materialPasswordInput"].forEach(id => togglePasswordField(id, false));
-
-  // 管理者用の履歴ボタンがHTMLにない場合もスクリプト側で補完する。
   const adminArea = document.getElementById("adminQuickArea");
   if (adminArea && !document.getElementById("adminHistoryButton")) {
     const button = document.createElement("button");
@@ -361,8 +344,6 @@ function initializeUiEnhancements() {
     button.textContent = "解答履歴を確認";
     adminArea.appendChild(button);
   }
-
-  // 結果画面に「今回のミスだけ解き直す」ボタンがない場合も補完する。
   const resultMenuButton = document.getElementById("resultMenuButton");
   if (resultMenuButton && !document.getElementById("retryMistakesButton")) {
     const button = document.createElement("button");
@@ -371,6 +352,11 @@ function initializeUiEnhancements() {
     button.textContent = "今回のミスを解き直す";
     resultMenuButton.parentNode.insertBefore(button, resultMenuButton);
   }
+}
+
+function safeAddEvent(id, event, handler) {
+  const element = document.getElementById(id);
+  if (element) element.addEventListener(event, handler);
 }
 
 /* =========================
@@ -582,8 +568,7 @@ function togglePasswordField(id, checked) {
 function renderMenu() {
   refreshDashboard();
   renderMaterialCategories();
-  const adminArea = document.getElementById("adminQuickArea");
-  if (adminArea) adminArea.classList.toggle("hidden", !isAdmin);
+  document.getElementById("adminQuickArea").classList.toggle("hidden", !isAdmin);
 }
 
 function getVisibleMaterials() {
@@ -849,26 +834,15 @@ async function updateAccessCodeActive(code, active) {
   }
 }
 
+
 async function updateAccessCodeMaterials(code, currentMaterialsText) {
   const allKeys = Object.keys(TEST_CONFIG).join(",");
-  const current = currentMaterialsText || "";
-  const input = prompt(
-    `許可する教材キーをカンマ区切りで入力してください。\n\n利用可能キー：${allKeys}`,
-    current
-  );
+  const input = prompt(`許可する教材キーをカンマ区切りで入力してください。\n\n利用可能キー：${allKeys}`, currentMaterialsText || "");
   if (input == null) return;
-
   const allowedMaterials = input.split(",").map(v => v.trim()).filter(Boolean);
   const invalid = allowedMaterials.filter(type => !TEST_CONFIG[type]);
-  if (invalid.length) {
-    alert(`存在しない教材キーがあります：${invalid.join(", ")}`);
-    return;
-  }
-  if (allowedMaterials.length === 0) {
-    alert("教材を1つ以上指定してください。");
-    return;
-  }
-
+  if (invalid.length) return alert(`存在しない教材キーがあります：${invalid.join(", ")}`);
+  if (!allowedMaterials.length) return alert("教材を1つ以上指定してください。");
   try {
     await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, allowedMaterials });
     loadAccessCodeList();
@@ -884,7 +858,7 @@ function parseMaterialList(value) {
 }
 
 function materialNames(types) {
-  return parseMaterialList(types).map(type => TEST_CONFIG[type]?.title || type);
+  return (types || []).map(type => TEST_CONFIG[type]?.title || type);
 }
 
 function formatSheetDate(value) {
@@ -911,7 +885,7 @@ async function openSettings(type) {
   showOnly("settingScreen");
   document.getElementById("settingTitle").textContent = config.title;
   document.getElementById("settingDescription").textContent = config.description || "";
-  document.getElementById("vocabReviewArea").classList.toggle("hidden", !configSupportsReview(type));
+  document.getElementById("vocabReviewArea").classList.toggle("hidden", !config.review);
   document.getElementById("timeLimitSelect").value = String(config.defaultTime || 0);
   toggleCustomQuestionInput();
 
@@ -928,6 +902,8 @@ async function ensureQuestionsLoaded(type) {
     loadedQuestions[type] = await loadSentenceQuestions(config.files);
   } else if (config.type === "cloze") {
     loadedQuestions[type] = await loadClozeQuestions(config.path);
+  } else if (config.type === "errorCorrection") {
+    loadedQuestions[type] = await loadErrorCorrectionQuestions(config.path);
   } else if (config.type === "writing") {
     loadedQuestions[type] = await loadWritingTasks(config.path);
   } else if (config.manifest) {
@@ -943,7 +919,10 @@ function setupSectionSelect(sourceQuestions) {
   const select = document.getElementById("sectionSelect");
   const sections = [...new Set(sourceQuestions.map(q => q.section))]
     .filter(Boolean)
-    .sort((a, b) => String(a).localeCompare(String(b), "ja", { numeric: true }));
+    .sort((a, b) => {
+      const rankDiff = getSectionSortRank(a) - getSectionSortRank(b);
+      return rankDiff || String(a).localeCompare(String(b), "ja", { numeric: true });
+    });
 
   select.innerHTML = `<option value="all">すべてのセクション</option>`;
   sections.forEach(section => {
@@ -952,6 +931,18 @@ function setupSectionSelect(sourceQuestions) {
     option.textContent = isNaN(Number(section)) ? section : `Section ${section}`;
     select.appendChild(option);
   });
+}
+
+function getSectionSortRank(section) {
+  const order = [
+    "Photo description",
+    "Responding question",
+    "Opinion",
+    "E-mail writing",
+    "Read aloud"
+  ];
+  const index = order.indexOf(String(section));
+  return index >= 0 ? index : 999;
 }
 
 function toggleCustomQuestionInput() {
@@ -967,11 +958,6 @@ function toggleCustomQuestionInput() {
 
 async function loadChoiceQuestions(filePath, options = {}) {
   const silent = Boolean(options.silent);
-  if (!filePath) {
-    if (!silent) alert("教材CSVのpathが設定されていません。TEST_CONFIGを確認してください。");
-    return [];
-  }
-
   let response;
   try {
     response = await fetch(filePath);
@@ -980,66 +966,38 @@ async function loadChoiceQuestions(filePath, options = {}) {
     if (!silent) alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
     return [];
   }
-
   if (!response.ok) {
     console.warn(`読み込み失敗: ${filePath}`);
     if (!silent) alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
     return [];
   }
-
   const text = await response.text();
   const rows = parseCSV(text);
   rows.shift();
-
   return rows.map(row => ({
-    id: row[0],
-    section: row[1],
-    word: row[2],
-    correctAnswer: row[3],
+    id: row[0], section: row[1], word: row[2], correctAnswer: row[3],
     choices: [row[3], row[4], row[5], row[6]].filter(Boolean),
-    points: Number(row[7]) || 1,
-    explanation: row[8] || "",
-    questionType: row[9] || "",
-    passage: row[10] || "",
-    source: row[11] || ""
+    points: Number(row[7]) || 1, explanation: row[8] || "",
+    questionType: row[9] || "", passage: row[10] || "", source: row[11] || ""
   })).filter(q => q.id && q.section && q.word && q.correctAnswer && q.choices.length > 0);
 }
 
-
 async function loadChoiceQuestionsFromManifest(manifestPath, fallbackFiles = []) {
   const files = [];
-
   try {
     const response = await fetch(manifestPath);
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
     const rows = parseCSV(await response.text());
     rows.shift();
-    files.push(...rows
-      .map(row => row.find(cell => String(cell).toLowerCase().includes(".csv")) || row[0] || row[1])
-      .filter(Boolean));
+    files.push(...rows.map(row => row.find(cell => String(cell).toLowerCase().includes(".csv")) || row[0] || row[1]).filter(Boolean));
   } catch (error) {
     console.warn(`${manifestPath} を読み込めませんでした。fallbackFilesを確認します。`, error);
-    if (!fallbackFiles.length) {
-      alert(`${manifestPath} を読み込めませんでした。manifestの場所を確認してください。`);
-      return [];
-    }
+    if (!fallbackFiles.length) return [];
   }
-
-  // 古い manifest が Lesson 7・8 までの場合でも、TEST_CONFIG 側の補助リストから
-  // Lesson 9 以降を追加で読み込む。重複は除外する。
   const mergedFiles = [...new Set([...files, ...fallbackFiles].map(file => String(file).trim()).filter(Boolean))];
   const all = [];
-
-  for (const file of mergedFiles) {
-    const loaded = await loadChoiceQuestions(file, { silent: true });
-    all.push(...loaded);
-  }
-
-  if (all.length === 0) {
-    alert(`${manifestPath} または各Lesson CSVを読み込めませんでした。data/highschool/ 内のファイル名を確認してください。`);
-  }
-
+  for (const file of mergedFiles) all.push(...await loadChoiceQuestions(file, { silent: true }));
+  if (!all.length) alert(`${manifestPath} または各Lesson CSVを読み込めませんでした。data/highschool/ 内のファイル名を確認してください。`);
   return all;
 }
 
@@ -1088,6 +1046,31 @@ async function loadClozeQuestions(filePath) {
     explanation: row[5] || "",
     points: Number(row[6]) || 1
   })).filter(q => q.id && q.section && q.prompt && q.answer);
+}
+
+async function loadErrorCorrectionQuestions(filePath) {
+  const response = await fetch(filePath);
+  if (!response.ok) {
+    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
+    return [];
+  }
+
+  const text = await response.text();
+  const rows = parseCSV(text);
+  rows.shift();
+
+  return rows.map(row => ({
+    id: row[0],
+    section: row[1],
+    sentence: row[2],
+    correctAnswer: row[3],
+    choices: [row[4], row[5], row[6]].filter(Boolean),
+    correctionPrompt: row[7] || "誤りを自然な表現に直してください。",
+    clozeAnswer: row[8],
+    hint: row[9] || "",
+    explanation: row[10] || "",
+    points: Number(row[11]) || 1
+  })).filter(q => q.id && q.section && q.sentence && q.correctAnswer && q.choices.length > 0 && q.clozeAnswer);
 }
 
 async function loadWritingTasks(filePath) {
@@ -1174,6 +1157,9 @@ function startQuizCommon() {
   currentIndex = 0;
   score = 0;
   selectedChoice = "";
+  errorCorrectionPhase = "identify";
+  quizCorrectStreak = 0;
+  bestCorrectStreak = 0;
   answersLog = [];
   mistakes = [];
   startTime = new Date();
@@ -1191,7 +1177,6 @@ function showQuestion() {
   clearQuestionTimer();
   clearAutoAdvanceTimer();
   selectedChoice = "";
-  incrementalClozeState = null;
   questionStartTime = new Date();
 
   document.getElementById("questionNumber").textContent = `問題 ${currentIndex + 1} / ${questions.length}`;
@@ -1199,11 +1184,14 @@ function showQuestion() {
   document.getElementById("feedback").className = "";
   document.getElementById("nextButton").classList.add("hidden");
   document.getElementById("checkButton").disabled = false;
+  document.getElementById("checkButton").textContent = "回答する";
   document.getElementById("progressBar").style.width = `${Math.round((currentIndex / questions.length) * 100)}%`;
+  errorCorrectionPhase = "identify";
 
   if (TEST_CONFIG[testType].type === "choice") showChoiceQuestion();
   if (TEST_CONFIG[testType].type === "sentence") showSentenceQuestion();
   if (TEST_CONFIG[testType].type === "cloze") showClozeQuestion();
+  if (TEST_CONFIG[testType].type === "errorCorrection") showErrorCorrectionQuestion();
 
   startQuestionTimer();
 }
@@ -1247,9 +1235,17 @@ function handleTimeUp() {
   if (document.getElementById("checkButton").disabled) return;
   const q = questions[currentIndex];
   const configType = TEST_CONFIG[testType].type;
-  const correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
-  const questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
-  const typedAnswer = getCurrentUserAnswerText();
+  let correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
+  let questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
+  let typedAnswer = document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
+
+  if (configType === "errorCorrection") {
+    correctAnswer = `${q.correctAnswer} → ${q.clozeAnswer}`;
+    questionText = q.sentence;
+    typedAnswer = errorCorrectionPhase === "revise"
+      ? (document.getElementById("answerInput")?.value || "")
+      : (selectedChoice || "");
+  }
 
   processAnswer({
     id: q.id,
@@ -1266,158 +1262,121 @@ function handleTimeUp() {
 
 function showChoiceQuestion() {
   const q = questions[currentIndex];
-  const config = TEST_CONFIG[testType];
-  document.getElementById("testTitle").textContent = reviewMode ? `${config.title} 間違い復習` : config.title;
+  document.getElementById("testTitle").textContent = reviewMode ? `${TEST_CONFIG[testType].title} 間違い復習` : TEST_CONFIG[testType].title;
   const area = document.getElementById("questionArea");
   area.innerHTML = "";
 
-  if (config.passageDisplay || q.passage) {
-    const reading = document.createElement("div");
-    reading.className = "reading-question";
-    const typeLabel = q.questionType || detectPolarisQuestionType(q.id);
-    const paragraphLabel = extractParagraphLabel(q.id);
-    reading.innerHTML = `
-      <div class="question-meta-line">${escapeHtml(q.section)} / ${escapeHtml(paragraphLabel)} / ${escapeHtml(typeLabel)}</div>
-      ${q.passage ? `<div class="passage-card"><span>Passage</span><p>${escapeHtml(q.passage)}</p></div>` : ""}
-      <div class="reading-prompt">${escapeHtml(q.word)}</div>
+  const wordDiv = document.createElement("div");
+  wordDiv.className = testType === "polaris3" ? "words polaris-question-wrap" : "words";
+
+  if (testType === "monitor") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br><span class="monitor-label">最も自然で正確な表現を選んでください。</span><br>"${escapeHtml(q.word)}"`;
+  } else if (testType === "speakingReview") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>より自然な表現は？<br>"${escapeHtml(q.word)}"`;
+  } else if (["englishTheory", "statisticsQuestions", "writingTheoryChapter4", "writingTheoryMap", "presentationBuilderTasks"].includes(testType)) {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>説明に合う概念を選んでください。<br>${escapeHtml(q.word)}`;
+  } else if (testType === "polaris3") {
+    const passageBlock = q.passage
+      ? `<div class="polaris-passage-card"><div class="polaris-card-label">本文</div><div class="polaris-passage-text">${formatPolarisText(q.passage)}</div></div>`
+      : "";
+    wordDiv.innerHTML = `
+      <div class="polaris-meta">No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}</div>
+      <p class="polaris-instruction">本文に基づいて、最も適切な選択肢を選んでください。</p>
+      ${passageBlock}
+      <div class="polaris-question-card">
+        <div class="polaris-card-label">設問</div>
+        <div class="polaris-question-text">${formatPolarisText(q.word)}</div>
+      </div>
     `;
-    area.appendChild(reading);
+  } else if (testType === "eikenConnectors") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>空欄に最も適切な表現を選んでください。<br>"${escapeHtml(q.word)}"`;
+  } else if (testType.startsWith("classical")) {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>${escapeHtml(q.word)}`;
   } else {
-    const wordDiv = document.createElement("div");
-    wordDiv.className = "words";
-    const instruction = getChoiceInstruction(q);
-    const questionText = shouldQuoteChoicePrompt(testType) ? `"${escapeHtml(q.word)}"` : escapeHtml(q.word);
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(formatSectionLabel(q.section))}<br><span class="monitor-label">${escapeHtml(instruction)}</span><br>${questionText}`;
-    area.appendChild(wordDiv);
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | Section ${escapeHtml(q.section)}<br>"${escapeHtml(q.word)}" の意味は？`;
   }
 
-  shuffle([...q.choices]).forEach((choice, index) => {
+  area.appendChild(wordDiv);
+
+  const note = document.createElement("p");
+  note.className = "choice-submit-note";
+  note.textContent = "選択肢は1回押すと選択、同じ選択肢をもう1回押すと回答できます。Enterキーでも回答できます。";
+  area.appendChild(note);
+
+  shuffle(q.choices).forEach(choice => {
     const btn = document.createElement("button");
     btn.className = "choice-button";
-    btn.innerHTML = `<span class="choice-index">${index + 1}</span><span>${escapeHtml(choice)}</span>`;
-    btn.addEventListener("click", () => {
-      const alreadySelected = selectedChoice === choice && btn.classList.contains("selected");
-      selectedChoice = choice;
-      document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected"));
-      btn.classList.add("selected");
-      if (alreadySelected && !document.getElementById("checkButton").disabled) checkChoiceAnswer();
-    });
-    btn.addEventListener("dblclick", () => {
-      selectedChoice = choice;
-      if (!document.getElementById("checkButton").disabled) checkChoiceAnswer();
-    });
+    btn.textContent = choice;
+    btn.addEventListener("click", () => handleChoiceSelection(choice, btn));
     area.appendChild(btn);
   });
 }
 
-function getChoiceInstruction(q) {
-  const config = TEST_CONFIG[testType] || {};
-  if (config.choiceInstruction) return config.choiceInstruction;
-  if (testType === "monitor") return "最も自然で正確な表現を選んでください。";
-  if (testType === "speakingReview") return "より自然な表現を選んでください。";
-  if (testType === "englishTheory") return "説明に合う概念を選んでください。";
-  if (testType === "eikenConnectors") return "空欄に最も適切な表現を選んでください。";
-  if (String(testType).startsWith("classical")) return "設問に最も適切に答えてください。";
-  if (q?.questionType) return `${q.questionType}：最も適切な選択肢を選んでください。`;
-  return "設問に最も適切に答えてください。";
-}
+function handleChoiceSelection(choice, button, selector = ".choice-button") {
+  const checkButton = document.getElementById("checkButton");
+  const isSecondPress = selectedChoice === choice && button.classList.contains("selected");
+  selectedChoice = choice;
+  document.querySelectorAll(selector).forEach(b => b.classList.remove("selected", "ready-to-submit"));
+  button.classList.add("selected", "ready-to-submit");
 
-function shouldQuoteChoicePrompt(type) {
-  return ["vocab", "target1900Vocab", "sokudokuVocab", "monitor", "speakingReview", "eikenConnectors", "phrasalVerbs"].includes(type);
-}
-
-function formatSectionLabel(section) {
-  return isNaN(Number(section)) ? section : `Section ${section}`;
-}
-
-function detectPolarisQuestionType(id) {
-  const text = String(id || "");
-  if (text.includes("-V")) return "Vocabulary";
-  if (text.includes("-F")) return "Factual";
-  if (text.includes("-I")) return "Inference";
-  if (text.includes("-S")) return "Summary Cloze";
-  return "Question";
-}
-
-function extractParagraphLabel(id) {
-  const match = String(id || "").match(/P(\d{1,2})/i);
-  return match ? `Paragraph ${Number(match[1])}` : "Paragraph";
+  if (isSecondPress && checkButton && !checkButton.disabled) {
+    checkAnswer();
+  }
 }
 
 function showSentenceQuestion() {
   const q = questions[currentIndex];
-  const config = TEST_CONFIG[testType];
-  const noKeyboardMode = testType === "speakingReview";
-
-  document.getElementById("testTitle").textContent = config.title;
+  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
   q.words = shuffle(splitSentence(q.answer));
   const hint = q.hint || createInitialHint(q.answer);
   const prompt = q.prompt ? `<div class="question-prompt">${escapeHtml(q.prompt)}</div>` : "";
-  const inputAttributes = noKeyboardMode
-    ? 'readonly inputmode="none" aria-readonly="true" data-no-keyboard="true"'
-    : 'inputmode="text"';
-  const placeholder = noKeyboardMode
-    ? `単語ボタンをタップして英文を作ります：${escapeHtml(hint)}`
-    : `ヒント: ${escapeHtml(hint)}`;
+  const keyboardless = testType === "speakingReview";
+  const inputAttributes = keyboardless ? 'readonly inputmode="none" aria-readonly="true"' : 'autocomplete="off"';
+  const inputClass = keyboardless ? "answer-input no-keyboard-input" : "answer-input";
+  const inputPlaceholder = keyboardless ? "下の語句をタップして並べ替えます" : `ヒント: ${escapeHtml(hint)}`;
 
   document.getElementById("questionArea").innerHTML = `
     ${prompt}
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
+    ${keyboardless ? `<p class="tap-only-note">キーボードは開かず、語句をタップするだけで回答できます。</p>` : ""}
     <div class="words" id="sentenceWords">${q.words.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
-    <input type="text" id="answerInput" class="answer-input" placeholder="${placeholder}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" ${inputAttributes} />
+    <input type="text" id="answerInput" class="${inputClass}" placeholder="${inputPlaceholder}" ${inputAttributes} />
     <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
   `;
 
-  const input = document.getElementById("answerInput");
-
-  if (noKeyboardMode) {
-    // Speaking Reviewの並び替えはタップ操作専用にし、スマホのソフトキーボードを開かない。
-    ["focus", "touchstart", "mousedown", "click"].forEach(eventName => {
-      input.addEventListener(eventName, event => {
-        if (eventName !== "focus") event.preventDefault();
-        input.blur();
-      }, { passive: false });
-    });
-  }
-
   document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
     chip.addEventListener("click", () => {
+      const input = document.getElementById("answerInput");
       input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
       updateUsedWords();
-      if (!noKeyboardMode) input.focus();
+      if (!keyboardless) input.focus();
     });
   });
   document.getElementById("clearSentenceButton").addEventListener("click", () => {
+    const input = document.getElementById("answerInput");
     input.value = "";
     updateUsedWords();
-    if (noKeyboardMode) input.blur();
-    else input.focus();
+    if (!keyboardless) input.focus();
   });
-  input.addEventListener("input", updateUsedWords);
-  if (!noKeyboardMode) input.focus();
+  document.getElementById("answerInput").addEventListener("input", updateUsedWords);
+  if (!keyboardless) document.getElementById("answerInput").focus();
 }
 
 function showClozeQuestion() {
-  if (isIncrementalCloze(testType)) {
-    showIncrementalClozeQuestion();
-    return;
-  }
-
   const q = questions[currentIndex];
-  const config = TEST_CONFIG[testType];
-  document.getElementById("testTitle").textContent = config.title;
+  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
   const hint = q.hint || createInitialHint(q.answer);
   const examples = extractLearningExamples(q.explanation || "");
   const originalBlock = examples.wrong
     ? `<div class="source-expression"><span>直す前の表現</span><strong>${escapeHtml(examples.wrong)}</strong></div>`
-    : `<div class="source-expression"><span>学習目標</span><strong>${escapeHtml(getClozeGoalMessage())}</strong></div>`;
+    : `<div class="source-expression"><span>学習目標</span><strong>TOEIC Speakingでそのまま使える自然なチャンクを完成させる</strong></div>`;
 
   document.getElementById("questionArea").innerHTML = `
     <div class="question-prompt cloze-prompt">
       <div class="task-badge">${escapeHtml(q.section || "穴埋め")}</div>
-      <p class="task-instruction">${escapeHtml(getClozeInstruction())}</p>
+      <p class="task-instruction">下の表現をより自然な英語に直すつもりで、空欄に入る表現を入力してください。</p>
       ${originalBlock}
-      <div class="target-expression"><span>完成させる内容</span><strong>${escapeHtml(q.prompt)}</strong></div>
+      <div class="target-expression"><span>完成させる英文</span><strong>${escapeHtml(q.prompt)}</strong></div>
     </div>
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
     <input type="text" id="answerInput" class="answer-input" placeholder="空欄に入る表現を入力：${escapeHtml(hint)}" autocomplete="off" />
@@ -1426,54 +1385,78 @@ function showClozeQuestion() {
   document.getElementById("answerInput").focus();
 }
 
-function showIncrementalClozeQuestion() {
+function showErrorCorrectionQuestion() {
   const q = questions[currentIndex];
-  const config = TEST_CONFIG[testType];
-  document.getElementById("testTitle").textContent = reviewMode ? `${config.title} 間違い復習` : config.title;
+  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
+  errorCorrectionPhase = "identify";
+  selectedChoice = "";
+  document.getElementById("checkButton").textContent = "誤りを確認する";
 
-  const examples = extractLearningExamples(q.explanation || "");
-  const answerTokens = splitAnswerTokens(q.answer);
-  incrementalClozeState = {
-    tokens: answerTokens,
-    index: 0,
-    accepted: [],
-    attempts: [],
-    completed: false
-  };
-
-  const originalBlock = examples.wrong
-    ? `<div class="source-expression"><span>直す前の表現</span><strong>${escapeHtml(examples.wrong)}</strong></div>`
-    : `<div class="source-expression"><span>学習目標</span><strong>${escapeHtml(getClozeGoalMessage())}</strong></div>`;
-
-  document.getElementById("questionArea").innerHTML = `
-    <div class="question-prompt cloze-prompt">
-      <div class="task-badge">${escapeHtml(q.section || "一語ずつ確認")}</div>
-      <p class="task-instruction">1語ずつ入力してください。正しい語を入力すると自動で次の語に進みます。</p>
-      ${originalBlock}
-      <div class="target-expression"><span>完成させる内容</span><strong>${escapeHtml(q.prompt)}</strong></div>
+  const area = document.getElementById("questionArea");
+  area.innerHTML = `
+    <div class="question-prompt error-correction-prompt">
+      <div class="task-badge">${escapeHtml(q.section || "Error correction")}</div>
+      <p class="task-instruction">Which phrase is incorrect? 誤りを含む部分を選んでください。</p>
+      <div class="error-sentence">${escapeHtml(q.sentence)}</div>
     </div>
-    <div class="incremental-cloze-panel">
-      <div class="incremental-progress" id="incrementalProgress"></div>
-      <div class="incremental-current">
-        <span id="incrementalStepLabel"></span>
-        <strong id="incrementalHint"></strong>
+    <div id="errorChoices" class="error-choice-grid">
+      ${q.choices.map((choice, index) => `<button type="button" class="choice-button error-choice-button" data-choice="${escapeHtml(choice)}">${index + 1}. ${escapeHtml(choice)}</button>`).join("")}
+    </div>
+    <p class="choice-submit-note">選択肢は1回押すと選択、同じ選択肢をもう1回押すと次の修正問題に進めます。</p>
+  `;
+
+  document.querySelectorAll("#errorChoices .choice-button").forEach(button => {
+    button.addEventListener("click", () => handleChoiceSelection(button.dataset.choice, button, "#errorChoices .choice-button"));
+  });
+}
+
+function showErrorCorrectionRevision(q) {
+  errorCorrectionPhase = "revise";
+  document.getElementById("checkButton").textContent = "並び替えを回答する";
+  const hint = q.hint || createInitialHint(q.clozeAnswer);
+  const feedback = document.getElementById("feedback");
+  feedback.className = "correct feedback-visible";
+  feedback.innerHTML = `
+    <div class="feedback-card feedback-correct feedback-achievement feedback-step-clear">
+      <div class="feedback-icon achievement-icon">🔎</div>
+      <div class="feedback-main">
+        <div class="feedback-title-row">
+          <strong>Step 1 clear：誤り発見OK</strong>
+          <span class="streak-pill soft">気づき +1</span>
+        </div>
+        <p>「どこが不自然か」を見つけられました。次は、正しい表現を語句の並び替えで完成させましょう。</p>
+        <div class="mini-illustration" aria-hidden="true"><span>間違い発見</span><b>→</b><span>修正</span></div>
       </div>
-      <input type="text" id="answerInput" class="answer-input incremental-input" placeholder="現在の1語を入力" autocomplete="off" />
-      <p id="incrementalMessage" class="muted"></p>
     </div>
   `;
 
-  renderIncrementalClozeState();
-  const input = document.getElementById("answerInput");
-  input.addEventListener("input", () => checkIncrementalClozeWord(false));
-  input.addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      event.stopPropagation();
-      checkIncrementalClozeWord(true);
-    }
+  q.revisionWords = shuffle(splitSentence(q.clozeAnswer));
+  document.getElementById("questionArea").innerHTML = `
+    <div class="question-prompt error-correction-prompt">
+      <div class="task-badge">${escapeHtml(q.section || "Error correction")}</div>
+      <p class="task-instruction">${escapeHtml(q.correctionPrompt || "語句をタップして、正しい表現に並び替えてください。")}</p>
+      <div class="error-sentence">${escapeHtml(q.sentence)}</div>
+      <div class="source-expression"><span>修正する部分</span><strong>${escapeHtml(q.correctAnswer)}</strong></div>
+    </div>
+    <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
+    <p class="tap-only-note">キーボードは開かず、語句をタップするだけで回答できます。</p>
+    <div class="words" id="sentenceWords">${q.revisionWords.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
+    <input type="text" id="answerInput" class="answer-input no-keyboard-input" placeholder="下の語句をタップして並べ替えます" readonly inputmode="none" aria-readonly="true" />
+    <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
+  `;
+
+  document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      const input = document.getElementById("answerInput");
+      input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
+      updateUsedWords();
+    });
   });
-  input.focus();
+  document.getElementById("clearSentenceButton").addEventListener("click", () => {
+    const input = document.getElementById("answerInput");
+    input.value = "";
+    updateUsedWords();
+  });
 }
 
 function extractLearningExamples(explanation) {
@@ -1484,6 +1467,14 @@ function extractLearningExamples(explanation) {
     correct: correctMatch ? correctMatch[1].trim() : "",
     wrong: wrongMatch ? wrongMatch[1].trim() : ""
   };
+}
+
+function formatPolarisText(text) {
+  return escapeHtml(text)
+    .replace(/\s*(\[\d+\])/g, "<br><strong>$1</strong> ")
+    .replace(/^<br>/, "")
+    .replace(/\n{2,}/g, "<br><br>")
+    .replace(/\n/g, "<br>");
 }
 
 function createInitialHint(sentence) {
@@ -1512,6 +1503,7 @@ function checkAnswer() {
   if (TEST_CONFIG[testType].type === "choice") checkChoiceAnswer();
   if (TEST_CONFIG[testType].type === "sentence") checkSentenceAnswer();
   if (TEST_CONFIG[testType].type === "cloze") checkClozeAnswer();
+  if (TEST_CONFIG[testType].type === "errorCorrection") checkErrorCorrectionAnswer();
 }
 
 function checkChoiceAnswer() {
@@ -1522,6 +1514,10 @@ function checkChoiceAnswer() {
   }
 
   const isCorrect = selectedChoice === q.correctAnswer;
+  if (TEST_CONFIG[testType].review) {
+    if (isCorrect && reviewMode) removeWrongWord(q.id);
+    if (!isCorrect) saveWrongWord(q.id);
+  }
 
   processAnswer({
     id: q.id,
@@ -1553,11 +1549,6 @@ function checkSentenceAnswer() {
 }
 
 function checkClozeAnswer() {
-  if (isIncrementalCloze(testType)) {
-    checkIncrementalClozeWord(true);
-    return;
-  }
-
   const q = questions[currentIndex];
   const userAnswer = document.getElementById("answerInput").value;
   const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.answer);
@@ -1574,110 +1565,45 @@ function checkClozeAnswer() {
   });
 }
 
-function checkIncrementalClozeWord(manual = false) {
-  if (!incrementalClozeState || incrementalClozeState.completed) return;
-
-  const input = document.getElementById("answerInput");
-  const message = document.getElementById("incrementalMessage");
-  const currentToken = incrementalClozeState.tokens[incrementalClozeState.index];
-  const typed = input.value.trim();
-  if (!typed) {
-    if (manual && message) {
-      message.className = "wrong";
-      message.textContent = "現在の1語を入力してください。";
-    }
-    return;
-  }
-
-  const correct = normalizeToken(typed) === normalizeToken(currentToken);
-
-  if (!correct) {
-    // 自動確認では、入力途中の文字列を誤答として記録しない。
-    // Enterまたは回答ボタンで明示的に確認した場合だけ、語ごとのミスとして残す。
-    if (manual) {
-      incrementalClozeState.attempts.push({
-        index: incrementalClozeState.index,
-        expected: currentToken,
-        typed,
-        correct: false,
-        time: new Date().toISOString()
-      });
-      if (message) {
-        message.className = "wrong";
-        message.textContent = `この語はまだ違います。ヒント：${createWordHint(currentToken)}`;
-      }
-    }
-    return;
-  }
-
-  incrementalClozeState.attempts.push({
-    index: incrementalClozeState.index,
-    expected: currentToken,
-    typed,
-    correct: true,
-    time: new Date().toISOString()
-  });
-
-  incrementalClozeState.accepted.push(currentToken);
-  incrementalClozeState.index += 1;
-  input.value = "";
-  if (message) {
-    message.className = "correct";
-    message.textContent = "OK。次の語へ進みます。";
-  }
-  playCorrectSound(0.35);
-
-  if (incrementalClozeState.index >= incrementalClozeState.tokens.length) {
-    completeIncrementalCloze();
-    return;
-  }
-
-  renderIncrementalClozeState();
-}
-
-function renderIncrementalClozeState() {
-  if (!incrementalClozeState) return;
-  const progress = document.getElementById("incrementalProgress");
-  const label = document.getElementById("incrementalStepLabel");
-  const hint = document.getElementById("incrementalHint");
-  const tokens = incrementalClozeState.tokens;
-
-  if (progress) {
-    progress.innerHTML = tokens.map((token, index) => {
-      const stateClass = index < incrementalClozeState.index ? "filled" : index === incrementalClozeState.index ? "current" : "pending";
-      const text = index < incrementalClozeState.index ? token : "_____";
-      return `<span class="incremental-token ${stateClass}">${escapeHtml(text)}</span>`;
-    }).join(" ");
-  }
-
-  if (label) label.textContent = `${incrementalClozeState.index + 1} / ${tokens.length} 語目`;
-  if (hint) hint.textContent = createWordHint(tokens[incrementalClozeState.index] || "");
-}
-
-function completeIncrementalCloze() {
-  if (!incrementalClozeState || incrementalClozeState.completed) return;
-  incrementalClozeState.completed = true;
-  renderIncrementalClozeState();
-
+function checkErrorCorrectionAnswer() {
   const q = questions[currentIndex];
-  const userAnswer = incrementalClozeState.accepted.join(" ");
-  const wrongAttempts = incrementalClozeState.attempts.filter(a => !a.correct);
-  const isCorrect = wrongAttempts.length === 0;
-  const attemptSummary = incrementalClozeState.attempts
-    .filter(a => !a.correct)
-    .map(a => `${a.typed}→${a.expected}`)
-    .join(" / ");
 
+  if (errorCorrectionPhase === "identify") {
+    if (!selectedChoice) {
+      alert("誤りを含む部分を選んでください。");
+      return;
+    }
+
+    const foundError = selectedChoice === q.correctAnswer;
+    if (foundError) {
+      showErrorCorrectionRevision(q);
+      return;
+    }
+
+    processAnswer({
+      id: q.id,
+      section: q.section,
+      question: q.sentence,
+      userAnswer: selectedChoice,
+      correctAnswer: `${q.correctAnswer} → ${q.clozeAnswer}`,
+      explanation: q.explanation || "",
+      isCorrect: false,
+      points: q.points || 1
+    });
+    return;
+  }
+
+  const userAnswer = document.getElementById("answerInput")?.value || "";
+  const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.clozeAnswer);
   processAnswer({
     id: q.id,
     section: q.section,
-    question: q.prompt,
-    userAnswer: attemptSummary ? `${userAnswer}（途中ミス：${attemptSummary}）` : userAnswer,
-    correctAnswer: q.answer,
+    question: `${q.sentence} / ${q.correctionPrompt}`,
+    userAnswer,
+    correctAnswer: q.clozeAnswer,
     explanation: q.explanation || "",
     isCorrect,
-    points: q.points || 1,
-    partialMistakes: wrongAttempts
+    points: q.points || 1
   });
 }
 
@@ -1689,29 +1615,64 @@ function processAnswer(data) {
 
   if (data.isCorrect) {
     score += data.points;
-    const praise = getCorrectPraise();
+    quizCorrectStreak += 1;
+    bestCorrectStreak = Math.max(bestCorrectStreak, quizCorrectStreak);
+    const correctCountSoFar = answersLog.filter(answer => answer.correct).length + 1;
+    const answeredCountSoFar = answersLog.length + 1;
+    const progressPercent = Math.min(100, Math.round((correctCountSoFar / Math.max(1, questions.length)) * 100));
+    const accuracySoFar = Math.round((correctCountSoFar / Math.max(1, answeredCountSoFar)) * 100);
+    const praise = getCorrectPraise({
+      streak: quizCorrectStreak,
+      correctCount: correctCountSoFar,
+      answeredCount: answeredCountSoFar,
+      accuracy: accuracySoFar,
+      section: data.section
+    });
     feedback.className = "correct feedback-visible";
     feedback.innerHTML = `
-      <div class="feedback-card feedback-correct">
-        <div class="feedback-icon">${praise.icon}</div>
-        <div>
-          <strong>${escapeHtml(praise.title)}</strong>
+      <div class="feedback-card feedback-correct feedback-achievement">
+        <div class="feedback-icon achievement-icon">${escapeHtml(praise.icon)}</div>
+        <div class="feedback-main">
+          <div class="feedback-title-row">
+            <strong>${escapeHtml(praise.title)}</strong>
+            <span class="streak-pill">${quizCorrectStreak}連続</span>
+          </div>
           <p>${escapeHtml(praise.message)}</p>
+          <div class="mini-illustration success-map" aria-hidden="true"><span>気づく</span><b>→</b><span>選べる</span><b>→</b><span>使える</span></div>
+          <div class="feedback-stats">
+            <span>正解 ${correctCountSoFar}/${questions.length}</span>
+            <span>正答率 ${accuracySoFar}%</span>
+            <span>Best ${bestCorrectStreak}連続</span>
+          </div>
+          <div class="level-row" aria-label="正解進捗">
+            <div class="level-track"><div class="level-fill" style="width:${progressPercent}%"></div></div>
+            <span class="xp-badge">+${data.points || 1} XP</span>
+          </div>
         </div>
       </div>
     `;
-    triggerCorrectEffect();
+    triggerCorrectEffect({ streak: quizCorrectStreak, title: praise.effectTitle || praise.title, points: data.points || 1 });
+    playFeedbackTone(true, quizCorrectStreak);
   } else {
+    quizCorrectStreak = 0;
+    const insight = getWrongFeedback(data);
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
-      <div class="feedback-card feedback-wrong">
-        <div class="feedback-icon">${data.timedOut ? "⏰" : "💡"}</div>
-        <div>
-          <strong>${data.timedOut ? "時間切れ" : "あと少し"}</strong>
-          <p>正解：${escapeHtml(data.correctAnswer)}</p>
+      <div class="feedback-card feedback-wrong feedback-insight">
+        <div class="feedback-icon insight-icon">${escapeHtml(insight.icon)}</div>
+        <div class="feedback-main">
+          <div class="feedback-title-row">
+            <strong>${escapeHtml(insight.title)}</strong>
+            <span class="streak-pill review-pill">復習候補</span>
+          </div>
+          <p>${escapeHtml(insight.message)}</p>
+          <div class="mini-illustration review-map" aria-hidden="true"><span>誤答</span><b>→</b><span>原因</span><b>→</b><span>次の正解</span></div>
+          <div class="wrong-answer-line"><span>正解</span>${escapeHtml(data.correctAnswer)}</div>
+          <div class="next-action-line">${escapeHtml(insight.action)}</div>
         </div>
       </div>
     `;
+    playFeedbackTone(false, 0);
     mistakes.push(data);
   }
 
@@ -1748,11 +1709,6 @@ function processAnswer(data) {
   answersLog.push(record);
   appendLocalHistory(record);
 
-  if (configSupportsReview(testType)) {
-    if (data.isCorrect) removeWrongItem(data.id);
-    else saveWrongItem(data.id);
-  }
-
   document.getElementById("checkButton").disabled = true;
   const delay = Number(selectedAutoNextDelay) || 0;
   const nextButton = document.getElementById("nextButton");
@@ -1770,55 +1726,182 @@ function processAnswer(data) {
   }
 }
 
-function getCorrectPraise() {
-  const config = TEST_CONFIG[testType] || {};
-  const category = config.category || "general";
-  const byCategory = {
-    toeic: [
-      { icon: "🎉", title: "Great!", message: "表現を使える形で定着できています。" },
-      { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" }
-    ],
-    toefl: [
-      { icon: "🎓", title: "Good structure!", message: "語順と構造を正確に組み立てられています。" }
-    ],
-    highschool: [
-      { icon: "📚", title: "正解！", message: "本文・語彙・文法のポイントを押さえられています。" },
-      { icon: "✅", title: "よくできました", message: "根拠を確認しながら次の問題へ進みましょう。" }
-    ],
-    eiken: [
-      { icon: "✍️", title: "正解！", message: "答案で使える接続・論理表現を確認できています。" }
-    ],
-    classics: [
-      { icon: "🌸", title: "正解！", message: "古文の語句・文法・常識を正しく整理できています。" }
-    ],
-    teacher: [
-      { icon: "🧑‍🏫", title: "正解！", message: "概念の定義と使い方を正確に確認できています。" },
-      { icon: "🧠", title: "Good understanding", message: "研究・授業設計に必要な知識として整理できています。" }
-    ],
-    general: [
-      { icon: "✨", title: "正解！", message: "この問題の重要ポイントを正確に選べています。" }
-    ]
-  };
-  const list = byCategory[category] || byCategory.general;
-  return list[currentIndex % list.length];
+function getCorrectPraise(state = {}) {
+  const streak = Number(state.streak) || 1;
+  const category = TEST_CONFIG[testType]?.category || "";
+
+  if (streak >= 10) {
+    return {
+      icon: "🏆",
+      title: `${streak}連続正解！本番級の集中力`,
+      message: "正確さが安定しています。この状態は、制限時間つき演習でも強みになります。",
+      effectTitle: `${streak} COMBO!`
+    };
+  }
+  if (streak >= 5) {
+    return {
+      icon: "🚀",
+      title: `${streak}連続正解！流れに乗れています`,
+      message: "正しい表現を選ぶスピードが上がっています。あと少しで自動化に近づきます。",
+      effectTitle: `${streak}連続正解`
+    };
+  }
+  if (streak >= 3) {
+    return {
+      icon: "🔥",
+      title: `${streak}連続正解！チャンクが定着中`,
+      message: "同じ型を迷わず処理できています。復習の効果が出ています。",
+      effectTitle: `${streak} streak`
+    };
+  }
+
+  if (testType === "speakingErrorCorrection") {
+    return {
+      icon: "🛠️",
+      title: "Good repair!",
+      message: "誤りを直す練習は、Speaking/Writingの自己修正力につながります。",
+      effectTitle: "Repair complete"
+    };
+  }
+  if (category === "toeic") {
+    return {
+      icon: "🎙️",
+      title: "Nice output!",
+      message: "その表現はTOEIC S&Wでそのまま使えるチャンクになります。",
+      effectTitle: "Output +1"
+    };
+  }
+  if (testType === "polaris3") {
+    return {
+      icon: "📘",
+      title: "本文根拠をつかめました",
+      message: "読解では、正解よりも「どこを根拠にしたか」が次の得点につながります。",
+      effectTitle: "Reading point"
+    };
+  }
+
+  const praises = [
+    { icon: "🎉", title: "Great!", message: "今の1問で、使える知識が1つ増えました。", effectTitle: "Great!" },
+    { icon: "⚡", title: "Quick and accurate!", message: "正確に選べたことが、次のスピードにつながります。", effectTitle: "Accurate" },
+    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。", effectTitle: "Excellent" }
+  ];
+  return praises[currentIndex % praises.length];
 }
 
-function triggerCorrectEffect() {
-  playCorrectSound();
+function getWrongFeedback(data = {}) {
+  if (data.timedOut) {
+    return {
+      icon: "⏰",
+      title: "時間切れ：スピードを伸ばすチャンス",
+      message: "知識がないのではなく、取り出す速度を鍛える段階です。次は同じ型を先に声に出してから解くと効果的です。",
+      action: "次の行動：正解を1回音読してから、もう一度解き直しましょう。"
+    };
+  }
+  if (testType === "speakingErrorCorrection") {
+    return {
+      icon: "🔧",
+      title: "修正ポイントが見えました",
+      message: "このミスは、前置詞・冠詞・動詞形などの型として再利用できます。間違いを見つけた分だけ自己修正力が上がります。",
+      action: "次の行動：正しい表現だけを短いチャンクとして覚えましょう。"
+    };
+  }
+  if (TEST_CONFIG[testType]?.type === "sentence") {
+    return {
+      icon: "🧩",
+      title: "語順の組み立てポイントです",
+      message: "惜しい並びは、意味のまとまりをチャンクで捉える練習材料になります。",
+      action: "次の行動：正解を2〜3語ずつ区切って並べ直しましょう。"
+    };
+  }
+  if (TEST_CONFIG[testType]?.type === "cloze") {
+    return {
+      icon: "✍️",
+      title: "表現の精度を上げるミスです",
+      message: "穴埋めの誤答は、実際のSpeaking/Writingで言い換えが必要な場所を教えてくれます。",
+      action: "次の行動：空欄部分だけを声に出して3回確認しましょう。"
+    };
+  }
+  if (testType === "polaris3") {
+    return {
+      icon: "🧭",
+      title: "根拠に戻るサインです",
+      message: "読解の誤答は、本文中の根拠を探し直す練習になります。選択肢ではなく本文に戻ることが大切です。",
+      action: "次の行動：本文の該当段落を1つ選び、なぜ違うか確認しましょう。"
+    };
+  }
+
+  return {
+    icon: "💡",
+    title: "次に伸びるミスです",
+    message: "間違えた問題は、今の弱点を具体的に教えてくれるデータです。復習候補として保存されます。",
+    action: "次の行動：正解を見て、どの語が決め手だったか1つだけ確認しましょう。"
+  };
+}
+
+function triggerCorrectEffect(options = {}) {
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const streak = Number(options.streak) || 1;
   const layer = document.createElement("div");
-  layer.className = "celebration-layer";
-  const marks = ["★", "●", "◆", "✦", "✓"];
-  for (let i = 0; i < 22; i++) {
+  layer.className = `celebration-layer ${streak >= 5 ? "combo-layer" : ""}`;
+
+  const badge = document.createElement("div");
+  badge.className = "celebration-badge";
+  const strong = document.createElement("strong");
+  strong.textContent = streak >= 3 ? `${streak}連続正解！` : (options.title || "正解！");
+  const span = document.createElement("span");
+  span.textContent = streak >= 3 ? "集中が続いています" : "使える知識が1つ増えました";
+  badge.appendChild(strong);
+  badge.appendChild(span);
+  layer.appendChild(badge);
+
+  const marks = streak >= 5 ? ["★", "✦", "✓", "+1", "●", "◆", "✨"] : ["★", "✦", "✓", "+1", "●"];
+  const count = reduceMotion ? 8 : (streak >= 5 ? 46 : 30);
+  for (let i = 0; i < count; i++) {
     const piece = document.createElement("span");
     piece.className = "confetti-piece";
     piece.textContent = marks[i % marks.length];
-    piece.style.left = `${8 + Math.random() * 84}%`;
-    piece.style.animationDelay = `${Math.random() * 0.18}s`;
-    piece.style.transform = `rotate(${Math.random() * 180}deg)`;
+    piece.style.left = `${6 + Math.random() * 88}%`;
+    piece.style.setProperty("--start-y", `${4 + Math.random() * 22}%`);
+    piece.style.setProperty("--drift", `${-90 + Math.random() * 180}px`);
+    piece.style.animationDelay = `${Math.random() * 0.22}s`;
+    piece.style.animationDuration = `${0.95 + Math.random() * 0.55}s`;
     layer.appendChild(piece);
   }
+
+  document.body.classList.add("correct-flash");
   document.body.appendChild(layer);
-  setTimeout(() => layer.remove(), 1100);
+  setTimeout(() => document.body.classList.remove("correct-flash"), 850);
+  setTimeout(() => layer.remove(), reduceMotion ? 900 : 1550);
+}
+
+function playFeedbackTone(isCorrect, streak = 1) {
+  try {
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return;
+    const ctx = new AudioContext();
+    const gain = ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(isCorrect ? 0.06 : 0.035, ctx.currentTime + 0.015);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (isCorrect ? 0.24 : 0.18));
+    gain.connect(ctx.destination);
+
+    const frequencies = isCorrect
+      ? (streak >= 5 ? [659.25, 783.99, 987.77] : [523.25, 659.25, 783.99])
+      : [220.00, 196.00];
+
+    frequencies.forEach((freq, index) => {
+      const osc = ctx.createOscillator();
+      osc.type = isCorrect ? "sine" : "triangle";
+      osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.055);
+      osc.connect(gain);
+      osc.start(ctx.currentTime + index * 0.055);
+      osc.stop(ctx.currentTime + index * 0.055 + 0.11);
+    });
+
+    setTimeout(() => ctx.close(), 420);
+  } catch (error) {
+    // ブラウザ設定により音が鳴らない場合でも、学習機能は継続します。
+  }
 }
 
 function nextQuestion() {
@@ -1845,7 +1928,6 @@ async function showResult(isQuit) {
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   const accuracy = answeredCount ? Math.round((answersLog.filter(a => a.correct).length / answeredCount) * 100) : 0;
-  lastMistakeQuestions = getCurrentMistakeQuestions();
 
   updateStreak();
   showOnly("resultScreen");
@@ -1863,6 +1945,7 @@ async function showResult(isQuit) {
   document.getElementById("dateDisplay").textContent = `回答日時：${endTime.toLocaleString("ja-JP")}`;
   document.getElementById("timeDisplay").textContent = `合計解答時間：${minutes}分 ${seconds}秒`;
   document.getElementById("sendStatusDisplay").textContent = sendStatus;
+  lastMistakeQuestions = getCurrentMistakeQuestions();
   updateRetryMistakesButton();
   showMistakes();
 }
@@ -2126,75 +2209,38 @@ function csvEscape(value) {
   return `"${text}"`;
 }
 
-/* =========================
-   間違い復習（全教材共通）
-========================= */
+
+function handleQuizKeyboard(event) {
+  const quizScreen = document.getElementById("quizScreen");
+  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
+  if (event.isComposing) return;
+
+  const nextButton = document.getElementById("nextButton");
+  const checkButton = document.getElementById("checkButton");
+
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (nextButton && !nextButton.classList.contains("hidden")) return nextQuestion();
+    if (checkButton && !checkButton.disabled) return checkAnswer();
+  }
+
+  const canUseNumberKeys = TEST_CONFIG[testType]?.type === "choice" || (TEST_CONFIG[testType]?.type === "errorCorrection" && errorCorrectionPhase === "identify");
+  if (canUseNumberKeys && /^[1-9]$/.test(event.key)) {
+    const buttons = [...document.querySelectorAll(".choice-button")];
+    const button = buttons[Number(event.key) - 1];
+    if (button) {
+      button.click();
+      event.preventDefault();
+    }
+  }
+}
 
 function configSupportsReview(type) {
-  const config = TEST_CONFIG[type];
-  if (!config) return false;
-  return ["choice", "sentence", "cloze"].includes(config.type) && config.review !== false;
+  return Boolean(TEST_CONFIG[type]?.review);
 }
 
-function saveWrongItem(id) {
-  const key = getWrongKey();
-  const wrongIds = getWrongIds();
-  if (!wrongIds.includes(String(id))) wrongIds.push(String(id));
-  localStorage.setItem(key, JSON.stringify(wrongIds));
-  updateMistakeCountInSettings();
-}
-
-function removeWrongItem(id) {
-  const key = getWrongKey();
-  const wrongIds = getWrongIds().filter(wrongId => wrongId !== String(id));
-  localStorage.setItem(key, JSON.stringify(wrongIds));
-  updateMistakeCountInSettings();
-}
-
-// 旧関数名も残し、既存コードや古いキャッシュから呼ばれても動くようにする。
-function saveWrongWord(id) { saveWrongItem(id); }
-function removeWrongWord(id) { removeWrongItem(id); }
-
-function getWrongIds() {
-  const key = getWrongKey();
-  const legacyKey = getLegacyWrongKey();
-  let ids = [];
-  try { ids = JSON.parse(localStorage.getItem(key)) || []; } catch { ids = []; }
-
-  // 旧 wrongWords_* に保存された履歴があれば、新キーへ移行する。
-  if (ids.length === 0) {
-    try {
-      const legacyIds = JSON.parse(localStorage.getItem(legacyKey)) || [];
-      if (legacyIds.length) {
-        ids = legacyIds;
-        localStorage.setItem(key, JSON.stringify(ids));
-      }
-    } catch { /* ignore */ }
-  }
-  return ids.map(String);
-}
-
-function getWrongKey() {
-  return `${STORAGE_KEYS.wrongItemsPrefix}_${testType}_${currentStudentId || "unknown"}`;
-}
-
-function getLegacyWrongKey() {
-  return `${STORAGE_KEYS.legacyWrongPrefix}_${testType}_${currentStudentId || "unknown"}`;
-}
-
-function clearStoredMistakes() {
-  if (!confirm("この学習者の間違い履歴を削除しますか？")) return;
-  localStorage.removeItem(getWrongKey());
-  localStorage.removeItem(getLegacyWrongKey());
-  updateMistakeCountInSettings();
-  alert("間違い履歴を削除しました。");
-}
-
-function updateMistakeCountInSettings() {
-  const countText = document.getElementById("settingMistakeCount");
-  if (!countText) return;
-  const label = TEST_CONFIG[testType]?.title || "この教材";
-  countText.textContent = `${label} の保存された間違い：${getWrongIds().length}問`;
+function shouldKeepQuestionOrder(type) {
+  return Boolean(TEST_CONFIG[type]?.keepOrder);
 }
 
 function getCurrentMistakeQuestions() {
@@ -2211,13 +2257,54 @@ function updateRetryMistakesButton() {
 }
 
 function retryCurrentMistakes() {
-  if (!lastMistakeQuestions.length) {
-    alert("今回解き直すミスはありません。");
-    return;
-  }
+  if (!lastMistakeQuestions.length) return alert("今回解き直すミスはありません。");
   reviewMode = true;
   questions = shouldKeepQuestionOrder(testType) ? [...lastMistakeQuestions] : shuffle(lastMistakeQuestions);
   startQuizCommon();
+}
+
+/* =========================
+   間違い復習
+========================= */
+
+function saveWrongWord(id) {
+  const key = getWrongKey();
+  const wrongIds = getWrongIds();
+  if (!wrongIds.includes(String(id))) wrongIds.push(String(id));
+  localStorage.setItem(key, JSON.stringify(wrongIds));
+  updateMistakeCountInSettings();
+}
+
+function removeWrongWord(id) {
+  const key = getWrongKey();
+  const wrongIds = getWrongIds().filter(wrongId => wrongId !== String(id));
+  localStorage.setItem(key, JSON.stringify(wrongIds));
+  updateMistakeCountInSettings();
+}
+
+function getWrongIds() {
+  try {
+    return JSON.parse(localStorage.getItem(getWrongKey())) || [];
+  } catch {
+    return [];
+  }
+}
+
+function getWrongKey() {
+  return `wrongWords_${testType}_${currentStudentId || "unknown"}`;
+}
+
+function clearStoredMistakes() {
+  if (!confirm("この学習者の単語間違い履歴を削除しますか？")) return;
+  localStorage.removeItem(getWrongKey());
+  updateMistakeCountInSettings();
+  alert("間違い履歴を削除しました。" );
+}
+
+function updateMistakeCountInSettings() {
+  const countText = document.getElementById("settingMistakeCount");
+  if (!countText) return;
+  countText.textContent = `保存された間違い：${getWrongIds().length}問`;
 }
 
 /* =========================
@@ -2320,10 +2407,12 @@ function resetQuizState() {
   currentIndex = 0;
   score = 0;
   selectedChoice = "";
+  errorCorrectionPhase = "identify";
+  quizCorrectStreak = 0;
+  bestCorrectStreak = 0;
   answersLog = [];
   mistakes = [];
   questions = [];
-  incrementalClozeState = null;
   document.getElementById("feedback").textContent = "";
   document.getElementById("questionArea").innerHTML = "";
 }
@@ -2352,103 +2441,6 @@ function normalizeSentence(text) {
 function normalizeForCompare(text) {
   return String(text).replace(/[.,!?;:]/g, "").replace(/[“”]/g, '"').replace(/[’‘]/g, "'").trim().toLowerCase();
 }
-
-function normalizeToken(text) {
-  return normalizeForCompare(text).replace(/\s+/g, "");
-}
-
-function splitAnswerTokens(text) {
-  return String(text).trim().split(/\s+/).filter(Boolean);
-}
-
-function createWordHint(word) {
-  const text = String(word || "");
-  const clean = text.replace(/[.,!?;:]/g, "");
-  if (!clean) return "";
-  const first = clean.charAt(0);
-  const rest = "_".repeat(Math.max(clean.length - 1, 1));
-  const punctuation = text.match(/[.,!?;:]$/);
-  return punctuation ? `${first}${rest}${punctuation[0]}` : `${first}${rest}`;
-}
-
-function isIncrementalCloze(type) {
-  return TEST_CONFIG[type]?.type === "cloze" && TEST_CONFIG[type]?.clozeMode === "incremental";
-}
-
-function shouldKeepQuestionOrder(type) {
-  return Boolean(TEST_CONFIG[type]?.keepOrder);
-}
-
-function getCurrentUserAnswerText() {
-  if (incrementalClozeState && incrementalClozeState.accepted) {
-    const currentInput = document.getElementById("answerInput")?.value || "";
-    return [...incrementalClozeState.accepted, currentInput].filter(Boolean).join(" ").trim();
-  }
-  return document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
-}
-
-function getClozeInstruction() {
-  const category = TEST_CONFIG[testType]?.category;
-  if (category === "classics") return "空欄に入る語句を入力してください。";
-  if (category === "teacher") return "説明に合う重要語句を入力してください。";
-  return "空欄に入る表現を入力してください。";
-}
-
-function getClozeGoalMessage() {
-  const category = TEST_CONFIG[testType]?.category;
-  if (category === "classics") return "古文読解に必要な知識を正確に取り出す";
-  if (category === "teacher") return "重要概念を正確に説明できるようにする";
-  if (category === "toeic") return "TOEIC Speakingでそのまま使える自然なチャンクを完成させる";
-  return "必要な知識・表現を自分で取り出せるようにする";
-}
-
-function handleQuizKeyboard(event) {
-  const quiz = document.getElementById("quizScreen");
-  if (!quiz || quiz.classList.contains("hidden")) return;
-  if (event.key !== "Enter") return;
-
-  const active = document.activeElement;
-  const isTextInput = active && ["INPUT", "TEXTAREA"].includes(active.tagName);
-  if (isTextInput && active.id !== "answerInput") return;
-
-  event.preventDefault();
-  const nextButton = document.getElementById("nextButton");
-  const checkButton = document.getElementById("checkButton");
-  if (nextButton && !nextButton.classList.contains("hidden")) {
-    nextQuestion();
-  } else if (checkButton && !checkButton.disabled) {
-    checkAnswer();
-  }
-}
-
-function playCorrectSound(volume = 0.8) {
-  try {
-    const AudioContext = window.AudioContext || window.webkitAudioContext;
-    if (!AudioContext) return;
-    if (!correctSoundContext) correctSoundContext = new AudioContext();
-    const ctx = correctSoundContext;
-    if (ctx.state === "suspended") ctx.resume();
-
-    const now = ctx.currentTime;
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.045 * volume, now + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
-    gain.connect(ctx.destination);
-
-    [660, 880].forEach((freq, i) => {
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(freq, now + i * 0.055);
-      osc.connect(gain);
-      osc.start(now + i * 0.055);
-      osc.stop(now + 0.24 + i * 0.035);
-    });
-  } catch {
-    // 音声再生がブラウザ設定でブロックされた場合は、視覚効果だけを使う。
-  }
-}
-
 
 function shuffle(array) {
   const copied = [...array];
