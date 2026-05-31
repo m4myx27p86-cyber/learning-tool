@@ -2466,3 +2466,2227 @@ body.local-review-active .container {
     justify-content: center;
   }
 }
+
+
+/* =========================================================
+   Quiz Motivation & Mobile Stability Patch
+   2026-05-31
+   目的: 問題機能を変更せず、問題画面・選択ボタン・木の成長表示をCSS中心で改善
+   適用: 既存 style.css の後に読み込む、または末尾へ追記
+========================================================= */
+
+:root {
+  --quest-bg-deep: #11231f;
+  --quest-ink: #13231f;
+  --quest-paper: rgba(255, 253, 244, 0.94);
+  --quest-paper-strong: rgba(255, 255, 255, 0.96);
+  --quest-gold: #c99a3d;
+  --quest-gold-soft: #f7d889;
+  --quest-green: #2f855a;
+  --quest-green-deep: #14532d;
+  --quest-blue: #2563eb;
+  --quest-shadow: 0 20px 48px rgba(17, 35, 31, 0.18);
+  --safe-bottom-space: max(16px, env(safe-area-inset-bottom));
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+button,
+.choice-button,
+.word-chip {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 問題画面: スマホで画面全体が揺れにくい、かつ中身はスクロール可能 */
+body.quiz-active-body {
+  overscroll-behavior-y: none;
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 0;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(247, 216, 137, 0.26), transparent 34%),
+      radial-gradient(circle at 85% 10%, rgba(47, 133, 90, 0.24), transparent 38%),
+      linear-gradient(180deg, #f7faf7 0%, #edf4ee 100%);
+  }
+
+  body.quiz-active-body .app-shell {
+    max-width: none;
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+  }
+
+  body.quiz-active-body .app-header {
+    display: none;
+  }
+
+  body.quiz-active-body .container {
+    width: 100%;
+    min-height: 100dvh;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  body.quiz-active-body #quizScreen:not(.hidden) {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(12px + env(safe-area-inset-top)) 12px var(--safe-bottom-space);
+  }
+}
+
+/* 問題画面の冒険カード風デザイン */
+#quizScreen:not(.hidden) {
+  position: relative;
+  isolation: isolate;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+#quizScreen:not(.hidden)::before {
+  content: "";
+  position: absolute;
+  inset: -24px -18px auto;
+  height: min(260px, 42vh);
+  z-index: -2;
+  border-radius: 0 0 44px 44px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(247, 216, 137, 0.56), transparent 30%),
+    radial-gradient(circle at 88% 10%, rgba(34, 197, 94, 0.20), transparent 32%),
+    linear-gradient(135deg, rgba(20, 83, 45, 0.10), rgba(37, 99, 235, 0.08));
+}
+
+#quizScreen:not(.hidden)::after {
+  content: "Daily Quest";
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  z-index: -1;
+  color: rgba(17, 35, 31, 0.05);
+  font-size: clamp(42px, 12vw, 104px);
+  font-weight: 1000;
+  letter-spacing: -0.06em;
+  pointer-events: none;
+}
+
+.quiz-top {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(201, 154, 61, 0.30);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 253, 244, 0.88));
+  box-shadow: 0 16px 36px rgba(17, 35, 31, 0.10);
+  backdrop-filter: blur(16px);
+  text-align: left;
+}
+
+#testTitle {
+  margin: 0;
+  color: var(--quest-ink);
+  font-size: clamp(20px, 4vw, 30px);
+  letter-spacing: -0.02em;
+}
+
+#questionNumber {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: #5b6472;
+  font-weight: 900;
+}
+
+#questionNumber::before {
+  content: "◆";
+  color: var(--quest-gold);
+  font-size: 12px;
+}
+
+.timer {
+  min-width: 94px;
+  border: 1px solid rgba(201, 154, 61, 0.35);
+  background: linear-gradient(180deg, #fff8e1, #fef3c7);
+  color: #8a5a10;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 10px 22px rgba(146, 64, 14, 0.10);
+}
+
+.timer-warning {
+  background: linear-gradient(180deg, #fff1f2, #ffe4e6);
+  color: #b91c1c;
+  border-color: rgba(225, 29, 72, 0.34);
+}
+
+.progress-wrap {
+  height: 12px;
+  margin: 14px 0 12px;
+  border: 1px solid rgba(201, 154, 61, 0.28);
+  background: rgba(255, 255, 255, 0.60);
+  box-shadow: inset 0 1px 3px rgba(17, 35, 31, 0.08);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #22c55e, #f7d889, #c99a3d);
+  box-shadow: 0 0 18px rgba(247, 216, 137, 0.55);
+}
+
+.quiz-progress-note {
+  max-width: 820px;
+  margin: 0 auto 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #55606f;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+#questionArea {
+  position: relative;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: clamp(14px, 3vw, 22px);
+  border: 1px solid rgba(201, 154, 61, 0.34);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, var(--quest-paper-strong), var(--quest-paper)),
+    radial-gradient(circle at 0% 0%, rgba(247, 216, 137, 0.20), transparent 38%);
+  box-shadow: var(--quest-shadow);
+  overflow: hidden;
+}
+
+#questionArea::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(201, 154, 61, 0.18);
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+.words {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 18px;
+  color: var(--quest-ink);
+  font-size: clamp(20px, 5vw, 30px);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.monitor-label,
+.task-instruction {
+  color: #475569;
+}
+
+.question-prompt,
+.cloze-prompt,
+.error-correction-card {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(201, 154, 61, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 253, 244, 0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+/* 選択ボタン: 見た目を整え、二度押し準備状態も分かるようにする */
+.choice-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 760px;
+  min-height: 58px;
+  margin: 12px auto;
+  padding: 15px 18px 15px 52px;
+  border: 1px solid rgba(201, 154, 61, 0.38);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(255, 250, 235, .94));
+  color: #1f2937;
+  box-shadow:
+    0 10px 22px rgba(17, 35, 31, 0.08),
+    inset 0 1px 0 rgba(255,255,255,.86);
+  text-align: left;
+  line-height: 1.55;
+  letter-spacing: .01em;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.choice-button::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #fef3c7, #c99a3d);
+  box-shadow: 0 0 0 5px rgba(201, 154, 61, 0.12);
+}
+
+.choice-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(247,216,137,.18), transparent 44%);
+  opacity: 0;
+  transition: opacity .18s ease;
+  pointer-events: none;
+}
+
+.choice-button:hover,
+.choice-button:focus-visible {
+  border-color: rgba(201, 154, 61, 0.70);
+  background: linear-gradient(180deg, #ffffff, #fff8e1);
+  color: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(17, 35, 31, 0.12);
+  outline: none;
+}
+
+.choice-button:hover::after,
+.choice-button:focus-visible::after {
+  opacity: 1;
+}
+
+.choice-button.selected,
+.choice-button.ready-to-submit {
+  color: #0f172a;
+  border-color: rgba(37, 99, 235, 0.62);
+  background:
+    linear-gradient(180deg, #eef6ff, #dbeafe),
+    linear-gradient(90deg, rgba(37,99,235,.12), transparent);
+  box-shadow:
+    0 16px 28px rgba(37, 99, 235, 0.16),
+    inset 0 0 0 1px rgba(255,255,255,.7);
+}
+
+.choice-button.selected::before,
+.choice-button.ready-to-submit::before {
+  background: linear-gradient(135deg, #93c5fd, #2563eb);
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.14), 0 0 16px rgba(37, 99, 235, 0.30);
+}
+
+.choice-button.ready-to-submit::after {
+  opacity: 1;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.18), transparent 58%);
+}
+
+.choice-button.ready-to-submit {
+  animation: choiceReadyGlow 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes choiceReadyGlow {
+  from { box-shadow: 0 14px 24px rgba(37,99,235,.12), inset 0 0 0 1px rgba(255,255,255,.7); }
+  to { box-shadow: 0 18px 34px rgba(37,99,235,.22), inset 0 0 0 1px rgba(255,255,255,.8); }
+}
+
+.error-choice-grid .choice-button {
+  max-width: none;
+}
+
+/* 語順並べ替えのチップもスマホで押しやすく */
+.word-chip {
+  min-height: 44px;
+  border-color: rgba(20, 83, 45, 0.18);
+  border-radius: 15px;
+  background: linear-gradient(180deg, #ffffff, #f0fdf4);
+  color: #13351f;
+  box-shadow: 0 8px 16px rgba(17, 35, 31, 0.08);
+}
+
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: #14532d;
+  background: linear-gradient(180deg, #ecfdf5, #dcfce7);
+  outline: 3px solid rgba(34, 197, 94, 0.18);
+}
+
+.answer-support,
+.source-expression,
+.target-expression,
+.answer-input {
+  position: relative;
+  z-index: 1;
+}
+
+.answer-input {
+  min-height: 52px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.94);
+}
+
+#feedback {
+  min-height: 76px;
+}
+
+.feedback-card {
+  border: 1px solid rgba(201, 154, 61, 0.22);
+  border-radius: 24px;
+}
+
+.feedback-correct {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(247, 216, 137, 0.30), transparent 32%),
+    linear-gradient(135deg, #dcfce7, #fef9c3);
+}
+
+.feedback-wrong {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(253, 186, 116, 0.26), transparent 34%),
+    linear-gradient(135deg, #fff7ed, #fee2e2);
+}
+
+#checkButton,
+#nextButton,
+#quitButton,
+#startButton,
+.start-action-row button {
+  min-height: 52px;
+  border-radius: 18px;
+}
+
+#checkButton {
+  background: linear-gradient(135deg, #14532d, #2f855a);
+  box-shadow: 0 14px 26px rgba(20, 83, 45, 0.20);
+}
+
+#nextButton {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+}
+
+/* 花ではなく木に見えるように上書き */
+.plant-visual {
+  --tree-trunk: #7c4a21;
+  --tree-trunk-dark: #4a2f16;
+  --tree-leaf-1: #22c55e;
+  --tree-leaf-2: #15803d;
+  --tree-leaf-3: #166534;
+  filter: drop-shadow(0 16px 28px rgba(20,83,45,.18));
+}
+
+.plant-sky {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(247, 216, 137, .36), transparent 24%),
+    linear-gradient(180deg, #ecfeff 0%, #f4fff3 72%, #fefce8 100%);
+}
+
+.plant-stem {
+  width: 13px;
+  border-radius: 999px 999px 4px 4px;
+  background: linear-gradient(90deg, var(--tree-trunk-dark), var(--tree-trunk), #a16207);
+  box-shadow: inset 2px 0 rgba(255,255,255,.12);
+}
+
+.plant-leaf {
+  width: 52px;
+  height: 34px;
+  border-radius: 70% 30% 70% 30%;
+  background: radial-gradient(circle at 30% 30%, #86efac, var(--tree-leaf-1) 42%, var(--tree-leaf-2) 100%);
+  box-shadow: 0 8px 14px rgba(20,83,45,.18);
+}
+
+.plant-bloom {
+  left: 50%;
+  bottom: 112px;
+  width: 92px;
+  height: 74px;
+  margin-left: -46px;
+  border-radius: 48% 52% 44% 56% / 54% 48% 52% 46%;
+  background:
+    radial-gradient(circle at 30% 25%, #bbf7d0 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 34%, rgba(255,255,255,.22) 0 9%, transparent 10%),
+    linear-gradient(135deg, #4ade80, #16a34a 55%, #166534);
+  box-shadow:
+    inset 0 -10px 18px rgba(20,83,45,.18),
+    0 18px 28px rgba(20,83,45,.20);
+}
+
+.plant-bloom::before,
+.plant-bloom::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  width: 58px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #86efac, #15803d);
+  z-index: -1;
+  box-shadow: inset 0 -8px 14px rgba(20,83,45,.15);
+}
+
+.plant-bloom::before { left: -25px; }
+.plant-bloom::after { right: -25px; top: 18px; background: linear-gradient(135deg, #6ee7b7, #166534); }
+
+.plant-stage-0 .plant-stem { height: 10px; width: 10px; background: #65a30d; }
+.plant-stage-1 .plant-stem { height: 44px; }
+.plant-stage-2 .plant-stem { height: 76px; }
+.plant-stage-3 .plant-stem { height: 104px; width: 14px; }
+.plant-stage-4 .plant-stem,
+.plant-stage-5 .plant-stem { height: 126px; width: 16px; }
+
+.plant-stage-4 .plant-bloom,
+.plant-stage-5 .plant-bloom {
+  opacity: 1;
+  transform: scale(.86);
+}
+
+.plant-stage-5 .plant-bloom {
+  transform: scale(1.04);
+}
+
+.plant-stage-5 .plant-bloom::before,
+.plant-stage-5 .plant-bloom::after {
+  opacity: 1;
+}
+
+/* スマホ最適化 */
+@media (max-width: 720px) {
+  .quiz-top {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 22px;
+  }
+
+  #testTitle {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  #questionNumber {
+    font-size: 13px;
+  }
+
+  .timer {
+    min-width: 82px;
+    padding: 9px 10px;
+    font-size: 14px;
+  }
+
+  #questionArea {
+    padding: 14px 10px;
+    border-radius: 24px;
+  }
+
+  #questionArea::before {
+    inset: 7px;
+    border-radius: 19px;
+  }
+
+  .words {
+    margin: 10px 0 14px;
+    font-size: clamp(19px, 5.5vw, 24px);
+    line-height: 1.55;
+  }
+
+  .choice-button {
+    min-height: 56px;
+    margin: 9px auto;
+    padding: 13px 14px 13px 46px;
+    border-radius: 17px;
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+
+  .choice-button::before {
+    left: 16px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .question-prompt,
+  .cloze-prompt,
+  .error-correction-card,
+  .answer-support,
+  .source-expression,
+  .target-expression {
+    border-radius: 18px;
+    padding: 12px;
+  }
+
+  .answer-input {
+    font-size: 16px;
+    min-height: 52px;
+  }
+
+  .word-chip {
+    min-height: 42px;
+    margin: 5px 3px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    font-size: 15px;
+  }
+
+  #checkButton,
+  #nextButton,
+  #quitButton {
+    width: 100%;
+    max-width: none;
+    margin: 7px 0;
+  }
+
+  #feedback {
+    margin: 12px auto 8px;
+    min-height: 66px;
+  }
+
+  .feedback-card {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .feedback-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    font-size: 26px;
+  }
+
+  .plant-visual {
+    width: min(210px, 68vw);
+    height: 210px;
+  }
+
+  .plant-bloom {
+    width: 78px;
+    height: 64px;
+    margin-left: -39px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice-button,
+  .choice-button.ready-to-submit,
+  .feedback-card,
+  .plant-stem,
+  .plant-leaf,
+  .plant-bloom {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+
+/* =========================================================
+   2026-05-31 Blue Theme Update
+   目的: 問題機能を変更せず、配色を青系主体に統一
+   変更範囲: CSSのみ。HTML構造・JSの判定ロジックは変更しない。
+   参考: 冒険感・余白・透明感だけを抽象化し、画像や固有デザインは模倣しない。
+========================================================= */
+
+:root {
+  --bg1: #eaf2ff;
+  --bg2: #f8fbff;
+  --card: rgba(255, 255, 255, 0.94);
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --secondary: #475569;
+  --success: #0284c7;
+  --danger: #dc2626;
+  --border: #dbeafe;
+  --shadow: 0 22px 50px rgba(30, 64, 175, 0.13);
+
+  --quest-bg-deep: #0b1f44;
+  --quest-ink: #0f2344;
+  --quest-paper: rgba(248, 251, 255, 0.94);
+  --quest-paper-strong: rgba(255, 255, 255, 0.97);
+  --quest-gold: #3b82f6;
+  --quest-gold-soft: #bfdbfe;
+  --quest-green: #0ea5e9;
+  --quest-green-deep: #1e40af;
+  --quest-blue: #2563eb;
+  --quest-shadow: 0 22px 54px rgba(30, 64, 175, 0.18);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(191, 219, 254, 0.92) 0, transparent 34%),
+    radial-gradient(circle at 86% 8%, rgba(224, 242, 254, 0.86) 0, transparent 32%),
+    linear-gradient(135deg, #eaf2ff 0%, #f8fbff 52%, #eef6ff 100%);
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(96, 165, 250, 0.22), transparent 25%),
+    radial-gradient(circle at 12% 82%, rgba(14, 165, 233, 0.15), transparent 27%);
+}
+
+.container::before {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb, #38bdf8, #60a5fa, #1e40af);
+}
+
+button,
+.admin-card,
+.admin-quick button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+}
+
+button:hover,
+.admin-card:hover,
+.admin-quick button:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.secondary-button {
+  background: linear-gradient(135deg, #64748b, #475569);
+}
+
+.small-button.secondary-button,
+.material-progress-button,
+.local-tab-button,
+.star-button {
+  box-shadow: none;
+}
+
+.timer {
+  border-color: rgba(96, 165, 250, 0.46);
+  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  color: #1d4ed8;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 10px 22px rgba(37, 99, 235, 0.12);
+}
+
+.timer-warning {
+  background: linear-gradient(180deg, #eef2ff, #dbeafe);
+  color: #1e40af;
+  border-color: rgba(59, 130, 246, 0.46);
+}
+
+.progress-wrap {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(239, 246, 255, 0.78);
+}
+
+.progress-bar,
+.quest-xp i {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb, #38bdf8);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.42);
+}
+
+.material-card,
+.stat-card,
+.result-summary-card,
+.review-plant-card,
+.review-chart-card,
+.local-insight-card,
+.category-section,
+#questionArea,
+.question-prompt,
+.cloze-prompt,
+.error-correction-card {
+  border-color: rgba(147, 197, 253, 0.52);
+}
+
+.material-card {
+  background: linear-gradient(180deg, #ffffff, #f0f7ff);
+}
+
+.material-card:hover {
+  background: linear-gradient(180deg, #ffffff, #eaf4ff);
+  box-shadow: 0 18px 36px rgba(37, 99, 235, .16);
+  border-color: rgba(37, 99, 235, .38);
+}
+
+.material-card span,
+.eyebrow,
+.panel-label,
+.result-card-label,
+.task-badge {
+  color: #1d4ed8;
+}
+
+.panel-label,
+.result-card-label,
+.task-badge {
+  background: rgba(219, 234, 254, 0.86);
+}
+
+.category-toeic,
+.category-toefl,
+.category-highschool,
+.category-eiken,
+.category-classics,
+.category-teacher {
+  border-left-color: #2563eb;
+}
+
+.category-toeic .category-head span,
+.category-toefl .category-head span,
+.category-highschool .category-head span,
+.category-eiken .category-head span,
+.category-classics .category-head span,
+.category-teacher .category-head span,
+.category-title {
+  color: #1d4ed8 !important;
+}
+
+.category-section {
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(240, 247, 255, .93));
+}
+
+.category-tip,
+.accordion-marker {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.theme-toeic,
+.theme-toefl,
+.theme-highschool,
+.theme-eiken,
+.theme-classics,
+.theme-teacher {
+  background: linear-gradient(135deg, #dbeafe, #f8fbff) !important;
+}
+
+.notice-banner,
+.notice-banner.notice-ok,
+.notice-banner.notice-warn,
+.notice-banner.notice-local,
+.growth-home-card,
+.home-learning-calendar,
+.result-hero,
+.local-insight-card {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(59, 130, 246, .16), transparent 33%),
+    linear-gradient(135deg, rgba(255,255,255,.97), rgba(239,246,255,.92));
+  border-color: rgba(147, 197, 253, .74);
+}
+
+.notice-icon,
+.notice-banner.notice-ok .notice-icon,
+.notice-banner.notice-warn .notice-icon,
+.notice-banner.notice-local .notice-icon {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.growth-stats strong,
+.growth-next strong,
+.calendar-motivation strong,
+.calendar-motivation span,
+.main-result-card strong b,
+.sync-result-card strong {
+  color: #1d4ed8;
+}
+
+.mini-day.active,
+.mini-day.strong {
+  background: linear-gradient(180deg, #dbeafe, #eff6ff);
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.mini-day.active strong {
+  color: #1d4ed8;
+}
+
+.combo-message,
+.combo-message.super {
+  background: linear-gradient(135deg, #dbeafe, #e0f2fe, #eef2ff);
+  border-color: #93c5fd;
+}
+
+.combo-message strong,
+.combo-message.super strong {
+  color: #1d4ed8;
+}
+
+body.quiz-active-body {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(191, 219, 254, 0.40), transparent 34%),
+    radial-gradient(circle at 85% 10%, rgba(14, 165, 233, 0.22), transparent 38%),
+    linear-gradient(180deg, #f8fbff 0%, #eaf2ff 100%);
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(191, 219, 254, 0.42), transparent 34%),
+      radial-gradient(circle at 85% 10%, rgba(56, 189, 248, 0.23), transparent 38%),
+      linear-gradient(180deg, #f8fbff 0%, #eaf2ff 100%);
+  }
+}
+
+#quizScreen:not(.hidden)::before {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(191, 219, 254, 0.72), transparent 31%),
+    radial-gradient(circle at 88% 10%, rgba(56, 189, 248, 0.25), transparent 32%),
+    linear-gradient(135deg, rgba(30, 64, 175, 0.12), rgba(37, 99, 235, 0.09));
+}
+
+#quizScreen:not(.hidden)::after {
+  color: rgba(30, 64, 175, 0.055);
+}
+
+.quiz-top {
+  border-color: rgba(147, 197, 253, 0.52);
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(239,246,255,.90));
+  box-shadow: 0 16px 36px rgba(30, 64, 175, 0.12);
+}
+
+#questionNumber::before {
+  color: #2563eb;
+}
+
+#questionArea {
+  border-color: rgba(147, 197, 253, 0.58);
+  background:
+    linear-gradient(180deg, var(--quest-paper-strong), var(--quest-paper)),
+    radial-gradient(circle at 0% 0%, rgba(191, 219, 254, 0.30), transparent 38%);
+}
+
+#questionArea::before {
+  border-color: rgba(147, 197, 253, 0.30);
+}
+
+.question-prompt,
+.cloze-prompt,
+.error-correction-card,
+.answer-support,
+.source-expression,
+.target-expression {
+  border-color: rgba(147, 197, 253, 0.58);
+  background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(239,246,255,.84));
+}
+
+.answer-support {
+  color: #1e40af;
+}
+
+.answer-support span {
+  background: rgba(219, 234, 254, .90);
+  color: #1d4ed8;
+}
+
+.choice-button {
+  border-color: rgba(147, 197, 253, 0.62);
+  background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(239,246,255,.96));
+  box-shadow:
+    0 10px 22px rgba(30, 64, 175, 0.09),
+    inset 0 1px 0 rgba(255,255,255,.86);
+}
+
+.choice-button::before {
+  background: linear-gradient(135deg, #bfdbfe, #2563eb);
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.12);
+}
+
+.choice-button::after {
+  background: linear-gradient(90deg, rgba(59,130,246,.15), transparent 44%);
+}
+
+.choice-button:hover,
+.choice-button:focus-visible {
+  border-color: rgba(37, 99, 235, 0.74);
+  background: linear-gradient(180deg, #ffffff, #dbeafe);
+  box-shadow: 0 14px 26px rgba(30, 64, 175, 0.14);
+}
+
+.choice-button.selected,
+.choice-button.ready-to-submit {
+  border-color: rgba(29, 78, 216, 0.72);
+  background:
+    linear-gradient(180deg, #dbeafe, #bfdbfe),
+    linear-gradient(90deg, rgba(37,99,235,.14), transparent);
+  box-shadow:
+    0 16px 28px rgba(37, 99, 235, 0.18),
+    inset 0 0 0 1px rgba(255,255,255,.70);
+}
+
+.choice-button.selected::before,
+.choice-button.ready-to-submit::before {
+  background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.16), 0 0 16px rgba(37, 99, 235, 0.34);
+}
+
+.choice-button.ready-to-submit::after {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.20), transparent 58%);
+}
+
+@keyframes choiceReadyGlow {
+  from { box-shadow: 0 14px 24px rgba(37,99,235,.13), inset 0 0 0 1px rgba(255,255,255,.70); }
+  to { box-shadow: 0 18px 34px rgba(37,99,235,.24), inset 0 0 0 1px rgba(255,255,255,.82); }
+}
+
+.word-chip {
+  border-color: rgba(147, 197, 253, 0.56);
+  background: linear-gradient(180deg, #ffffff, #eff6ff);
+  color: #1e3a8a;
+  box-shadow: 0 8px 16px rgba(30, 64, 175, 0.08);
+}
+
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: #1d4ed8;
+  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  outline: 3px solid rgba(37, 99, 235, 0.16);
+}
+
+.feedback-card {
+  border-color: rgba(147, 197, 253, 0.46);
+}
+
+.feedback-correct {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(191, 219, 254, 0.42), transparent 33%),
+    linear-gradient(135deg, #e0f2fe, #dbeafe);
+  border-color: #93c5fd;
+}
+
+.feedback-wrong {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(191, 219, 254, 0.22), transparent 34%),
+    linear-gradient(135deg, #eff6ff, #fee2e2);
+}
+
+.feedback-correct strong,
+#feedback.correct,
+#feedback .correct,
+.correct {
+  color: #0369a1;
+}
+
+#checkButton,
+#nextButton,
+#startButton,
+.start-action-row button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
+}
+
+#checkButton:hover,
+#nextButton:hover,
+#startButton:hover,
+.start-action-row button:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.combo-layer .celebration-badge,
+.super-combo-layer .celebration-badge,
+.celebration-badge {
+  background: linear-gradient(135deg, rgba(15, 23, 42, .93), rgba(37, 99, 235, .88), rgba(14, 165, 233, .82));
+}
+
+.confetti-piece,
+.combo-layer .confetti-piece {
+  color: #2563eb;
+}
+.confetti-piece:nth-child(3n),
+.combo-layer .confetti-piece:nth-child(3n) { color: #38bdf8; }
+.confetti-piece:nth-child(3n+1),
+.combo-layer .confetti-piece:nth-child(3n+1) { color: #60a5fa; }
+.confetti-piece:nth-child(4n),
+.combo-layer .confetti-piece:nth-child(4n) { color: #1d4ed8; }
+
+.local-donut {
+  background:
+    conic-gradient(#2563eb 0 var(--mastered-percent), #38bdf8 var(--mastered-percent) calc(var(--mastered-percent) + var(--review-percent)), #cbd5e1 0 100%);
+}
+
+.dot.mastered { background: #2563eb; }
+.dot.review { background: #38bdf8; }
+.dot.unlearned { background: #94a3b8; }
+.dot.starred { background: #6366f1; }
+.star-button.active { background: #2563eb; }
+
+/* 木の見た目は維持しつつ、画面全体に合う青緑寄りに調整 */
+.plant-visual {
+  --tree-trunk: #37527a;
+  --tree-trunk-dark: #1e3a5f;
+  --tree-leaf-1: #38bdf8;
+  --tree-leaf-2: #0284c7;
+  --tree-leaf-3: #075985;
+  filter: drop-shadow(0 16px 28px rgba(37, 99, 235, .18));
+}
+
+.plant-sky {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(191, 219, 254, .54), transparent 25%),
+    linear-gradient(180deg, #eff6ff 0%, #e0f2fe 72%, #f8fbff 100%);
+  border-color: #bfdbfe;
+}
+
+.plant-soil {
+  background: linear-gradient(180deg, #1e3a5f, #172554);
+}
+
+.plant-soil::before {
+  background: linear-gradient(90deg, rgba(147,197,253,.46), transparent);
+}
+
+.plant-stem {
+  background: linear-gradient(90deg, var(--tree-trunk-dark), var(--tree-trunk), #60a5fa);
+}
+
+.plant-leaf {
+  background: radial-gradient(circle at 30% 30%, #bae6fd, var(--tree-leaf-1) 42%, var(--tree-leaf-2) 100%);
+  box-shadow: 0 8px 14px rgba(37, 99, 235, .18);
+}
+
+.plant-bloom {
+  background:
+    radial-gradient(circle at 30% 25%, #dbeafe 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 34%, rgba(255,255,255,.25) 0 9%, transparent 10%),
+    linear-gradient(135deg, #7dd3fc, #0284c7 55%, #075985);
+  box-shadow:
+    inset 0 -10px 18px rgba(7, 89, 133, .18),
+    0 18px 28px rgba(37, 99, 235, .22);
+}
+
+.plant-bloom::before,
+.plant-bloom::after {
+  background: linear-gradient(135deg, #bae6fd, #0284c7);
+  box-shadow: inset 0 -8px 14px rgba(7,89,133,.15);
+}
+
+.plant-bloom::after {
+  background: linear-gradient(135deg, #7dd3fc, #075985);
+}
+
+@keyframes correctGlow {
+  0%, 100% { filter: none; }
+  45% { filter: drop-shadow(0 0 22px rgba(37,99,235,.30)); }
+}
+
+@keyframes comboContainerGlow {
+  0%, 100% { box-shadow: var(--shadow); }
+  45% { box-shadow: 0 0 0 5px rgba(37,99,235,.15), 0 30px 70px rgba(37,99,235,.24); }
+}
+
+
+/* =========================================================
+   2026-05-31 Material-specific Calm Theme Update
+   目的:
+   - 教材ごとに色味を少し変える
+   - 問題画面の派手さ・影・発光を抑える
+   - 木は青緑ではなく自然な緑に戻す
+   - 機能は変更せず、CSS変数と body[data-current-material] のみで見た目を調整する
+========================================================= */
+
+:root {
+  --material-accent: #2563eb;
+  --material-accent-2: #38bdf8;
+  --material-soft: #eff6ff;
+  --material-soft-2: #f8fbff;
+  --material-border: #bfdbfe;
+  --material-ink: #0f172a;
+  --material-muted: #64748b;
+  --calm-shadow: 0 6px 16px rgba(15, 23, 42, 0.055);
+  --calm-shadow-soft: 0 3px 10px rgba(15, 23, 42, 0.045);
+}
+
+/* 教材カテゴリの基本色 */
+body.theme-toeic {
+  --material-accent: #2563eb;
+  --material-accent-2: #0ea5e9;
+  --material-soft: #eff6ff;
+  --material-soft-2: #f8fbff;
+  --material-border: #bfdbfe;
+}
+body.theme-toefl {
+  --material-accent: #4f46e5;
+  --material-accent-2: #60a5fa;
+  --material-soft: #eef2ff;
+  --material-soft-2: #f8fbff;
+  --material-border: #c7d2fe;
+}
+body.theme-highschool {
+  --material-accent: #0f766e;
+  --material-accent-2: #14b8a6;
+  --material-soft: #f0fdfa;
+  --material-soft-2: #f8fffd;
+  --material-border: #99f6e4;
+}
+body.theme-eiken {
+  --material-accent: #1d4ed8;
+  --material-accent-2: #f59e0b;
+  --material-soft: #eff6ff;
+  --material-soft-2: #fffbeb;
+  --material-border: #bfdbfe;
+}
+body.theme-classics {
+  --material-accent: #7c3aed;
+  --material-accent-2: #a78bfa;
+  --material-soft: #f5f3ff;
+  --material-soft-2: #fff7ed;
+  --material-border: #ddd6fe;
+}
+body.theme-teacher {
+  --material-accent: #0f766e;
+  --material-accent-2: #475569;
+  --material-soft: #f0fdfa;
+  --material-soft-2: #f8fafc;
+  --material-border: #99f6e4;
+}
+
+/* 教材ごとの微調整 */
+body[data-current-material="vocab"], .material-card[data-material="vocab"] {
+  --material-accent: #0f766e; --material-accent-2: #14b8a6; --material-soft: #f0fdfa; --material-border: #99f6e4;
+}
+body[data-current-material="sokudokuVocab"], .material-card[data-material="sokudokuVocab"] {
+  --material-accent: #0369a1; --material-accent-2: #38bdf8; --material-soft: #f0f9ff; --material-border: #bae6fd;
+}
+body[data-current-material="target1900Vocab"], .material-card[data-material="target1900Vocab"] {
+  --material-accent: #1d4ed8; --material-accent-2: #60a5fa; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="polaris3"], .material-card[data-material="polaris3"] {
+  --material-accent: #334155; --material-accent-2: #64748b; --material-soft: #f8fafc; --material-border: #cbd5e1;
+}
+body[data-current-material="sentence"], .material-card[data-material="sentence"] {
+  --material-accent: #4f46e5; --material-accent-2: #818cf8; --material-soft: #eef2ff; --material-border: #c7d2fe;
+}
+body[data-current-material="monitor"], .material-card[data-material="monitor"] {
+  --material-accent: #2563eb; --material-accent-2: #38bdf8; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="speakingReview"], .material-card[data-material="speakingReview"] {
+  --material-accent: #0284c7; --material-accent-2: #06b6d4; --material-soft: #ecfeff; --material-border: #a5f3fc;
+}
+body[data-current-material="speakingReviewCloze"], .material-card[data-material="speakingReviewCloze"] {
+  --material-accent: #1e40af; --material-accent-2: #60a5fa; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="speakingErrorCorrection"], .material-card[data-material="speakingErrorCorrection"] {
+  --material-accent: #0f766e; --material-accent-2: #22c55e; --material-soft: #f0fdf4; --material-border: #bbf7d0;
+}
+body[data-current-material="phrasalVerbs"], .material-card[data-material="phrasalVerbs"] {
+  --material-accent: #475569; --material-accent-2: #94a3b8; --material-soft: #f8fafc; --material-border: #cbd5e1;
+}
+body[data-current-material="eikenConnectors"], .material-card[data-material="eikenConnectors"] {
+  --material-accent: #1d4ed8; --material-accent-2: #f59e0b; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="eikenWriting"], .material-card[data-material="eikenWriting"] {
+  --material-accent: #0f766e; --material-accent-2: #f59e0b; --material-soft: #f0fdfa; --material-border: #99f6e4;
+}
+body[data-current-material="englishTheory"], .material-card[data-material="englishTheory"] {
+  --material-accent: #0f766e; --material-accent-2: #475569; --material-soft: #f0fdfa; --material-border: #99f6e4;
+}
+body[data-current-material="statisticsQuestions"], .material-card[data-material="statisticsQuestions"] {
+  --material-accent: #1e40af; --material-accent-2: #64748b; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="writingTheoryChapter4"], .material-card[data-material="writingTheoryChapter4"],
+body[data-current-material="writingTheoryMap"], .material-card[data-material="writingTheoryMap"] {
+  --material-accent: #7c3aed; --material-accent-2: #60a5fa; --material-soft: #f5f3ff; --material-border: #ddd6fe;
+}
+body[data-current-material="presentationBuilderTasks"], .material-card[data-material="presentationBuilderTasks"] {
+  --material-accent: #0369a1; --material-accent-2: #0f766e; --material-soft: #f0f9ff; --material-border: #bae6fd;
+}
+body[data-current-material="classicalWords"], .material-card[data-material="classicalWords"],
+body[data-current-material="classicalGrammar"], .material-card[data-material="classicalGrammar"],
+body[data-current-material="classicalKnowledge"], .material-card[data-material="classicalKnowledge"] {
+  --material-accent: #7c3aed; --material-accent-2: #a78bfa; --material-soft: #f5f3ff; --material-border: #ddd6fe;
+}
+
+/* 全体の影を控えめにする */
+.container,
+.category-section,
+.material-card,
+.stat-card,
+.growth-home-card,
+.home-learning-calendar,
+.result-hero,
+.result-summary-card,
+.review-plant-card,
+.review-chart-card,
+.local-insight-card,
+.unified-card,
+#questionArea,
+.quiz-top,
+.feedback-card,
+.choice-button,
+.word-chip,
+.notice-banner,
+.calendar-card,
+.panel,
+.mistake-list {
+  box-shadow: var(--calm-shadow-soft) !important;
+}
+button,
+#checkButton,
+#nextButton,
+#startButton,
+.start-action-row button,
+.admin-card,
+.admin-quick button,
+.sound-toggle-button {
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+.material-card:hover,
+.category-section:hover,
+.stat-card:hover {
+  box-shadow: var(--calm-shadow) !important;
+  transform: translateY(-1px);
+}
+
+/* 教材カード：色分けはするが、主張しすぎない */
+.material-card[data-material] {
+  border-left: 6px solid var(--material-accent);
+  border-color: var(--material-border);
+  background: linear-gradient(180deg, #ffffff 0%, var(--material-soft) 100%);
+}
+.material-card[data-material] span { color: var(--material-accent); }
+.material-progress-button:hover {
+  color: var(--material-accent);
+  border-color: var(--material-border);
+  background: var(--material-soft);
+}
+
+/* 背景：教材色は薄く反映するだけ */
+body[class*="material-"] {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(147, 197, 253, 0.22), transparent 34%),
+    linear-gradient(135deg, #f8fbff, var(--material-soft-2));
+}
+
+/* 設定・結果・復習画面にも教材色を薄く反映 */
+body[class*="material-"] .panel-label,
+body[class*="material-"] .task-badge,
+body[class*="material-"] .result-card-label {
+  color: var(--material-accent);
+  background: var(--material-soft);
+}
+body[class*="material-"] .progress-bar,
+body[class*="material-"] .quest-xp i {
+  background: linear-gradient(90deg, var(--material-accent), var(--material-accent-2));
+  box-shadow: none !important;
+}
+body[class*="material-"] #checkButton,
+body[class*="material-"] #nextButton,
+body[class*="material-"] #startButton,
+body[class*="material-"] .start-action-row button {
+  background: linear-gradient(135deg, var(--material-accent), var(--material-accent-2));
+}
+
+/* 問題画面：派手な装飾・発光・大きい影を抑える */
+#quizScreen:not(.hidden)::after { display: none; }
+#quizScreen:not(.hidden)::before {
+  height: min(130px, 22vh);
+  opacity: 0.5;
+  border-radius: 0 0 26px 26px;
+  background: linear-gradient(180deg, var(--material-soft), transparent);
+}
+.quiz-top {
+  border-color: var(--material-border);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+}
+#testTitle { color: var(--material-ink); }
+#questionNumber::before { color: var(--material-accent); }
+.timer {
+  color: var(--material-accent);
+  border-color: var(--material-border);
+  background: var(--material-soft);
+}
+.progress-wrap {
+  height: 8px;
+  margin: 12px 0 14px;
+  border-color: #e2e8f0;
+  background: rgba(241, 245, 249, 0.9);
+  box-shadow: none !important;
+}
+.quiz-progress-note {
+  color: var(--material-muted);
+  background: rgba(255,255,255,.72);
+  border-color: #e2e8f0;
+}
+#questionArea {
+  border-color: var(--material-border);
+  background: linear-gradient(180deg, rgba(255,255,255,.97), var(--material-soft));
+}
+#questionArea::before { display: none; }
+.question-prompt,
+.cloze-prompt,
+.error-correction-card,
+.polaris-passage-card,
+.polaris-question-card,
+.answer-support,
+.source-expression,
+.target-expression {
+  border-color: #e2e8f0;
+  background: rgba(255,255,255,.82);
+  box-shadow: none !important;
+}
+.words {
+  color: #172033;
+  font-weight: 800;
+}
+
+/* 選択ボタン：落ち着いたカード型へ */
+.choice-button {
+  min-height: 56px;
+  border-color: #dbe3ef;
+  background: #ffffff;
+  color: #172033;
+  box-shadow: none !important;
+}
+.choice-button::before {
+  background: var(--material-accent);
+  box-shadow: 0 0 0 4px var(--material-soft);
+}
+.choice-button::after { display: none; }
+.choice-button:hover,
+.choice-button:focus-visible {
+  border-color: var(--material-border);
+  background: var(--material-soft);
+  transform: translateY(-1px);
+  box-shadow: none !important;
+}
+.choice-button.selected,
+.choice-button.ready-to-submit {
+  color: #0f172a;
+  border-color: var(--material-accent);
+  background: linear-gradient(180deg, #ffffff, var(--material-soft));
+  box-shadow: none !important;
+}
+.choice-button.selected::before,
+.choice-button.ready-to-submit::before {
+  background: var(--material-accent);
+  box-shadow: 0 0 0 5px var(--material-soft);
+}
+.choice-button.ready-to-submit {
+  animation: none !important;
+  outline: 2px solid var(--material-border);
+  outline-offset: 2px;
+}
+
+.word-chip {
+  border-color: #dbe3ef;
+  background: #ffffff;
+  color: #172033;
+  box-shadow: none !important;
+}
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: var(--material-accent);
+  background: var(--material-soft);
+  outline: 2px solid var(--material-border);
+}
+
+/* フィードバック：達成感は残し、演出を控えめに */
+.feedback-card {
+  border-color: var(--material-border);
+  background: #ffffff;
+}
+.feedback-correct {
+  background: linear-gradient(180deg, #ffffff, #f0fdf4);
+  border-color: #bbf7d0;
+}
+.feedback-wrong {
+  background: linear-gradient(180deg, #ffffff, #fff7ed);
+  border-color: #fed7aa;
+}
+.celebration-layer { opacity: 0.55; }
+.confetti-piece,
+.combo-layer .confetti-piece {
+  font-size: 18px;
+  animation-duration: 0.85s !important;
+}
+.celebration-badge {
+  background: rgba(15, 23, 42, 0.78) !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.14) !important;
+}
+.correct-flash .app-shell,
+.combo-flash .container {
+  animation: none !important;
+}
+
+/* 木：青緑ではなく自然な緑へ。影も控えめ */
+.plant-visual {
+  --tree-trunk: #7c4a21;
+  --tree-trunk-dark: #4a2f16;
+  --tree-leaf-1: #4ade80;
+  --tree-leaf-2: #16a34a;
+  --tree-leaf-3: #166534;
+  filter: drop-shadow(0 6px 10px rgba(20,83,45,.10));
+}
+.plant-sky {
+  background: linear-gradient(180deg, #eff6ff 0%, #f0fdf4 72%, #f8fafc 100%);
+  border-color: #dbeafe;
+}
+.plant-soil {
+  background: linear-gradient(180deg, #92400e, #78350f);
+}
+.plant-soil::before {
+  background: linear-gradient(90deg, rgba(250, 204, 21, .36), transparent);
+}
+.plant-stem {
+  background: linear-gradient(90deg, var(--tree-trunk-dark), var(--tree-trunk), #a16207);
+}
+.plant-leaf {
+  background: radial-gradient(circle at 30% 30%, #bbf7d0, var(--tree-leaf-1) 42%, var(--tree-leaf-2) 100%);
+  box-shadow: none;
+}
+.plant-bloom {
+  background:
+    radial-gradient(circle at 30% 25%, #dcfce7 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 34%, rgba(255,255,255,.24) 0 9%, transparent 10%),
+    linear-gradient(135deg, #86efac, #16a34a 55%, #166534);
+  box-shadow: inset 0 -8px 14px rgba(20,83,45,.13);
+}
+.plant-bloom::before,
+.plant-bloom::after {
+  background: linear-gradient(135deg, #bbf7d0, #16a34a);
+  box-shadow: none;
+}
+.plant-bloom::after {
+  background: linear-gradient(135deg, #86efac, #166534);
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    background: linear-gradient(180deg, #f8fbff 0%, var(--material-soft) 100%);
+  }
+  .quiz-top {
+    border-radius: 18px;
+  }
+  #questionArea {
+    border-radius: 20px;
+  }
+  .choice-button {
+    border-radius: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece,
+  .celebration-badge,
+  .choice-button,
+  .word-chip,
+  .material-card,
+  .category-section {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+/* =========================================================
+   Polaris3 passage display fix
+   - manifest.csvのpath/descriptionが本文に見えないように、本文カード内部を明確化
+========================================================= */
+.polaris-passage-card {
+  max-height: 46vh;
+  overflow: hidden;
+}
+.polaris-passage-summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+.polaris-passage-summary::-webkit-details-marker {
+  display: none;
+}
+.polaris-passage-summary::before {
+  content: "本文を表示 / 非表示";
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.polaris-passage-summary strong {
+  color: #172033;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1.45;
+}
+.polaris-passage-summary small {
+  color: #64748b;
+  font-size: .84rem;
+  font-weight: 700;
+}
+.polaris-passage-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  max-height: 34vh;
+  overflow-y: auto;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: clamp(15px, 2.3vw, 18px);
+  line-height: 1.85;
+  font-weight: 600;
+}
+.polaris-question-text {
+  margin-top: 6px;
+  color: #172033;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1.45;
+  font-weight: 900;
+}
+@media (max-width: 520px) {
+  .polaris-passage-card { max-height: 44vh; }
+  .polaris-passage-body { max-height: 30vh; }
+}
+
+/* =========================================================
+   Polaris3 passage-first display fix v3
+   - 本文を大きく、設問を小さめにする
+   - Summary Clozeではサマリー全体を表示する
+========================================================= */
+.material-polaris3 .words.polaris-question-wrap {
+  max-width: 980px;
+  margin: 12px auto 18px;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.material-polaris3 .polaris-passage-card {
+  max-height: 56vh;
+  padding: clamp(18px, 3vw, 28px);
+  margin: 8px 0 14px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.94);
+}
+
+.material-polaris3 .polaris-passage-summary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(20px, 3.2vw, 34px);
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.material-polaris3 .polaris-passage-summary small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: .82rem;
+}
+
+.material-polaris3 .polaris-passage-body {
+  margin-top: 16px;
+  white-space: pre-wrap;
+  font-size: clamp(18px, 2.2vw, 23px);
+  line-height: 1.9;
+  color: #111827;
+  font-weight: 650;
+}
+
+.material-polaris3 .polaris-question-card {
+  padding: 12px 14px;
+  margin: 10px 0 8px;
+  border-radius: 18px;
+  background: rgba(248,250,252,.92);
+}
+
+.material-polaris3 .polaris-question-text,
+.material-polaris3 .polaris-current-summary {
+  font-size: clamp(15px, 1.7vw, 18px);
+  line-height: 1.65;
+  font-weight: 750;
+  color: #172033;
+}
+
+.material-polaris3 .polaris-summary-label {
+  display: inline-flex;
+  margin: 4px 0 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+.material-polaris3 .polaris-summary-text {
+  white-space: pre-wrap;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  font-size: clamp(16px, 1.9vw, 20px);
+  line-height: 1.8;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.material-polaris3 .polaris-current-summary {
+  margin-top: 10px;
+  color: #334155;
+}
+
+.material-polaris3 .double-press-hint {
+  font-size: .82rem;
+  margin: 6px 0 10px;
+}
+
+.material-polaris3 .choice-button {
+  max-width: 980px;
+  padding: 11px 14px;
+  font-size: clamp(15px, 1.8vw, 17px);
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .material-polaris3 .polaris-passage-card { max-height: 60vh; }
+  .material-polaris3 .polaris-passage-body { font-size: 17px; line-height: 1.85; }
+  .material-polaris3 .polaris-question-card { padding: 10px 12px; }
+  .material-polaris3 .polaris-summary-text { font-size: 15.5px; }
+}
+
+/* =========================================================
+   2026-05-31 Final Style-only Patch
+   - 選択肢の疑似Bulletを削除して文字欠けを防止
+   - 全体の色味を温かみのある緑へ調整
+   - HTML / JavaScript / 問題判定ロジックは変更しない
+========================================================= */
+:root {
+  --bg1: #f3f7ed;
+  --bg2: #fffaf0;
+  --card: rgba(255, 255, 248, 0.95);
+  --text: #17231b;
+  --muted: #667461;
+  --primary: #2f7d4a;
+  --primary-dark: #1f5f3a;
+  --secondary: #6b735f;
+  --success: #2f7d4a;
+  --danger: #b45309;
+  --border: #d7e7cf;
+  --shadow: 0 10px 24px rgba(48, 82, 48, 0.10);
+
+  --material-accent: #2f7d4a;
+  --material-accent-2: #78a85b;
+  --material-soft: #f2f8ed;
+  --material-soft-2: #fffaf0;
+  --material-border: #cfe5c3;
+  --material-ink: #17231b;
+  --material-muted: #667461;
+
+  --quest-bg-deep: #1d3327;
+  --quest-ink: #17231b;
+  --quest-paper: rgba(255, 252, 240, 0.95);
+  --quest-paper-strong: rgba(255, 255, 250, 0.97);
+  --quest-gold: #b58b3b;
+  --quest-gold-soft: #f3dfad;
+  --quest-green: #2f7d4a;
+  --quest-green-deep: #1f5f3a;
+  --quest-blue: #3f7f5a;
+  --quest-shadow: 0 10px 24px rgba(48, 82, 48, 0.10);
+}
+
+body {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(210, 232, 194, 0.55), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(244, 223, 173, 0.45), transparent 30%),
+    linear-gradient(135deg, #f3f7ed 0%, #fffaf0 58%, #edf6e8 100%);
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(181, 139, 59, 0.14), transparent 25%),
+    radial-gradient(circle at 12% 82%, rgba(47, 125, 74, 0.13), transparent 27%);
+}
+
+.container::before {
+  background: linear-gradient(90deg, #2f7d4a, #78a85b, #b58b3b);
+}
+
+button,
+#checkButton,
+#nextButton,
+#startButton,
+.start-action-row button,
+.admin-card,
+.admin-quick button,
+.sound-toggle-button {
+  background: linear-gradient(135deg, #2f7d4a, #78a85b) !important;
+  color: #ffffff;
+  box-shadow: 0 4px 10px rgba(47, 125, 74, 0.14) !important;
+}
+
+button:hover,
+#checkButton:hover,
+#nextButton:hover,
+#startButton:hover,
+.start-action-row button:hover,
+.admin-card:hover,
+.admin-quick button:hover,
+.sound-toggle-button:hover {
+  background: linear-gradient(135deg, #1f5f3a, #5f9349) !important;
+}
+
+.secondary-button {
+  background: linear-gradient(135deg, #6b735f, #4b5b48) !important;
+}
+
+.quit-button,
+#quitButton {
+  background: linear-gradient(135deg, #b45309, #92400e) !important;
+}
+
+.material-card,
+.category-section,
+.unified-card,
+.panel,
+#questionArea,
+.quiz-top,
+.question-prompt,
+.cloze-prompt,
+.error-correction-card,
+.polaris-passage-card,
+.polaris-question-card,
+.result-hero,
+.notice-banner,
+.growth-home-card,
+.home-learning-calendar {
+  border-color: var(--material-border) !important;
+  box-shadow: 0 4px 12px rgba(48, 82, 48, 0.055) !important;
+}
+
+.material-card,
+.category-section,
+.unified-card,
+.panel,
+#questionArea,
+.polaris-passage-card,
+.polaris-question-card {
+  background: linear-gradient(180deg, rgba(255,255,250,0.97), var(--material-soft)) !important;
+}
+
+.material-card[data-material] {
+  border-left-color: var(--material-accent) !important;
+}
+
+.material-card span,
+.category-title,
+.eyebrow,
+.panel-label,
+.result-card-label,
+.task-badge,
+.polaris-summary-label {
+  color: var(--material-accent) !important;
+}
+
+.panel-label,
+.result-card-label,
+.task-badge,
+.polaris-summary-label,
+.category-tip,
+.accordion-marker,
+.timer,
+.quiz-progress-note {
+  background: var(--material-soft) !important;
+  border-color: var(--material-border) !important;
+}
+
+.progress-bar,
+.quest-xp i {
+  background: linear-gradient(90deg, #2f7d4a, #78a85b, #b58b3b) !important;
+  box-shadow: none !important;
+}
+
+.timer,
+#questionNumber::before,
+.growth-stats strong,
+.growth-next strong,
+.calendar-motivation strong,
+.calendar-motivation span,
+.main-result-card strong b,
+.sync-result-card strong,
+.correct,
+#feedback.correct,
+#feedback .correct {
+  color: #2f7d4a !important;
+}
+
+/* 選択肢のBulletを完全に消し、文字が欠けない余白に戻す */
+.choice-button,
+.material-polaris3 .choice-button,
+.error-choice-grid .choice-button {
+  display: block !important;
+  padding: 13px 16px !important;
+  min-height: 54px;
+  border-color: #d7e7cf !important;
+  background: rgba(255, 255, 250, 0.98) !important;
+  color: #17231b !important;
+  box-shadow: none !important;
+  text-align: left;
+  overflow: visible !important;
+}
+
+.choice-button::before,
+.choice-button::after,
+.material-polaris3 .choice-button::before,
+.material-polaris3 .choice-button::after,
+.error-choice-grid .choice-button::before,
+.error-choice-grid .choice-button::after {
+  content: none !important;
+  display: none !important;
+}
+
+.choice-button:hover,
+.choice-button:focus-visible,
+.material-polaris3 .choice-button:hover,
+.material-polaris3 .choice-button:focus-visible {
+  border-color: #a8cf99 !important;
+  background: #f2f8ed !important;
+  color: #17231b !important;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.choice-button.selected,
+.choice-button.ready-to-submit,
+.material-polaris3 .choice-button.selected,
+.material-polaris3 .choice-button.ready-to-submit {
+  border-color: #2f7d4a !important;
+  background: linear-gradient(180deg, #ffffff, #e8f5df) !important;
+  color: #17231b !important;
+  outline: 2px solid #cfe5c3 !important;
+  outline-offset: 2px;
+}
+
+.word-chip {
+  border-color: #cfe5c3 !important;
+  background: #fffefa !important;
+  color: #17231b !important;
+}
+
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: #2f7d4a !important;
+  background: #f2f8ed !important;
+  outline: 2px solid #cfe5c3 !important;
+}
+
+.feedback-correct {
+  background: linear-gradient(180deg, #ffffff, #f2f8ed) !important;
+  border-color: #b9dca9 !important;
+}
+
+.feedback-wrong {
+  background: linear-gradient(180deg, #ffffff, #fff7ed) !important;
+  border-color: #f3dfad !important;
+}
+
+.local-donut {
+  background:
+    conic-gradient(#2f7d4a 0 var(--mastered-percent), #b58b3b var(--mastered-percent) calc(var(--mastered-percent) + var(--review-percent)), #d7e7cf 0 100%) !important;
+}
+.dot.mastered { background: #2f7d4a !important; }
+.dot.review { background: #b58b3b !important; }
+.dot.unlearned { background: #a8b59f !important; }
+.dot.starred { background: #78a85b !important; }
+.star-button.active { background: #2f7d4a !important; }
+
+/* ポラリス3は読解教材らしく、落ち着いた温かい緑に寄せる */
+body[data-current-material="polaris3"],
+.material-polaris3,
+.material-card[data-material="polaris3"] {
+  --material-accent: #2f7d4a;
+  --material-accent-2: #78a85b;
+  --material-soft: #f5f8ef;
+  --material-soft-2: #fffaf0;
+  --material-border: #d7e7cf;
+}
+
+.material-polaris3 .polaris-passage-body {
+  color: #17231b;
+}
+
+.material-polaris3 .polaris-summary-text {
+  border-color: #d7e7cf !important;
+  background: #fffefa !important;
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(210, 232, 194, 0.46), transparent 34%),
+      linear-gradient(180deg, #fffaf0 0%, #edf6e8 100%) !important;
+  }
+
+  .choice-button,
+  .material-polaris3 .choice-button,
+  .error-choice-grid .choice-button {
+    padding: 12px 14px !important;
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+}
+
+
+/* =========================================================
+   2026-05-31 Integrated dashboard + black simple buttons patch
+   目的:
+   - 「演習設定」と「習得状況と総復習」を1画面に統合
+   - 参考画像に近い黒系・シンプルな操作ボタンへ統一
+   - 青は集中・画面背景、緑は成長・習得に使い分ける
+   - 木のイラスト以外の茶色系をできるだけ排除
+========================================================= */
+:root {
+  --bg1: #eaf3ff;
+  --bg2: #f6fff8;
+  --card: rgba(255, 255, 255, 0.96);
+  --text: #0f172a;
+  --muted: #5f6f67;
+  --primary: #0f766e;
+  --primary-dark: #0f172a;
+  --secondary: #1f2937;
+  --success: #16803f;
+  --danger: #dc2626;
+  --border: #dbeafe;
+  --shadow: 0 8px 22px rgba(15, 23, 42, 0.075);
+
+  --material-accent: #0f766e;
+  --material-accent-2: #2563eb;
+  --material-soft: #f0fdfa;
+  --material-soft-2: #f8fbff;
+  --material-border: #bfdbfe;
+  --material-ink: #0f172a;
+  --material-muted: #5f6f67;
+
+  --quest-gold: #2563eb;
+  --quest-gold-soft: #dbeafe;
+  --quest-green: #0f766e;
+  --quest-green-deep: #14532d;
+  --quest-blue: #2563eb;
+  --quest-paper: rgba(248, 253, 250, 0.96);
+  --quest-paper-strong: rgba(255, 255, 255, 0.98);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(191, 219, 254, 0.55), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(187, 247, 208, 0.38), transparent 30%),
+    linear-gradient(135deg, #eef6ff 0%, #f8fffb 54%, #eefcf4 100%) !important;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(37, 99, 235, 0.13), transparent 25%),
+    radial-gradient(circle at 12% 82%, rgba(15, 118, 110, 0.12), transparent 27%) !important;
+}
+
+.container::before,
+.progress-bar,
+.quest-xp i {
+  background: linear-gradient(90deg, #2563eb, #0f766e, #22c55e) !important;
+  box-shadow: none !important;
+}
+
+.unified-material-grid,
+.unified-material-single {
+  display: block;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.integrated-setting-review-card {
+  width: 100%;
+  text-align: left;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(219, 234, 254, .72), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,253,250,.96)) !important;
+  border: 1px solid rgba(191, 219, 254, .92) !important;
+}
+
+.integrated-review-head,
+.integrated-settings-block,
+.setting-review-conditions,
+.integrated-status-grid,
+.local-insight-card {
+  border-color: rgba(191, 219, 254, .86) !important;
+}
+
+.integrated-review-head { align-items: start; }
+
+.integrated-settings-block {
+  margin: 22px 0;
+  padding: clamp(16px, 2.4vw, 24px);
+  border: 1px solid rgba(191, 219, 254, .86);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+}
+
+.integrated-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px 18px;
+  margin-top: 14px;
+}
+
+.integrated-settings-grid label {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: rgba(248, 251, 255, .94);
+  font-weight: 900;
+  color: #233247;
+}
+
+.integrated-settings-grid select,
+.integrated-settings-grid input {
+  margin-bottom: 0;
+  max-width: none;
+  background: #ffffff;
+}
+
+.integrated-start-actions {
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+
+.integrated-status-grid {
+  margin: 10px 0 18px;
+  padding: clamp(16px, 2.4vw, 22px);
+  border: 1px solid #dbeafe;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #ffffff, #f0fdfa) !important;
+}
+
+.review-condition-note {
+  margin: 6px 0 12px;
+  font-size: .92rem;
+}
+
+.integrated-review-actions {
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.material-card-wrap .material-progress-button,
+.material-progress-note { display: none !important; }
+.material-card-wrap { display: flex; }
+.material-card[data-material] { width: 100%; }
+
+button:not(.material-card):not(.choice-button):not(.word-chip) {
+  border: 1px solid rgba(255, 255, 255, .22) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(180deg, #111827, #020617) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .16) !important;
+  letter-spacing: .01em;
+}
+
+button:not(.material-card):not(.choice-button):not(.word-chip):hover,
+button:not(.material-card):not(.choice-button):not(.word-chip):focus-visible {
+  background: linear-gradient(180deg, #1f2937, #0f172a) !important;
+  transform: translateY(-1px);
+  outline: 2px solid rgba(37, 99, 235, .22);
+  outline-offset: 2px;
+}
+
+button:not(.material-card):not(.choice-button):not(.word-chip):disabled {
+  background: #94a3b8 !important;
+  color: #f8fafc !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.small-button,
+.secondary-button.small-button { border-radius: 12px !important; }
+.choice-button,
+.material-polaris3 .choice-button,
+.error-choice-grid .choice-button { padding-left: 16px !important; }
+
+.local-donut {
+  background:
+    conic-gradient(#16a34a 0 var(--mastered-percent), #2563eb var(--mastered-percent) calc(var(--mastered-percent) + var(--review-percent)), #cbd5e1 0 100%) !important;
+}
+.dot.mastered { background: #16a34a !important; }
+.dot.review { background: #2563eb !important; }
+.dot.unlearned { background: #94a3b8 !important; }
+.dot.starred { background: #0f766e !important; }
+.star-button.active { background: #0f172a !important; }
+
+.timer,
+.quiz-progress-note,
+.panel-label,
+.result-card-label,
+.task-badge,
+.polaris-summary-label,
+.category-tip,
+.accordion-marker {
+  color: #0f766e !important;
+  background: #f0fdfa !important;
+  border-color: #bfdbfe !important;
+}
+
+.feedback-wrong {
+  background: linear-gradient(180deg, #ffffff, #fff1f2) !important;
+  border-color: #fecdd3 !important;
+}
+
+.plant-visual {
+  --tree-trunk: #7c4a21;
+  --tree-trunk-dark: #4a2f16;
+  --tree-leaf-1: #4ade80;
+  --tree-leaf-2: #16a34a;
+  --tree-leaf-3: #166534;
+}
+
+.material-polaris3 .polaris-passage-card { max-height: 62vh; }
+.material-polaris3 .polaris-passage-body {
+  max-height: 44vh;
+  font-size: clamp(18px, 2.25vw, 23px);
+  line-height: 1.9;
+}
+.material-polaris3 .polaris-question-card { padding: 10px 12px; }
+.material-polaris3 .polaris-question-text,
+.material-polaris3 .polaris-current-summary { font-size: clamp(14px, 1.55vw, 17px); }
+.material-polaris3 .polaris-summary-text {
+  font-size: clamp(16px, 1.85vw, 20px);
+  line-height: 1.85;
+}
+
+@media (max-width: 760px) {
+  .integrated-settings-grid,
+  .setting-review-visual-grid,
+  .integrated-status-grid { grid-template-columns: 1fr !important; }
+  .integrated-review-head,
+  .unified-material-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .integrated-review-actions button,
+  .integrated-start-actions button {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .integrated-settings-block { padding: 14px; }
+}

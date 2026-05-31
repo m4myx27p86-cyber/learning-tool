@@ -315,7 +315,12 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("adminHistoryButton", "click", openHistoryScreen);
   safeAddEvent("scrollToMaterialsButton", "click", () => document.getElementById("materialShelf")?.scrollIntoView({ behavior: "smooth", block: "start" }));
 
-  safeAddEvent("questionCountSelect", "change", toggleCustomQuestionInput);
+  safeAddEvent("questionCountSelect", "change", () => {
+    toggleCustomQuestionInput();
+    renderSettingProgressDashboard(testType);
+  });
+  safeAddEvent("customQuestionCountInput", "input", () => renderSettingProgressDashboard(testType));
+  safeAddEvent("sectionSelect", "change", () => renderSettingProgressDashboard(testType));
   safeAddEvent("startButton", "click", startNormalQuiz);
   safeAddEvent("reviewButton", "click", startReviewQuiz);
   safeAddEvent("clearStoredMistakesButton", "click", clearStoredMistakes);
@@ -757,9 +762,6 @@ function renderMaterialCategories() {
 function materialCardHtml(type) {
   const config = TEST_CONFIG[type];
   const categoryLabel = CATEGORY_INFO[config.category]?.label || config.category;
-  const reviewButton = isReviewDashboardSupported(type)
-    ? `<button class="material-progress-button" data-review-material="${escapeHtml(type)}" type="button">進捗を見て始める</button>`
-    : `<span class="material-progress-note">提出型教材</span>`;
   return `
     <div class="material-card-wrap">
       <button class="material-card" data-material="${escapeHtml(type)}">
@@ -767,7 +769,6 @@ function materialCardHtml(type) {
         <strong>${escapeHtml(config.title)}</strong>
         <small>${escapeHtml(config.description || "")}</small>
       </button>
-      ${reviewButton}
     </div>
   `;
 }
@@ -828,7 +829,17 @@ function checkMaterialPassword() {
 function applyThemeForMaterial(type) {
   const category = TEST_CONFIG[type]?.category || "highschool";
   document.body.classList.remove("theme-toeic", "theme-toefl", "theme-highschool", "theme-classics", "theme-eiken", "theme-teacher");
+
+  // 教材ごとの見た目だけを切り替えるためのクラスです。
+  // 問題データ・採点・二度押し回答・送信処理には触れません。
+  [...document.body.classList]
+    .filter(className => className.startsWith("material-"))
+    .forEach(className => document.body.classList.remove(className));
+
+  const materialClass = `material-${String(type || "").replace(/[^a-z0-9_-]/gi, "-").toLowerCase()}`;
   document.body.classList.add(`theme-${CATEGORY_INFO[category]?.theme || category}`);
+  if (type) document.body.classList.add(materialClass);
+  if (type) document.body.dataset.currentMaterial = type;
 }
 
 /* =========================
@@ -1041,7 +1052,9 @@ async function ensureQuestionsLoaded(type) {
   if (loadedQuestions[type]) return loadedQuestions[type];
 
   const config = TEST_CONFIG[type];
-  if (config.type === "sentence") {
+  if (type === "polaris3") {
+    loadedQuestions[type] = await loadPolaris3Questions(config);
+  } else if (config.type === "sentence") {
     loadedQuestions[type] = await loadSentenceQuestions(config.files);
   } else if (config.type === "cloze") {
     loadedQuestions[type] = await loadClozeQuestions(config.path);
@@ -1080,6 +1093,41 @@ function toggleCustomQuestionInput() {
   input.classList.toggle("hidden", select.value !== "custom");
 }
 
+
+function getConfiguredPracticeCount(total) {
+  const select = document.getElementById("questionCountSelect");
+  if (!select || select.value === "all") return total;
+  if (select.value === "custom") {
+    const input = document.getElementById("customQuestionCountInput");
+    const customCount = Number(input?.value);
+    return customCount && customCount > 0 ? Math.min(customCount, total) : Math.min(10, total);
+  }
+  const selected = Number(select.value);
+  return selected > 0 ? Math.min(selected, total) : total;
+}
+
+function getSelectedSectionValue() {
+  return document.getElementById("sectionSelect")?.value || "all";
+}
+
+function filterQuestionsBySelectedSection(sourceQuestions) {
+  const selectedSection = getSelectedSectionValue();
+  return selectedSection === "all"
+    ? [...sourceQuestions]
+    : sourceQuestions.filter(q => String(q.section) === String(selectedSection));
+}
+
+function filterStatusesBySelectedSection(statuses) {
+  const selectedSection = getSelectedSectionValue();
+  return selectedSection === "all"
+    ? [...statuses]
+    : statuses.filter(item => String(item.question.section) === String(selectedSection));
+}
+
+function orderQuestionsForMode(type, pool) {
+  return TEST_CONFIG[type]?.keepOrder ? [...pool] : shuffle(pool);
+}
+
 /* =========================
    CSV読み込み
 ========================= */
@@ -1093,22 +1141,77 @@ async function loadChoiceQuestions(filePath) {
 
   const text = await response.text();
   const rows = parseCSV(text);
-  rows.shift();
+  const header = (rows.shift() || []).map(cell => String(cell || "").trim());
 
-  return rows.map(row => ({
-    id: row[0],
-    section: row[1],
-    word: row[2],
-    passage: row[2],
-    question: row[9] || row[2],
-    prompt: row[9] || row[2],
-    correctAnswer: row[3],
-    choices: [row[3], row[4], row[5], row[6]].filter(Boolean),
-    points: Number(row[7]) || 1,
-    explanation: row[8] || ""
-  })).filter(q => q.id && q.section && q.word && q.correctAnswer && q.choices.length > 0);
+  return rows.map(row => {
+    const id = getCsvCell(row, header, ["id", "no", "number", "番号"], 0);
+    const section = getCsvCell(row, header, ["section", "lesson", "unit", "part", "セクション", "レッスン", "単元"], 1);
+    const word = getCsvCell(row, header, ["word", "term", "sentence", "stimulus", "語", "語句", "問題"], 2);
+
+    // passage列があるCSVだけ本文として扱います。
+    // word列を本文に流用すると、ポラリス3で設問が本文欄に出るため、ここでは代用しません。
+    const passage = getCsvCell(row, header, ["passage", "context", "body", "source", "text", "本文", "長文"], -1);
+
+    // ポラリス3のCSVでは word列が設問、questionType列が Vocabulary/Factual です。
+    // fallbackを9列目にすると questionType が設問として表示されるため、明示的なquestion列がない場合はword列を使います。
+    const explicitQuestion = getCsvCell(row, header, ["question", "prompt", "item", "設問", "問い", "問題文"], -1);
+    const question = explicitQuestion || word;
+
+    const correctAnswer = getCsvCell(row, header, ["correctanswer", "correct", "answer", "key", "正解"], 3);
+    const points = Number(getCsvCell(row, header, ["points", "point", "score", "配点"], 7)) || 1;
+    const explanation = getCsvCell(row, header, ["explanation", "comment", "feedback", "解説", "説明"], 8) || "";
+    const questionType = getCsvCell(row, header, ["questionType", "type", "kind", "形式", "問題形式"], -1) || "";
+    const summaryText = getCsvCell(row, header, ["summary", "summaryText", "fullSummary", "summaryFullText", "要約", "サマリー", "要約全文"], -1) || "";
+
+    const choices = [
+      getCsvCell(row, header, ["choice1", "option1", "answer1", "a", "選択肢1"], 3),
+      getCsvCell(row, header, ["choice2", "option2", "answer2", "distractor1", "wrong1", "b", "選択肢2"], 4),
+      getCsvCell(row, header, ["choice3", "option3", "answer3", "distractor2", "wrong2", "c", "選択肢3"], 5),
+      getCsvCell(row, header, ["choice4", "option4", "answer4", "distractor3", "wrong3", "d", "選択肢4"], 6)
+    ].filter(Boolean);
+
+    if (correctAnswer && !choices.includes(correctAnswer)) choices.unshift(correctAnswer);
+
+    return {
+      id,
+      section,
+      word: word || question || passage,
+      passage,
+      question,
+      prompt: question || word,
+      correctAnswer,
+      choices,
+      points,
+      explanation,
+      questionType,
+      summaryText,
+      summaryFullText: summaryText,
+      sourceFile: filePath
+    };
+  }).filter(q => q.id && q.section && (q.word || q.question || q.passage) && q.correctAnswer && q.choices.length > 0);
 }
 
+function normalizeCsvHeader(value) {
+  return String(value || "").trim().toLowerCase().replace(/[\s_\-－ー]/g, "");
+}
+
+function getCsvCell(row, header, names, fallbackIndex = -1) {
+  const normalizedHeader = header.map(normalizeCsvHeader);
+  const normalizedNames = (Array.isArray(names) ? names : [names]).map(normalizeCsvHeader);
+  const headerIndex = normalizedNames
+    .map(name => normalizedHeader.indexOf(name))
+    .find(index => index >= 0);
+
+  if (headerIndex >= 0 && row[headerIndex] !== undefined && String(row[headerIndex]).trim() !== "") {
+    return row[headerIndex];
+  }
+
+  if (Number.isInteger(fallbackIndex) && fallbackIndex >= 0 && row[fallbackIndex] !== undefined) {
+    return row[fallbackIndex];
+  }
+
+  return "";
+}
 
 async function loadChoiceQuestionsFromFiles(files) {
   const all = [];
@@ -1117,6 +1220,133 @@ async function loadChoiceQuestionsFromFiles(files) {
     all.push(...loaded);
   }
   return all;
+}
+
+async function loadPolaris3Questions(config) {
+  const files = Array.isArray(config.files) ? config.files : [];
+  const manifest = await loadPolaris3Manifest(config.manifest);
+  const all = [];
+
+  for (const file of files) {
+    const fileLessonKey = getPolarisLessonKey(file);
+    const loaded = await loadChoiceQuestions(file);
+    loaded.forEach(question => {
+      const sectionLessonKey = getPolarisLessonKey(question.section) || fileLessonKey;
+      const manifestEntry = getPolarisManifestEntry(manifest, question.section, sectionLessonKey, fileLessonKey, file);
+      const embeddedPassage = looksLikePolarisQuestion(question.passage, question.question) ? "" : (question.passage || "");
+
+      // 各Lesson CSVの passage 列を最優先します。
+      // manifest.csvの description/path は本文ではなく見出し・ファイル情報なので、本文として上書きしません。
+      const passage = embeddedPassage || manifestEntry?.passage || "";
+      const title = manifestEntry?.title || question.passageTitle || makePolarisLessonTitle(sectionLessonKey || question.section || fileLessonKey);
+
+      all.push({
+        ...question,
+        section: question.section || title,
+        passage,
+        passageTitle: title,
+        lessonKey: sectionLessonKey || fileLessonKey
+      });
+    });
+  }
+
+  enrichPolarisSummaryBlocks(all);
+  return all;
+}
+
+function enrichPolarisSummaryBlocks(items) {
+  const groups = new Map();
+  items.forEach(item => {
+    if (!isPolarisSummaryQuestion(item)) return;
+    const key = `${item.lessonKey || item.section || ""}::${normalizeForCompare(item.passage || "")}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(item);
+  });
+
+  groups.forEach(group => {
+    const explicitSummary = group
+      .map(item => String(item.summaryFullText || item.summaryText || "").trim())
+      .find(text => text.length > 0);
+    const generatedSummary = group
+      .map(item => String(item.question || item.prompt || item.word || "").trim())
+      .filter(Boolean)
+      .join("\n");
+    const summaryText = explicitSummary || generatedSummary;
+    group.forEach(item => { item.summaryFullText = summaryText; });
+  });
+}
+
+function isPolarisSummaryQuestion(item) {
+  const type = String(item?.questionType || "").toLowerCase();
+  const id = String(item?.id || "").toUpperCase();
+  return type.includes("summary") || /-S\d+/.test(id);
+}
+
+async function loadPolaris3Manifest(manifestPath) {
+  const manifest = new Map();
+  if (!manifestPath) return manifest;
+
+  try {
+    const response = await fetch(manifestPath);
+    if (!response.ok) return manifest;
+
+    const text = await response.text();
+    const rows = parseCSV(text);
+    const header = (rows.shift() || []).map(cell => String(cell || "").trim());
+
+    rows.forEach(row => {
+      const lesson = getCsvCell(row, header, ["lesson", "section", "unit", "id", "レッスン", "セクション"], 0);
+      const path = getCsvCell(row, header, ["path", "file", "filename", "ファイル", "パス"], 1);
+      const title = getCsvCell(row, header, ["title", "name", "label", "description", "desc", "見出し", "タイトル", "説明"], -1) || makePolarisLessonTitle(lesson);
+
+      // description列やpath列は本文ではありません。
+      // 本文列が明示されているmanifestだけ、補助本文として使います。
+      const passage = getCsvCell(row, header, ["passage", "body", "text", "context", "本文", "長文"], -1);
+      if (!lesson) return;
+
+      [lesson, title, path, getPolarisLessonKey(lesson), getPolarisLessonKey(path)].filter(Boolean).forEach(key => {
+        manifest.set(normalizePolarisKey(key), { title, passage });
+      });
+    });
+  } catch (error) {
+    console.warn("ポラリス3本文manifestを読み込めませんでした:", error);
+  }
+
+  return manifest;
+}
+
+function getPolarisManifestEntry(manifest, ...keys) {
+  for (const key of keys) {
+    const normalized = normalizePolarisKey(key);
+    if (normalized && manifest.has(normalized)) return manifest.get(normalized);
+  }
+  return null;
+}
+
+function getPolarisLessonKey(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/(?:polaris3[_\-\s]*)?lesson[_\-\s]*(\d+)|^\s*(\d+)\s*$/i);
+  if (!match) return "";
+  return `lesson${match[1] || match[2]}`;
+}
+
+function normalizePolarisKey(value) {
+  const lessonKey = getPolarisLessonKey(value);
+  if (lessonKey) return lessonKey;
+  return String(value || "").trim().toLowerCase().replace(/[\s_\-－ー]/g, "");
+}
+
+function makePolarisLessonTitle(value) {
+  const lessonKey = getPolarisLessonKey(value);
+  if (!lessonKey) return String(value || "本文");
+  return `Lesson ${lessonKey.replace("lesson", "")}`;
+}
+
+function looksLikePolarisQuestion(text, questionText = "") {
+  const clean = String(text || "").trim();
+  if (!clean) return true;
+  if (questionText && normalizeForCompare(clean) === normalizeForCompare(questionText)) return true;
+  return clean.length < 180 && /[?？]|according|which|what|why|author|main idea|closest in meaning|本文|選び/i.test(clean);
 }
 
 async function loadErrorCorrectionQuestions(filePath) {
@@ -1294,19 +1524,17 @@ async function startReviewQuiz() {
     return;
   }
 
-  questions = shuffle(questions);
+  questions = orderQuestionsForMode(testType, questions);
   startQuizCommon();
 }
 
 function prepareQuiz(sourceQuestions) {
-  const selectedSection = document.getElementById("sectionSelect").value;
   const countValue = document.getElementById("questionCountSelect").value;
+  let pool = filterQuestionsBySelectedSection(sourceQuestions);
 
-  let pool = selectedSection === "all"
-    ? [...sourceQuestions]
-    : sourceQuestions.filter(q => q.section === selectedSection);
-
-  pool = shuffle(pool);
+  // ポラリス3は読解本文の流れに沿って学習するため、通常演習ではランダム化しません。
+  // 他教材は従来どおりランダム出題を維持します。
+  pool = orderQuestionsForMode(testType, pool);
 
   if (countValue === "custom") {
     const customCount = Number(document.getElementById("customQuestionCountInput").value);
@@ -1319,8 +1547,8 @@ function prepareQuiz(sourceQuestions) {
     return;
   }
 
-  if (countValue !== "all") pool = pool.slice(0, Number(countValue));
-  questions = pool;
+  const limit = getConfiguredPracticeCount(pool.length);
+  questions = pool.slice(0, limit);
 }
 
 function startQuizCommon() {
@@ -1440,11 +1668,25 @@ function showChoiceQuestion() {
   } else if (testType.startsWith("classical")) {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>${escapeHtml(q.word)}`;
   } else if (testType === "polaris3") {
-    const passage = q.passage || q.context || q.word;
+    const passage = q.passage || q.context || "";
+    const passageTitle = q.passageTitle || q.section || "本文";
+    const questionText = q.question || q.prompt || q.word;
+    const isSummary = isPolarisSummaryQuestion(q);
+    const summaryText = isSummary ? (q.summaryFullText || questionText) : "";
     wordDiv.className = "words polaris-question-wrap";
     wordDiv.innerHTML = `
-      <div class="polaris-passage-card"><span>本文</span>${escapeHtml(passage)}</div>
-      <div class="polaris-question-card"><span>No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}</span>${escapeHtml(q.question || q.prompt || q.word)}</div>
+      <details class="polaris-passage-card" open>
+        <summary class="polaris-passage-summary">
+          <span>本文</span>
+          <strong>${escapeHtml(passageTitle)}</strong>
+          <small>タップで本文を開閉できます</small>
+        </summary>
+        <div class="polaris-passage-body">${escapeHtml(passage || "本文データを読み込めませんでした。CSVの passage / 本文 列を確認してください。")}</div>
+      </details>
+      <div class="polaris-question-card ${isSummary ? "polaris-summary-card" : ""}">
+        <span>No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}${q.questionType ? " | " + escapeHtml(q.questionType) : ""}</span>
+        ${isSummary ? `<div class="polaris-summary-label">Summary 全体</div><div class="polaris-summary-text">${escapeHtml(summaryText)}</div><div class="polaris-current-summary">今回答える文：${escapeHtml(questionText)}</div>` : `<div class="polaris-question-text">${escapeHtml(questionText)}</div>`}
+      </div>
       <div class="double-press-hint">選択肢は1回目で選択、同じ選択肢をもう1回押すと回答します。</div>
     `;
   } else {
@@ -1685,7 +1927,7 @@ function checkChoiceAnswer() {
   processAnswer({
     id: q.id,
     section: q.section,
-    question: q.word,
+    question: q.question || q.prompt || q.word,
     userAnswer: selectedChoice,
     correctAnswer: q.correctAnswer,
     explanation: q.explanation || "",
@@ -2469,13 +2711,15 @@ async function renderSettingProgressDashboard(type = testType) {
   const percent = Math.round((mastered / total) * 100);
   const reviewPercent = Math.round((needReview / total) * 100);
   const settings = getLocalReviewSettings();
-  const selectedCount = getFilteredLocalReviewStatuses(statuses, settings).length;
+  const sectionFilteredStatuses = filterStatusesBySelectedSection(statuses);
+  const selectedCount = getFilteredLocalReviewStatuses(sectionFilteredStatuses, settings).length;
+  const selectedLimit = getConfiguredPracticeCount(selectedCount);
 
   setText("settingReviewDonutNumber", `${percent}%`);
   setText("settingReviewMasteredCount", `${mastered}問`);
   setText("settingReviewNeedReviewCount", `${needReview}問`);
   setText("settingReviewUnlearnedCount", `${unlearned}問`);
-  setText("settingReviewTotalButton", `総復習 ${Math.min(selectedCount, settings.count || selectedCount)}問`);
+  setText("settingReviewTotalButton", `総復習 ${selectedLimit}問`);
 
   const donut = document.getElementById("settingReviewDonut");
   if (donut) {
@@ -2483,6 +2727,7 @@ async function renderSettingProgressDashboard(type = testType) {
     donut.style.setProperty("--review-percent", `${reviewPercent}%`);
   }
   renderReviewPlant(mastered, needReview, unlearned, "settingReviewPlant", "settingReviewPlantMessage");
+  setText("settingReviewRandomButton", TEST_CONFIG[type]?.keepOrder ? "選択範囲を順番に練習" : "ランダムで練習");
   loadSettingReviewSettingsToForm();
   renderSettingReviewInsight(statuses, config);
   renderSettingReviewList(statuses);
@@ -2826,22 +3071,25 @@ async function startLocalReviewQuiz(mode = "review") {
   const type = activeLocalReviewType;
   const sourceQuestions = await ensureQuestionsLoaded(type);
   const settings = getLocalReviewSettings();
+  const isSettingScreenContext = type === testType && !document.getElementById("settingScreen")?.classList.contains("hidden");
   let statuses = getLocalReviewStatuses(type, sourceQuestions);
-  if (mode === "review") {
-    statuses = statuses.filter(item => {
-      if (item.status === "mastered" && settings.includeMastered) return true;
-      if (item.status === "review" && (settings.includeReview || settings.includeWrong)) return true;
-      if (item.starred && settings.includeStarred) return true;
-      if (item.status === "unlearned" && settings.includeUnlearned) return true;
-      return false;
-    });
+
+  if (isSettingScreenContext) {
+    statuses = filterStatusesBySelectedSection(statuses);
   }
-  const pool = statuses.map(item => item.question);
+
+  if (mode === "review") {
+    statuses = getFilteredLocalReviewStatuses(statuses, settings);
+  }
+
+  let pool = statuses.map(item => item.question);
   if (!pool.length) return alert("条件に合う問題がありません。設定を変更してください。");
   testType = type;
   reviewMode = mode !== "random";
-  document.getElementById("timeLimitSelect").value = String(TEST_CONFIG[type].defaultTime || 0);
-  questions = shuffle(pool).slice(0, settings.count);
+
+  const limit = isSettingScreenContext ? getConfiguredPracticeCount(pool.length) : Math.min(settings.count, pool.length);
+  pool = orderQuestionsForMode(type, pool);
+  questions = pool.slice(0, limit);
   startQuizCommon();
 }
 
@@ -2859,7 +3107,7 @@ async function startSingleLocalReview(id) {
 function retryCurrentMistakes() {
   if (!lastMistakeQuestions.length) return alert("今回解き直すミスはありません。");
   reviewMode = true;
-  questions = shuffle(lastMistakeQuestions);
+  questions = orderQuestionsForMode(testType, lastMistakeQuestions);
   startQuizCommon();
 }
 

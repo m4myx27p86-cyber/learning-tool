@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>学習ツール</title>
+  <title>A Learning Tool</title>
   <link rel="stylesheet" href="style.css?v=unified-material-20260531" />
 </head>
 <body>
@@ -11,8 +11,8 @@
     <header class="app-header">
       <div>
         <p class="eyebrow">Practice Dashboard</p>
-        <h1>学習ツール</h1>
-        <p class="header-message">1問ずつ、使える英語と確かな知識を積み上げる</p>
+        <h1>A Learning Tool</h1>
+        <p class="header-message">繰り返し学習し、知識を身に着けよう！</p>
       </div>
     </header>
 
@@ -272,75 +272,73 @@
           </div>
         </div>
 
-        <div class="unified-material-grid">
-          <article class="unified-card start-settings-card">
-            <span class="panel-label">Start Settings</span>
-            <h3>演習設定</h3>
-            <p class="muted">この画面だけで、設定・習得状況・総復習を確認できます。</p>
-
-            <div id="commonSettings" class="settings-grid unified-settings-grid">
-              <label>
-                セクション
-                <select id="sectionSelect"></select>
-              </label>
-              <label>
-                問題数
-                <select id="questionCountSelect">
-                  <option value="10">10問</option>
-                  <option value="20" selected>20問</option>
-                  <option value="30">30問</option>
-                  <option value="50">50問</option>
-                  <option value="100">100問</option>
-                  <option value="custom">自分で入力</option>
-                  <option value="all">すべて</option>
-                </select>
-                <input type="number" id="customQuestionCountInput" class="hidden" min="1" max="500" placeholder="問題数を入力" />
-              </label>
-              <label>
-                1問ごとの制限時間
-                <select id="timeLimitSelect">
-                  <option value="0">制限なし</option>
-                  <option value="15">15秒</option>
-                  <option value="30">30秒</option>
-                  <option value="45">45秒</option>
-                  <option value="60">60秒</option>
-                  <option value="90">90秒</option>
-                  <option value="120">120秒</option>
-                </select>
-              </label>
-              <label>
-                正解表示から次へ進むまで
-                <select id="autoNextDelaySelect">
-                  <option value="0">自動で進まない</option>
-                  <option value="1000">1.0秒</option>
-                  <option value="1600" selected>1.6秒</option>
-                  <option value="2500">2.5秒</option>
-                  <option value="4000">4.0秒</option>
-                </select>
-              </label>
-            </div>
-
-            <div id="vocabReviewArea" class="hidden panel compact-review-panel">
-              <p id="settingMistakeCount"></p>
-              <button id="reviewButton" class="secondary-button" type="button">間違えた問題を復習</button>
-              <button id="clearStoredMistakesButton" class="secondary-button" type="button">間違い履歴を削除</button>
-            </div>
-
-            <div class="start-action-row">
-              <button id="startButton" type="button">テスト開始</button>
-            </div>
-          </article>
-
-          <article id="settingReviewPanel" class="unified-card setting-review-card" aria-live="polite">
-            <div class="setting-review-head">
+        <div class="unified-material-single">
+          <article id="settingReviewPanel" class="unified-card setting-review-card integrated-setting-review-card" aria-live="polite">
+            <div class="setting-review-head integrated-review-head">
               <div>
-                <span class="panel-label">Progress & Review</span>
-                <h3>習得状況と総復習</h3>
+                <span class="panel-label">Start & Review</span>
+                <h3>演習設定・習得状況・総復習</h3>
+                <p class="muted">この画面で、セクション・問題数・制限時間・復習条件をまとめて設定できます。</p>
               </div>
               <button id="settingReviewListToggleButton" class="secondary-button small-button" type="button">問題一覧</button>
             </div>
 
-            <div class="setting-review-visual-grid">
+            <div class="integrated-settings-block">
+              <span class="panel-label">Practice Settings</span>
+              <div id="commonSettings" class="settings-grid unified-settings-grid integrated-settings-grid">
+                <label>
+                  セクション
+                  <select id="sectionSelect"></select>
+                </label>
+                <label>
+                  問題数
+                  <select id="questionCountSelect">
+                    <option value="10">10問</option>
+                    <option value="20" selected>20問</option>
+                    <option value="30">30問</option>
+                    <option value="50">50問</option>
+                    <option value="100">100問</option>
+                    <option value="custom">自分で入力</option>
+                    <option value="all">すべて</option>
+                  </select>
+                  <input type="number" id="customQuestionCountInput" class="hidden" min="1" max="500" placeholder="問題数を入力" />
+                </label>
+                <label>
+                  1問ごとの制限時間
+                  <select id="timeLimitSelect">
+                    <option value="0">制限なし</option>
+                    <option value="15">15秒</option>
+                    <option value="30">30秒</option>
+                    <option value="45">45秒</option>
+                    <option value="60">60秒</option>
+                    <option value="90">90秒</option>
+                    <option value="120">120秒</option>
+                  </select>
+                </label>
+                <label>
+                  正解表示から次へ進むまで
+                  <select id="autoNextDelaySelect">
+                    <option value="0">自動で進まない</option>
+                    <option value="1000">1.0秒</option>
+                    <option value="1600" selected>1.6秒</option>
+                    <option value="2500">2.5秒</option>
+                    <option value="4000">4.0秒</option>
+                  </select>
+                </label>
+              </div>
+
+              <div id="vocabReviewArea" class="hidden panel compact-review-panel">
+                <p id="settingMistakeCount"></p>
+                <button id="reviewButton" class="secondary-button" type="button">間違えた問題を復習</button>
+                <button id="clearStoredMistakesButton" class="secondary-button" type="button">間違い履歴を削除</button>
+              </div>
+
+              <div class="start-action-row integrated-start-actions">
+                <button id="startButton" type="button">テスト開始</button>
+              </div>
+            </div>
+
+            <div class="setting-review-visual-grid integrated-status-grid">
               <div>
                 <div id="settingReviewPlant" class="plant-visual plant-stage-0" aria-hidden="true">
                   <div class="plant-sky">
@@ -371,6 +369,7 @@
 
             <details class="setting-review-conditions" open>
               <summary>総復習の抽出条件</summary>
+              <p class="muted review-condition-note">総復習にも上のセクション・問題数・制限時間・自動移動設定を反映します。</p>
               <div class="setting-filter-grid">
                 <label><input id="settingIncludeMastered" type="checkbox" checked> 習得済</label>
                 <label><input id="settingIncludeReview" type="checkbox" checked> 要復習</label>
@@ -378,13 +377,9 @@
                 <label><input id="settingIncludeWrong" type="checkbox" checked> 間違えた問題</label>
                 <label><input id="settingIncludeUnlearned" type="checkbox" checked> 未学習</label>
               </div>
-              <div class="settings-stepper setting-stepper-inline">
-                <strong>総復習の問題数</strong>
-                <div><button id="settingReviewCountMinus" type="button">−</button><span id="settingReviewCountDisplay">1000問</span><button id="settingReviewCountPlus" type="button">＋</button></div>
-              </div>
             </details>
 
-            <div class="local-review-actions setting-review-actions">
+            <div class="local-review-actions setting-review-actions integrated-review-actions">
               <button id="settingReviewRandomButton" type="button">ランダムで練習</button>
               <button id="settingReviewReviewButton" type="button"><span id="settingReviewTotalButton">総復習 0問</span></button>
             </div>
