@@ -9,6 +9,8 @@
 const ADMIN_PASSWORD = "9999";
 const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbws03Pj4a2ojmA-ihgTrC3HM4FHZjPunJnjRkALqTzMhDGVeSqplY56wdS7xGNAaDww/exec";
 const AUTO_NEXT_DELAY_MS = 1600;
+const USE_LOCAL_ONLY = false; // false: localStorageに保存しつつ、Apps Scriptへ1問ごとに送信
+const USE_PER_QUESTION_SYNC = true; // USE_LOCAL_ONLY=false の場合、1問ごとに軽く送信して結果画面の待ち時間を減らす
 
 const STORAGE_KEYS = {
   sessionStudent: "learningTool_sessionStudent",
@@ -16,9 +18,14 @@ const STORAGE_KEYS = {
   sessionAccessCode: "learningTool_sessionAccessCode",
   allowedMaterials: "learningTool_allowedMaterials",
   answerHistory: "learningTool_answerHistory",
+  writingHistory: "learningTool_writingHistory",
+  localReviewSettings: "learningTool_localReviewSettings",
+  starredPrefix: "learningTool_starredItems",
   streak: "learningTool_streak",
+  streakPrefix: "learningTool_streak",
   wrongItemsPrefix: "learningTool_wrongItems",
-  legacyWrongPrefix: "wrongWords"
+  legacyWrongPrefix: "wrongWords",
+  soundEnabled: "learningTool_soundEnabled"
 };
 
 const SENTENCE_FILES = [
@@ -112,7 +119,7 @@ const TEST_CONFIG = {
     password: "1791",
     defaultTime: 0,
     path: "data/eiken/eiken_writing_tasks.csv",
-    description: "英検準一級Writingの答案を提出します。採点は行わず、Google Sheetsに保存します。"
+    description: "英検準一級Writingの答案を提出します。採点は行わず、この端末内に保存します。"
   },
   monitor: {
     title: "TOEIC S&W モニター練習",
@@ -148,7 +155,8 @@ const TEST_CONFIG = {
     password: "2180",
     defaultTime: 45,
     path: "data/speaking_review/toeic_error_correction.csv",
-    description: "昨日から今日のSpeaking/Writingの誤りを、誤り発見→修正入力の2段階で直します。"
+    review: true,
+    description: "Speaking/Writingの誤りを、誤り発見→修正の2段階で直します。"
   },
   phrasalVerbs: {
     title: "Phrasal Verbs / 実用チャンク",
@@ -216,6 +224,7 @@ const TEST_CONFIG = {
     password: "1110",
     defaultTime: 15,
     path: "data/classics/classical_words.csv",
+    review: true,
     description: "古典単語の意味をテンポよく確認します。"
   },
   classicalGrammar: {
@@ -267,6 +276,9 @@ let errorCorrectionPhase = "identify";
 let lastMistakeQuestions = [];
 let quizCorrectStreak = 0;
 let bestCorrectStreak = 0;
+let activeLocalReviewType = "vocab";
+let activeLocalReviewTab = "mastery";
+let settingReviewListVisible = false;
 
 /* =========================
    初期化・イベント登録
@@ -301,12 +313,22 @@ document.addEventListener("DOMContentLoaded", () => {
   safeAddEvent("exportHistoryButton", "click", exportHistoryCSV);
   safeAddEvent("clearHistoryButton", "click", clearHistory);
   safeAddEvent("adminHistoryButton", "click", openHistoryScreen);
+  safeAddEvent("scrollToMaterialsButton", "click", () => document.getElementById("materialShelf")?.scrollIntoView({ behavior: "smooth", block: "start" }));
 
   safeAddEvent("questionCountSelect", "change", toggleCustomQuestionInput);
   safeAddEvent("startButton", "click", startNormalQuiz);
   safeAddEvent("reviewButton", "click", startReviewQuiz);
   safeAddEvent("clearStoredMistakesButton", "click", clearStoredMistakes);
   safeAddEvent("backToMenuButton", "click", () => { renderMenu(); showOnly("menuScreen"); });
+  safeAddEvent("settingProgressRefreshButton", "click", () => renderSettingProgressDashboard(testType));
+  safeAddEvent("settingReviewRandomButton", "click", () => startSettingReviewQuiz("random"));
+  safeAddEvent("settingReviewReviewButton", "click", () => startSettingReviewQuiz("review"));
+  safeAddEvent("settingReviewListToggleButton", "click", toggleSettingReviewList);
+  safeAddEvent("settingReviewCountMinus", "click", () => changeSettingReviewCount(-100));
+  safeAddEvent("settingReviewCountPlus", "click", () => changeSettingReviewCount(100));
+  ["settingIncludeMastered", "settingIncludeReview", "settingIncludeStarred", "settingIncludeWrong", "settingIncludeUnlearned"].forEach(id => {
+    safeAddEvent(id, "change", () => { saveSettingReviewSettingsFromForm(); renderSettingProgressDashboard(testType); });
+  });
 
   safeAddEvent("writingBackButton", "click", () => { renderMenu(); showOnly("menuScreen"); });
   safeAddEvent("writingTaskSelect", "change", renderSelectedWritingTask);
@@ -321,21 +343,40 @@ document.addEventListener("DOMContentLoaded", () => {
     resetQuizState();
     openSettings(testType);
   });
+  safeAddEvent("retryMistakesButton", "click", retryCurrentMistakes);
+  document.addEventListener("keydown", handleQuizKeyboard);
+
+  safeAddEvent("localReviewBackButton", "click", () => { renderMenu(); showOnly("menuScreen"); });
+  safeAddEvent("localReviewSettingsButton", "click", () => toggleLocalReviewSettings(true));
+  safeAddEvent("localReviewCloseSettingsButton", "click", () => toggleLocalReviewSettings(false));
+  safeAddEvent("localReviewDoneSettingsButton", "click", () => toggleLocalReviewSettings(false));
+  safeAddEvent("localReviewResetButton", "click", resetLocalReviewSettings);
+  safeAddEvent("localReviewCountMinus", "click", () => changeLocalReviewCount(-100));
+  safeAddEvent("localReviewCountPlus", "click", () => changeLocalReviewCount(100));
+  safeAddEvent("localReviewRandomButton", "click", () => startLocalReviewQuiz("random"));
+  safeAddEvent("localReviewReviewButton", "click", () => startLocalReviewQuiz("review"));
+  safeAddEvent("localReviewPrevTypeButton", "click", () => cycleLocalReviewType(-1));
+  safeAddEvent("localReviewNextTypeButton", "click", () => cycleLocalReviewType(1));
+  safeAddEvent("localReviewFooterMasteryButton", "click", () => setLocalReviewTab("mastery"));
+  safeAddEvent("localReviewFooterListButton", "click", () => setLocalReviewTab("list"));
+  safeAddEvent("localReviewFooterReviewButton", "click", () => setLocalReviewTab("review"));
+
   safeAddEvent("resultMenuButton", "click", () => {
     resetQuizState();
     renderMenu();
     showOnly("menuScreen");
   });
   safeAddEvent("logoutButton", "click", logout);
-  safeAddEvent("retryMistakesButton", "click", retryCurrentMistakes);
-  document.addEventListener("keydown", handleQuizKeyboard);
+  safeAddEvent("soundToggleButton", "click", toggleSoundSetting);
 
+  initSoundToggle();
   restoreSession();
 });
 
 
 function initializeUiEnhancements() {
   ["passwordInput", "studentLoginInput", "materialPasswordInput"].forEach(id => togglePasswordField(id, false));
+
   const adminArea = document.getElementById("adminQuickArea");
   if (adminArea && !document.getElementById("adminHistoryButton")) {
     const button = document.createElement("button");
@@ -344,6 +385,7 @@ function initializeUiEnhancements() {
     button.textContent = "解答履歴を確認";
     adminArea.appendChild(button);
   }
+
   const resultMenuButton = document.getElementById("resultMenuButton");
   if (resultMenuButton && !document.getElementById("retryMistakesButton")) {
     const button = document.createElement("button");
@@ -352,6 +394,13 @@ function initializeUiEnhancements() {
     button.textContent = "今回のミスを解き直す";
     resultMenuButton.parentNode.insertBefore(button, resultMenuButton);
   }
+
+  document.querySelectorAll(".local-review-condition").forEach(box => {
+    box.addEventListener("change", saveLocalReviewSettingsFromForm);
+  });
+  document.querySelectorAll("input[name='localUnlearnedMethod'], input[name='localReviewMethod'], input[name='localListMethod']").forEach(radio => {
+    radio.addEventListener("change", saveLocalReviewSettingsFromForm);
+  });
 }
 
 function safeAddEvent(id, event, handler) {
@@ -413,7 +462,7 @@ async function apiPostNoCors(payload) {
   await fetch(GAS_WEB_APP_URL, {
     method: "POST",
     mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
     body: JSON.stringify(payload)
   });
   return true;
@@ -561,13 +610,85 @@ function togglePasswordField(id, checked) {
   if (field) field.type = checked ? "text" : "password";
 }
 
+
+/* =========================
+   音声設定・ゲーム型ホーム
+========================= */
+
+function initSoundToggle() {
+  if (localStorage.getItem(STORAGE_KEYS.soundEnabled) === null) {
+    localStorage.setItem(STORAGE_KEYS.soundEnabled, "true");
+  }
+  updateSoundToggleUI();
+}
+
+function isSoundEnabled() {
+  return localStorage.getItem(STORAGE_KEYS.soundEnabled) !== "false";
+}
+
+function toggleSoundSetting() {
+  localStorage.setItem(STORAGE_KEYS.soundEnabled, String(!isSoundEnabled()));
+  updateSoundToggleUI();
+}
+
+function updateSoundToggleUI() {
+  const button = document.getElementById("soundToggleButton");
+  if (!button) return;
+  const enabled = isSoundEnabled();
+  button.textContent = enabled ? "音声：ON" : "音声：OFF";
+  button.setAttribute("aria-pressed", String(enabled));
+  button.classList.toggle("sound-off", !enabled);
+}
+
+function renderGameHomeHero() {
+  const area = document.getElementById("gameHomeHero");
+  if (!area || !currentStudentId) return;
+  const history = getCurrentStudentHistory();
+  const todayKey = getDateKey(new Date());
+  const today = history.filter(item => item.dateKey === todayKey);
+  const correct = history.filter(item => item.correct).length;
+  const total = history.length;
+  const level = Math.max(1, Math.floor(correct / 25) + 1);
+  const nextNeed = 25 - (correct % 25 || 25);
+  const rank = level >= 8 ? "Master Learner" : level >= 4 ? "Quest Learner" : "New Adventurer";
+  const xpPercent = Math.min(100, (correct % 25) * 4);
+
+  area.innerHTML = `
+    <div class="game-hero-copy">
+      <span class="panel-label">Original Quest UI</span>
+      <h3>今日の学習クエスト</h3>
+      <p>このホームは、ゲームのような達成感を足しながら、点数だけでなく「使える知識」「復習」「継続」を見える化するためのオリジナル設計です。</p>
+      <div class="hero-action-row">
+        <button id="heroMaterialButton" type="button">教材へ</button>
+        <span class="hero-rank">Lv.${level} / ${escapeHtml(rank)}</span>
+      </div>
+    </div>
+    <div class="quest-status-card">
+      <span>Today</span>
+      <strong>${today.length}問</strong>
+      <small>次のレベルまで ${nextNeed} 正解</small>
+      <div class="quest-xp"><i style="width:${xpPercent}%"></i></div>
+      <p>${total ? `累計 ${total}問・正解 ${correct}問` : "まずは1問から始められます。"}</p>
+    </div>`;
+
+  document.getElementById("heroMaterialButton")?.addEventListener("click", () => {
+    document.getElementById("materialShelf")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+}
+
 /* =========================
    教材選択・カテゴリ表示
 ========================= */
 
 function renderMenu() {
   refreshDashboard();
+  renderGameHomeHero();
+  renderGrowthHome();
+  renderHomeLearningCalendar();
   renderMaterialCategories();
+  renderSyncNotice("checking");
+  checkAppsScriptIntegration();
+  updateSoundToggleUI();
   document.getElementById("adminQuickArea").classList.toggle("hidden", !isAdmin);
 }
 
@@ -586,7 +707,7 @@ function renderMaterialCategories() {
   const visible = getVisibleMaterials();
   const categoryOrder = ["toeic", "toefl", "highschool", "eiken", "classics", "teacher"];
 
-  area.innerHTML = categoryOrder.map(categoryKey => {
+  area.innerHTML = categoryOrder.map((categoryKey, index) => {
     const info = CATEGORY_INFO[categoryKey];
     const materials = visible.filter(type => TEST_CONFIG[type].category === categoryKey);
     let cards = materials.length
@@ -595,30 +716,38 @@ function renderMaterialCategories() {
 
     if (categoryKey === "toeic" && (isAdmin || !Array.isArray(allowedMaterials) || materials.length > 0)) {
       cards += `
-        <button class="material-card accent-card" data-action="calendar">
-          <span>計画</span>
-          <strong>TOEIC S&W 学習カレンダー</strong>
-          <small>毎日の学習チェック</small>
-        </button>
+        <div class="material-card-wrap utility-card-wrap">
+          <button class="material-card accent-card" data-action="calendar">
+            <span>計画</span>
+            <strong>TOEIC S&amp;W 学習カレンダー</strong>
+            <small>毎日の学習チェックを端末内に保存します。</small>
+          </button>
+        </div>
       `;
     }
 
+    const openAttr = index === 0 || (materials.length && categoryKey === "highschool") ? "open" : "";
     return `
-      <section class="category-section category-${info.theme}">
-        <div class="category-head">
+      <details class="category-section category-${info.theme}" ${openAttr}>
+        <summary class="category-head">
           <div>
             <span class="category-title"><b class="category-icon">${escapeHtml(info.icon || "✨")}</b>${escapeHtml(info.label)}</span>
             <p>${escapeHtml(info.description)}</p>
           </div>
-          <small class="category-tip">今日の1問が次の自信につながります</small>
-        </div>
+          <small class="category-tip">${materials.length}教材</small>
+          <span class="accordion-marker" aria-hidden="true"></span>
+        </summary>
         <div class="material-grid">${cards}</div>
-      </section>
+      </details>
     `;
   }).join("");
 
   document.querySelectorAll(".material-card[data-material]").forEach(button => {
     button.addEventListener("click", () => openMaterial(button.dataset.material));
+  });
+
+  document.querySelectorAll(".material-progress-button[data-review-material]").forEach(button => {
+    button.addEventListener("click", () => openSettings(button.dataset.reviewMaterial));
   });
 
   document.querySelectorAll("[data-action='calendar']").forEach(button => button.addEventListener("click", openCalendar));
@@ -628,13 +757,23 @@ function renderMaterialCategories() {
 function materialCardHtml(type) {
   const config = TEST_CONFIG[type];
   const categoryLabel = CATEGORY_INFO[config.category]?.label || config.category;
+  const reviewButton = isReviewDashboardSupported(type)
+    ? `<button class="material-progress-button" data-review-material="${escapeHtml(type)}" type="button">進捗を見て始める</button>`
+    : `<span class="material-progress-note">提出型教材</span>`;
   return `
-    <button class="material-card" data-material="${escapeHtml(type)}">
-      <span>${escapeHtml(categoryLabel)}</span>
-      <strong>${escapeHtml(config.title)}</strong>
-      <small>${escapeHtml(config.description || "")}</small>
-    </button>
+    <div class="material-card-wrap">
+      <button class="material-card" data-material="${escapeHtml(type)}">
+        <span>${escapeHtml(categoryLabel)}</span>
+        <strong>${escapeHtml(config.title)}</strong>
+        <small>${escapeHtml(config.description || "")}</small>
+      </button>
+      ${reviewButton}
+    </div>
   `;
+}
+
+function isReviewDashboardSupported(type) {
+  return Boolean(TEST_CONFIG[type] && TEST_CONFIG[type].type !== "writing");
 }
 
 function openMaterial(type, fromDirectLogin = false) {
@@ -892,6 +1031,10 @@ async function openSettings(type) {
   const sourceQuestions = await ensureQuestionsLoaded(type);
   setupSectionSelect(sourceQuestions);
   updateMistakeCountInSettings();
+  settingReviewListVisible = false;
+  const listPanel = document.getElementById("settingReviewListPanel");
+  if (listPanel) listPanel.classList.add("hidden");
+  await renderSettingProgressDashboard(type);
 }
 
 async function ensureQuestionsLoaded(type) {
@@ -906,8 +1049,8 @@ async function ensureQuestionsLoaded(type) {
     loadedQuestions[type] = await loadErrorCorrectionQuestions(config.path);
   } else if (config.type === "writing") {
     loadedQuestions[type] = await loadWritingTasks(config.path);
-  } else if (config.manifest) {
-    loadedQuestions[type] = await loadChoiceQuestionsFromManifest(config.manifest, config.files || []);
+  } else if (Array.isArray(config.files) && config.files.length) {
+    loadedQuestions[type] = await loadChoiceQuestionsFromFiles(config.files);
   } else {
     loadedQuestions[type] = await loadChoiceQuestions(config.path);
   }
@@ -919,10 +1062,7 @@ function setupSectionSelect(sourceQuestions) {
   const select = document.getElementById("sectionSelect");
   const sections = [...new Set(sourceQuestions.map(q => q.section))]
     .filter(Boolean)
-    .sort((a, b) => {
-      const rankDiff = getSectionSortRank(a) - getSectionSortRank(b);
-      return rankDiff || String(a).localeCompare(String(b), "ja", { numeric: true });
-    });
+    .sort((a, b) => String(a).localeCompare(String(b), "ja", { numeric: true }));
 
   select.innerHTML = `<option value="all">すべてのセクション</option>`;
   sections.forEach(section => {
@@ -931,18 +1071,6 @@ function setupSectionSelect(sourceQuestions) {
     option.textContent = isNaN(Number(section)) ? section : `Section ${section}`;
     select.appendChild(option);
   });
-}
-
-function getSectionSortRank(section) {
-  const order = [
-    "Photo description",
-    "Responding question",
-    "Opinion",
-    "E-mail writing",
-    "Read aloud"
-  ];
-  const index = order.indexOf(String(section));
-  return index >= 0 ? index : 999;
 }
 
 function toggleCustomQuestionInput() {
@@ -956,49 +1084,71 @@ function toggleCustomQuestionInput() {
    CSV読み込み
 ========================= */
 
-async function loadChoiceQuestions(filePath, options = {}) {
-  const silent = Boolean(options.silent);
-  let response;
-  try {
-    response = await fetch(filePath);
-  } catch (error) {
-    console.warn(`読み込み失敗: ${filePath}`, error);
-    if (!silent) alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
-    return [];
-  }
+async function loadChoiceQuestions(filePath) {
+  const response = await fetch(filePath);
   if (!response.ok) {
-    console.warn(`読み込み失敗: ${filePath}`);
-    if (!silent) alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
+    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
     return [];
   }
+
   const text = await response.text();
   const rows = parseCSV(text);
   rows.shift();
+
   return rows.map(row => ({
-    id: row[0], section: row[1], word: row[2], correctAnswer: row[3],
+    id: row[0],
+    section: row[1],
+    word: row[2],
+    passage: row[2],
+    question: row[9] || row[2],
+    prompt: row[9] || row[2],
+    correctAnswer: row[3],
     choices: [row[3], row[4], row[5], row[6]].filter(Boolean),
-    points: Number(row[7]) || 1, explanation: row[8] || "",
-    questionType: row[9] || "", passage: row[10] || "", source: row[11] || ""
+    points: Number(row[7]) || 1,
+    explanation: row[8] || ""
   })).filter(q => q.id && q.section && q.word && q.correctAnswer && q.choices.length > 0);
 }
 
-async function loadChoiceQuestionsFromManifest(manifestPath, fallbackFiles = []) {
-  const files = [];
-  try {
-    const response = await fetch(manifestPath);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const rows = parseCSV(await response.text());
-    rows.shift();
-    files.push(...rows.map(row => row.find(cell => String(cell).toLowerCase().includes(".csv")) || row[0] || row[1]).filter(Boolean));
-  } catch (error) {
-    console.warn(`${manifestPath} を読み込めませんでした。fallbackFilesを確認します。`, error);
-    if (!fallbackFiles.length) return [];
-  }
-  const mergedFiles = [...new Set([...files, ...fallbackFiles].map(file => String(file).trim()).filter(Boolean))];
+
+async function loadChoiceQuestionsFromFiles(files) {
   const all = [];
-  for (const file of mergedFiles) all.push(...await loadChoiceQuestions(file, { silent: true }));
-  if (!all.length) alert(`${manifestPath} または各Lesson CSVを読み込めませんでした。data/highschool/ 内のファイル名を確認してください。`);
+  for (const file of files) {
+    const loaded = await loadChoiceQuestions(file);
+    all.push(...loaded);
+  }
   return all;
+}
+
+async function loadErrorCorrectionQuestions(filePath) {
+  const response = await fetch(filePath);
+  if (!response.ok) {
+    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
+    return [];
+  }
+
+  const text = await response.text();
+  const rows = parseCSV(text);
+  rows.shift();
+
+  return rows.map(row => {
+    const incorrectPhrase = row[4] || row[3] || "";
+    const correctPhrase = row[5] || row[6] || "";
+    const correctedSentence = row[6] || row[5] || correctPhrase;
+    const choices = [row[4], row[7], row[8], row[9]].filter(Boolean);
+    if (!choices.includes(incorrectPhrase) && incorrectPhrase) choices.unshift(incorrectPhrase);
+    return {
+      id: row[0],
+      section: row[1],
+      prompt: row[2] || row[3] || "",
+      wrongSentence: row[3] || row[2] || "",
+      incorrectPhrase,
+      correctPhrase,
+      answer: correctedSentence,
+      choices: [...new Set(choices)].filter(Boolean),
+      explanation: row[10] || row[9] || "",
+      points: Number(row[11]) || 1
+    };
+  }).filter(q => q.id && q.section && q.wrongSentence && q.incorrectPhrase && q.correctPhrase);
 }
 
 async function loadSentenceQuestions(files) {
@@ -1048,31 +1198,6 @@ async function loadClozeQuestions(filePath) {
   })).filter(q => q.id && q.section && q.prompt && q.answer);
 }
 
-async function loadErrorCorrectionQuestions(filePath) {
-  const response = await fetch(filePath);
-  if (!response.ok) {
-    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
-    return [];
-  }
-
-  const text = await response.text();
-  const rows = parseCSV(text);
-  rows.shift();
-
-  return rows.map(row => ({
-    id: row[0],
-    section: row[1],
-    sentence: row[2],
-    correctAnswer: row[3],
-    choices: [row[4], row[5], row[6]].filter(Boolean),
-    correctionPrompt: row[7] || "誤りを自然な表現に直してください。",
-    clozeAnswer: row[8],
-    hint: row[9] || "",
-    explanation: row[10] || "",
-    points: Number(row[11]) || 1
-  })).filter(q => q.id && q.section && q.sentence && q.correctAnswer && q.choices.length > 0 && q.clozeAnswer);
-}
-
 async function loadWritingTasks(filePath) {
   const response = await fetch(filePath);
   if (!response.ok) {
@@ -1109,8 +1234,9 @@ async function startNormalQuiz() {
 }
 
 async function startReviewQuiz() {
-  if (!configSupportsReview(testType)) {
-    alert("この教材は復習モードの対象外です。");
+  const config = TEST_CONFIG[testType];
+  if (!config || !config.review) {
+    alert("復習機能は単語テスト用です。");
     return;
   }
 
@@ -1124,7 +1250,7 @@ async function startReviewQuiz() {
     return;
   }
 
-  questions = shouldKeepQuestionOrder(testType) ? questions : shuffle(questions);
+  questions = shuffle(questions);
   startQuizCommon();
 }
 
@@ -1136,7 +1262,7 @@ function prepareQuiz(sourceQuestions) {
     ? [...sourceQuestions]
     : sourceQuestions.filter(q => q.section === selectedSection);
 
-  if (!shouldKeepQuestionOrder(testType)) pool = shuffle(pool);
+  pool = shuffle(pool);
 
   if (countValue === "custom") {
     const customCount = Number(document.getElementById("customQuestionCountInput").value);
@@ -1157,11 +1283,11 @@ function startQuizCommon() {
   currentIndex = 0;
   score = 0;
   selectedChoice = "";
+  answersLog = [];
+  mistakes = [];
   errorCorrectionPhase = "identify";
   quizCorrectStreak = 0;
   bestCorrectStreak = 0;
-  answersLog = [];
-  mistakes = [];
   startTime = new Date();
   selectedTimeLimit = Number(document.getElementById("timeLimitSelect").value) || 0;
   selectedAutoNextDelay = Number(document.getElementById("autoNextDelaySelect")?.value ?? AUTO_NEXT_DELAY_MS);
@@ -1184,9 +1310,7 @@ function showQuestion() {
   document.getElementById("feedback").className = "";
   document.getElementById("nextButton").classList.add("hidden");
   document.getElementById("checkButton").disabled = false;
-  document.getElementById("checkButton").textContent = "回答する";
   document.getElementById("progressBar").style.width = `${Math.round((currentIndex / questions.length) * 100)}%`;
-  errorCorrectionPhase = "identify";
 
   if (TEST_CONFIG[testType].type === "choice") showChoiceQuestion();
   if (TEST_CONFIG[testType].type === "sentence") showSentenceQuestion();
@@ -1235,17 +1359,9 @@ function handleTimeUp() {
   if (document.getElementById("checkButton").disabled) return;
   const q = questions[currentIndex];
   const configType = TEST_CONFIG[testType].type;
-  let correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
-  let questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
-  let typedAnswer = document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
-
-  if (configType === "errorCorrection") {
-    correctAnswer = `${q.correctAnswer} → ${q.clozeAnswer}`;
-    questionText = q.sentence;
-    typedAnswer = errorCorrectionPhase === "revise"
-      ? (document.getElementById("answerInput")?.value || "")
-      : (selectedChoice || "");
-  }
+  const correctAnswer = (configType === "sentence" || configType === "cloze") ? q.answer : q.correctAnswer;
+  const questionText = configType === "sentence" ? shuffle(splitSentence(q.answer)).join(" / ") : (q.prompt || q.word);
+  const typedAnswer = document.getElementById("answerInput") ? document.getElementById("answerInput").value : "";
 
   processAnswer({
     id: q.id,
@@ -1267,61 +1383,49 @@ function showChoiceQuestion() {
   area.innerHTML = "";
 
   const wordDiv = document.createElement("div");
-  wordDiv.className = testType === "polaris3" ? "words polaris-question-wrap" : "words";
+  wordDiv.className = "words";
 
   if (testType === "monitor") {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br><span class="monitor-label">最も自然で正確な表現を選んでください。</span><br>"${escapeHtml(q.word)}"`;
   } else if (testType === "speakingReview") {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>より自然な表現は？<br>"${escapeHtml(q.word)}"`;
-  } else if (["englishTheory", "statisticsQuestions", "writingTheoryChapter4", "writingTheoryMap", "presentationBuilderTasks"].includes(testType)) {
-    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>説明に合う概念を選んでください。<br>${escapeHtml(q.word)}`;
-  } else if (testType === "polaris3") {
-    const passageBlock = q.passage
-      ? `<div class="polaris-passage-card"><div class="polaris-card-label">本文</div><div class="polaris-passage-text">${formatPolarisText(q.passage)}</div></div>`
-      : "";
-    wordDiv.innerHTML = `
-      <div class="polaris-meta">No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}</div>
-      <p class="polaris-instruction">本文に基づいて、最も適切な選択肢を選んでください。</p>
-      ${passageBlock}
-      <div class="polaris-question-card">
-        <div class="polaris-card-label">設問</div>
-        <div class="polaris-question-text">${formatPolarisText(q.word)}</div>
-      </div>
-    `;
+  } else if (testType === "englishTheory") {
+    wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>説明に合う概念を選んでください。<br>"${escapeHtml(q.word)}"`;
   } else if (testType === "eikenConnectors") {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>空欄に最も適切な表現を選んでください。<br>"${escapeHtml(q.word)}"`;
   } else if (testType.startsWith("classical")) {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}<br>${escapeHtml(q.word)}`;
+  } else if (testType === "polaris3") {
+    const passage = q.passage || q.context || q.word;
+    wordDiv.className = "words polaris-question-wrap";
+    wordDiv.innerHTML = `
+      <div class="polaris-passage-card"><span>本文</span>${escapeHtml(passage)}</div>
+      <div class="polaris-question-card"><span>No.${escapeHtml(q.id)} | ${escapeHtml(q.section)}</span>${escapeHtml(q.question || q.prompt || q.word)}</div>
+      <div class="double-press-hint">選択肢は1回目で選択、同じ選択肢をもう1回押すと回答します。</div>
+    `;
   } else {
     wordDiv.innerHTML = `No.${escapeHtml(q.id)} | Section ${escapeHtml(q.section)}<br>"${escapeHtml(q.word)}" の意味は？`;
   }
 
   area.appendChild(wordDiv);
 
-  const note = document.createElement("p");
-  note.className = "choice-submit-note";
-  note.textContent = "選択肢は1回押すと選択、同じ選択肢をもう1回押すと回答できます。Enterキーでも回答できます。";
-  area.appendChild(note);
-
   shuffle(q.choices).forEach(choice => {
     const btn = document.createElement("button");
     btn.className = "choice-button";
     btn.textContent = choice;
-    btn.addEventListener("click", () => handleChoiceSelection(choice, btn));
+    btn.addEventListener("click", () => {
+      const sameChoiceTapped = selectedChoice === choice;
+      selectedChoice = choice;
+      document.querySelectorAll(".choice-button").forEach(b => b.classList.remove("selected", "ready-to-submit"));
+      btn.classList.add("selected");
+      if (sameChoiceTapped && !document.getElementById("checkButton").disabled) {
+        checkAnswer();
+      } else {
+        btn.classList.add("ready-to-submit");
+      }
+    });
     area.appendChild(btn);
   });
-}
-
-function handleChoiceSelection(choice, button, selector = ".choice-button") {
-  const checkButton = document.getElementById("checkButton");
-  const isSecondPress = selectedChoice === choice && button.classList.contains("selected");
-  selectedChoice = choice;
-  document.querySelectorAll(selector).forEach(b => b.classList.remove("selected", "ready-to-submit"));
-  button.classList.add("selected", "ready-to-submit");
-
-  if (isSecondPress && checkButton && !checkButton.disabled) {
-    checkAnswer();
-  }
 }
 
 function showSentenceQuestion() {
@@ -1330,17 +1434,13 @@ function showSentenceQuestion() {
   q.words = shuffle(splitSentence(q.answer));
   const hint = q.hint || createInitialHint(q.answer);
   const prompt = q.prompt ? `<div class="question-prompt">${escapeHtml(q.prompt)}</div>` : "";
-  const keyboardless = testType === "speakingReview";
-  const inputAttributes = keyboardless ? 'readonly inputmode="none" aria-readonly="true"' : 'autocomplete="off"';
-  const inputClass = keyboardless ? "answer-input no-keyboard-input" : "answer-input";
-  const inputPlaceholder = keyboardless ? "下の語句をタップして並べ替えます" : `ヒント: ${escapeHtml(hint)}`;
 
+  const tapOnly = testType === "speakingReview" || testType === "speakingErrorCorrection";
   document.getElementById("questionArea").innerHTML = `
     ${prompt}
     <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
-    ${keyboardless ? `<p class="tap-only-note">キーボードは開かず、語句をタップするだけで回答できます。</p>` : ""}
     <div class="words" id="sentenceWords">${q.words.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
-    <input type="text" id="answerInput" class="${inputClass}" placeholder="${inputPlaceholder}" ${inputAttributes} />
+    <input type="text" id="answerInput" class="answer-input" placeholder="ヒント: ${escapeHtml(hint)}" autocomplete="off" ${tapOnly ? "readonly inputmode=\"none\"" : ""} />
     <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
   `;
 
@@ -1349,17 +1449,17 @@ function showSentenceQuestion() {
       const input = document.getElementById("answerInput");
       input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
       updateUsedWords();
-      if (!keyboardless) input.focus();
+      if (!input.readOnly) input.focus();
     });
   });
   document.getElementById("clearSentenceButton").addEventListener("click", () => {
     const input = document.getElementById("answerInput");
     input.value = "";
     updateUsedWords();
-    if (!keyboardless) input.focus();
+    if (!input.readOnly) input.focus();
   });
   document.getElementById("answerInput").addEventListener("input", updateUsedWords);
-  if (!keyboardless) document.getElementById("answerInput").focus();
+  if (!tapOnly) document.getElementById("answerInput").focus();
 }
 
 function showClozeQuestion() {
@@ -1385,80 +1485,6 @@ function showClozeQuestion() {
   document.getElementById("answerInput").focus();
 }
 
-function showErrorCorrectionQuestion() {
-  const q = questions[currentIndex];
-  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
-  errorCorrectionPhase = "identify";
-  selectedChoice = "";
-  document.getElementById("checkButton").textContent = "誤りを確認する";
-
-  const area = document.getElementById("questionArea");
-  area.innerHTML = `
-    <div class="question-prompt error-correction-prompt">
-      <div class="task-badge">${escapeHtml(q.section || "Error correction")}</div>
-      <p class="task-instruction">Which phrase is incorrect? 誤りを含む部分を選んでください。</p>
-      <div class="error-sentence">${escapeHtml(q.sentence)}</div>
-    </div>
-    <div id="errorChoices" class="error-choice-grid">
-      ${q.choices.map((choice, index) => `<button type="button" class="choice-button error-choice-button" data-choice="${escapeHtml(choice)}">${index + 1}. ${escapeHtml(choice)}</button>`).join("")}
-    </div>
-    <p class="choice-submit-note">選択肢は1回押すと選択、同じ選択肢をもう1回押すと次の修正問題に進めます。</p>
-  `;
-
-  document.querySelectorAll("#errorChoices .choice-button").forEach(button => {
-    button.addEventListener("click", () => handleChoiceSelection(button.dataset.choice, button, "#errorChoices .choice-button"));
-  });
-}
-
-function showErrorCorrectionRevision(q) {
-  errorCorrectionPhase = "revise";
-  document.getElementById("checkButton").textContent = "並び替えを回答する";
-  const hint = q.hint || createInitialHint(q.clozeAnswer);
-  const feedback = document.getElementById("feedback");
-  feedback.className = "correct feedback-visible";
-  feedback.innerHTML = `
-    <div class="feedback-card feedback-correct feedback-achievement feedback-step-clear">
-      <div class="feedback-icon achievement-icon">🔎</div>
-      <div class="feedback-main">
-        <div class="feedback-title-row">
-          <strong>Step 1 clear：誤り発見OK</strong>
-          <span class="streak-pill soft">気づき +1</span>
-        </div>
-        <p>「どこが不自然か」を見つけられました。次は、正しい表現を語句の並び替えで完成させましょう。</p>
-        <div class="mini-illustration" aria-hidden="true"><span>間違い発見</span><b>→</b><span>修正</span></div>
-      </div>
-    </div>
-  `;
-
-  q.revisionWords = shuffle(splitSentence(q.clozeAnswer));
-  document.getElementById("questionArea").innerHTML = `
-    <div class="question-prompt error-correction-prompt">
-      <div class="task-badge">${escapeHtml(q.section || "Error correction")}</div>
-      <p class="task-instruction">${escapeHtml(q.correctionPrompt || "語句をタップして、正しい表現に並び替えてください。")}</p>
-      <div class="error-sentence">${escapeHtml(q.sentence)}</div>
-      <div class="source-expression"><span>修正する部分</span><strong>${escapeHtml(q.correctAnswer)}</strong></div>
-    </div>
-    <div class="answer-support"><span>入力ヒント</span>${escapeHtml(hint)}</div>
-    <p class="tap-only-note">キーボードは開かず、語句をタップするだけで回答できます。</p>
-    <div class="words" id="sentenceWords">${q.revisionWords.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
-    <input type="text" id="answerInput" class="answer-input no-keyboard-input" placeholder="下の語句をタップして並べ替えます" readonly inputmode="none" aria-readonly="true" />
-    <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
-  `;
-
-  document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
-    chip.addEventListener("click", () => {
-      const input = document.getElementById("answerInput");
-      input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
-      updateUsedWords();
-    });
-  });
-  document.getElementById("clearSentenceButton").addEventListener("click", () => {
-    const input = document.getElementById("answerInput");
-    input.value = "";
-    updateUsedWords();
-  });
-}
-
 function extractLearningExamples(explanation) {
   const text = String(explanation || "");
   const correctMatch = text.match(/正しい全文：(.+?)(?:\s*\/\s*誤答例：|$)/);
@@ -1467,14 +1493,6 @@ function extractLearningExamples(explanation) {
     correct: correctMatch ? correctMatch[1].trim() : "",
     wrong: wrongMatch ? wrongMatch[1].trim() : ""
   };
-}
-
-function formatPolarisText(text) {
-  return escapeHtml(text)
-    .replace(/\s*(\[\d+\])/g, "<br><strong>$1</strong> ")
-    .replace(/^<br>/, "")
-    .replace(/\n{2,}/g, "<br><br>")
-    .replace(/\n/g, "<br>");
 }
 
 function createInitialHint(sentence) {
@@ -1492,6 +1510,107 @@ function updateUsedWords() {
   document.querySelectorAll(".word-chip").forEach(chip => {
     const word = normalizeForCompare(chip.textContent);
     chip.classList.toggle("used", inputWords.includes(word));
+  });
+}
+
+
+function showErrorCorrectionQuestion() {
+  const q = questions[currentIndex];
+  document.getElementById("testTitle").textContent = TEST_CONFIG[testType].title;
+  errorCorrectionPhase = "identify";
+  const area = document.getElementById("questionArea");
+  area.innerHTML = `
+    <div class="error-correction-card">
+      <div class="task-badge">Step 1 / 誤り発見</div>
+      <p class="task-instruction">不自然な表現を選んでください。同じ選択肢を2回押すと回答できます。</p>
+      <div class="source-expression"><span>直す前の文</span><strong>${escapeHtml(q.wrongSentence)}</strong></div>
+      <div class="error-choice-grid">
+        ${q.choices.map(choice => `<button type="button" class="choice-button error-choice" data-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}
+      </div>
+    </div>
+  `;
+  area.querySelectorAll(".error-choice").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const choice = btn.dataset.choice;
+      const sameChoiceTapped = selectedChoice === choice;
+      selectedChoice = choice;
+      area.querySelectorAll(".error-choice").forEach(b => b.classList.remove("selected", "ready-to-submit"));
+      btn.classList.add("selected", "ready-to-submit");
+      if (sameChoiceTapped && !document.getElementById("checkButton").disabled) checkAnswer();
+    });
+  });
+}
+
+function checkErrorCorrectionAnswer() {
+  const q = questions[currentIndex];
+  if (errorCorrectionPhase === "identify") {
+    if (!selectedChoice) {
+      alert("誤りだと思う表現を選んでください。");
+      return;
+    }
+    const identified = normalizeForCompare(selectedChoice) === normalizeForCompare(q.incorrectPhrase);
+    if (!identified) {
+      saveWrongWord(q.id);
+      processAnswer({
+        id: q.id,
+        section: q.section,
+        question: q.wrongSentence,
+        userAnswer: selectedChoice,
+        correctAnswer: q.incorrectPhrase,
+        explanation: q.explanation || "誤りの箇所を確認してから、正しい表現に直しましょう。",
+        isCorrect: false,
+        points: q.points || 1
+      });
+      return;
+    }
+
+    errorCorrectionPhase = "correct";
+    selectedChoice = "";
+    const hint = createInitialHint(q.correctPhrase || q.answer);
+    q.words = shuffle(splitSentence(q.correctPhrase || q.answer));
+    document.getElementById("feedback").className = "correct feedback-visible";
+    document.getElementById("feedback").innerHTML = `<div class="feedback-card feedback-correct"><div class="feedback-icon">✅</div><div><strong>Step 1 clear</strong><p>次は正しい表現を語句タップで組み立てましょう。</p></div></div>`;
+    triggerCorrectEffect({ streak: Math.max(1, quizCorrectStreak + 1), title: "Step 1 clear" });
+    playFeedbackTone(true, 1);
+    document.getElementById("questionArea").innerHTML = `
+      <div class="error-correction-card">
+        <div class="task-badge">Step 2 / 修正</div>
+        <div class="source-expression"><span>誤り</span><strong>${escapeHtml(q.incorrectPhrase)}</strong></div>
+        <div class="target-expression"><span>正しい表現</span><strong>${escapeHtml(hint)}</strong></div>
+        <div class="words" id="sentenceWords">${q.words.map(word => `<button type="button" class="word-chip">${escapeHtml(word)}</button>`).join("")}</div>
+        <input type="text" id="answerInput" class="answer-input" readonly inputmode="none" placeholder="語句をタップして完成" autocomplete="off" />
+        <button type="button" id="clearSentenceButton" class="secondary-button small-button">入力を消す</button>
+      </div>
+    `;
+    document.querySelectorAll("#sentenceWords .word-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const input = document.getElementById("answerInput");
+        input.value = `${input.value.trim()} ${chip.textContent.trim()}`.trim();
+        updateUsedWords();
+      });
+    });
+    document.getElementById("clearSentenceButton").addEventListener("click", () => {
+      const input = document.getElementById("answerInput");
+      input.value = "";
+      updateUsedWords();
+    });
+    return;
+  }
+
+  const userAnswer = document.getElementById("answerInput")?.value || "";
+  const correctAnswer = q.correctPhrase || q.answer;
+  const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(correctAnswer);
+  if (isCorrect) removeWrongWord(q.id);
+  else saveWrongWord(q.id);
+  processAnswer({
+    id: q.id,
+    section: q.section,
+    question: q.wrongSentence,
+    userAnswer,
+    correctAnswer,
+    explanation: q.explanation || "誤りを発見した後、正しいチャンクとして言い直せることが目標です。",
+    isCorrect,
+    points: q.points || 1
   });
 }
 
@@ -1565,48 +1684,6 @@ function checkClozeAnswer() {
   });
 }
 
-function checkErrorCorrectionAnswer() {
-  const q = questions[currentIndex];
-
-  if (errorCorrectionPhase === "identify") {
-    if (!selectedChoice) {
-      alert("誤りを含む部分を選んでください。");
-      return;
-    }
-
-    const foundError = selectedChoice === q.correctAnswer;
-    if (foundError) {
-      showErrorCorrectionRevision(q);
-      return;
-    }
-
-    processAnswer({
-      id: q.id,
-      section: q.section,
-      question: q.sentence,
-      userAnswer: selectedChoice,
-      correctAnswer: `${q.correctAnswer} → ${q.clozeAnswer}`,
-      explanation: q.explanation || "",
-      isCorrect: false,
-      points: q.points || 1
-    });
-    return;
-  }
-
-  const userAnswer = document.getElementById("answerInput")?.value || "";
-  const isCorrect = normalizeSentence(userAnswer) === normalizeSentence(q.clozeAnswer);
-  processAnswer({
-    id: q.id,
-    section: q.section,
-    question: `${q.sentence} / ${q.correctionPrompt}`,
-    userAnswer,
-    correctAnswer: q.clozeAnswer,
-    explanation: q.explanation || "",
-    isCorrect,
-    points: q.points || 1
-  });
-}
-
 function processAnswer(data) {
   clearQuestionTimer();
   const now = new Date();
@@ -1617,63 +1694,36 @@ function processAnswer(data) {
     score += data.points;
     quizCorrectStreak += 1;
     bestCorrectStreak = Math.max(bestCorrectStreak, quizCorrectStreak);
-    const correctCountSoFar = answersLog.filter(answer => answer.correct).length + 1;
-    const answeredCountSoFar = answersLog.length + 1;
-    const progressPercent = Math.min(100, Math.round((correctCountSoFar / Math.max(1, questions.length)) * 100));
-    const accuracySoFar = Math.round((correctCountSoFar / Math.max(1, answeredCountSoFar)) * 100);
-    const praise = getCorrectPraise({
-      streak: quizCorrectStreak,
-      correctCount: correctCountSoFar,
-      answeredCount: answeredCountSoFar,
-      accuracy: accuracySoFar,
-      section: data.section
-    });
+    const praise = getCorrectPraise();
     feedback.className = "correct feedback-visible";
     feedback.innerHTML = `
-      <div class="feedback-card feedback-correct feedback-achievement">
-        <div class="feedback-icon achievement-icon">${escapeHtml(praise.icon)}</div>
-        <div class="feedback-main">
-          <div class="feedback-title-row">
-            <strong>${escapeHtml(praise.title)}</strong>
-            <span class="streak-pill">${quizCorrectStreak}連続</span>
-          </div>
+      <div class="feedback-card feedback-correct">
+        <div class="feedback-icon">${praise.icon}</div>
+        <div>
+          <strong>${escapeHtml(praise.title)}</strong>
           <p>${escapeHtml(praise.message)}</p>
-          <div class="mini-illustration success-map" aria-hidden="true"><span>気づく</span><b>→</b><span>選べる</span><b>→</b><span>使える</span></div>
-          <div class="feedback-stats">
-            <span>正解 ${correctCountSoFar}/${questions.length}</span>
-            <span>正答率 ${accuracySoFar}%</span>
-            <span>Best ${bestCorrectStreak}連続</span>
-          </div>
-          <div class="level-row" aria-label="正解進捗">
-            <div class="level-track"><div class="level-fill" style="width:${progressPercent}%"></div></div>
-            <span class="xp-badge">+${data.points || 1} XP</span>
-          </div>
+          <div class="feedback-stats"><span>${quizCorrectStreak}連続</span><span>Best ${bestCorrectStreak}</span><span>+${data.points || 1} XP</span></div>
         </div>
       </div>
     `;
-    triggerCorrectEffect({ streak: quizCorrectStreak, title: praise.effectTitle || praise.title, points: data.points || 1 });
+    if (quizCorrectStreak >= 3) feedback.innerHTML += getComboMessageHtml(quizCorrectStreak);
+    triggerCorrectEffect({ streak: quizCorrectStreak, title: praise.title });
     playFeedbackTone(true, quizCorrectStreak);
   } else {
     quizCorrectStreak = 0;
-    const insight = getWrongFeedback(data);
+    playFeedbackTone(false, 0);
     feedback.className = "wrong feedback-visible";
     feedback.innerHTML = `
-      <div class="feedback-card feedback-wrong feedback-insight">
-        <div class="feedback-icon insight-icon">${escapeHtml(insight.icon)}</div>
-        <div class="feedback-main">
-          <div class="feedback-title-row">
-            <strong>${escapeHtml(insight.title)}</strong>
-            <span class="streak-pill review-pill">復習候補</span>
-          </div>
-          <p>${escapeHtml(insight.message)}</p>
-          <div class="mini-illustration review-map" aria-hidden="true"><span>誤答</span><b>→</b><span>原因</span><b>→</b><span>次の正解</span></div>
-          <div class="wrong-answer-line"><span>正解</span>${escapeHtml(data.correctAnswer)}</div>
-          <div class="next-action-line">${escapeHtml(insight.action)}</div>
+      <div class="feedback-card feedback-wrong">
+        <div class="feedback-icon">${data.timedOut ? "⏰" : "💡"}</div>
+        <div>
+          <strong>${data.timedOut ? "時間切れ" : "あと少し"}</strong>
+          <p>正解：${escapeHtml(data.correctAnswer)}</p>
         </div>
       </div>
     `;
-    playFeedbackTone(false, 0);
     mistakes.push(data);
+    lastMistakeQuestions = questions.filter(q => mistakes.some(m => String(m.id) === String(q.id)));
   }
 
   if (data.explanation) {
@@ -1708,6 +1758,9 @@ function processAnswer(data) {
 
   answersLog.push(record);
   appendLocalHistory(record);
+  if (!USE_LOCAL_ONLY && USE_PER_QUESTION_SYNC) {
+    sendAnswerRecordToSpreadsheet(record);
+  }
 
   document.getElementById("checkButton").disabled = true;
   const delay = Number(selectedAutoNextDelay) || 0;
@@ -1726,132 +1779,25 @@ function processAnswer(data) {
   }
 }
 
-function getCorrectPraise(state = {}) {
-  const streak = Number(state.streak) || 1;
-  const category = TEST_CONFIG[testType]?.category || "";
-
-  if (streak >= 10) {
-    return {
-      icon: "🏆",
-      title: `${streak}連続正解！本番級の集中力`,
-      message: "正確さが安定しています。この状態は、制限時間つき演習でも強みになります。",
-      effectTitle: `${streak} COMBO!`
-    };
-  }
-  if (streak >= 5) {
-    return {
-      icon: "🚀",
-      title: `${streak}連続正解！流れに乗れています`,
-      message: "正しい表現を選ぶスピードが上がっています。あと少しで自動化に近づきます。",
-      effectTitle: `${streak}連続正解`
-    };
-  }
-  if (streak >= 3) {
-    return {
-      icon: "🔥",
-      title: `${streak}連続正解！チャンクが定着中`,
-      message: "同じ型を迷わず処理できています。復習の効果が出ています。",
-      effectTitle: `${streak} streak`
-    };
-  }
-
-  if (testType === "speakingErrorCorrection") {
-    return {
-      icon: "🛠️",
-      title: "Good repair!",
-      message: "誤りを直す練習は、Speaking/Writingの自己修正力につながります。",
-      effectTitle: "Repair complete"
-    };
-  }
-  if (category === "toeic") {
-    return {
-      icon: "🎙️",
-      title: "Nice output!",
-      message: "その表現はTOEIC S&Wでそのまま使えるチャンクになります。",
-      effectTitle: "Output +1"
-    };
-  }
-  if (testType === "polaris3") {
-    return {
-      icon: "📘",
-      title: "本文根拠をつかめました",
-      message: "読解では、正解よりも「どこを根拠にしたか」が次の得点につながります。",
-      effectTitle: "Reading point"
-    };
-  }
-
+function getCorrectPraise() {
   const praises = [
-    { icon: "🎉", title: "Great!", message: "今の1問で、使える知識が1つ増えました。", effectTitle: "Great!" },
-    { icon: "⚡", title: "Quick and accurate!", message: "正確に選べたことが、次のスピードにつながります。", effectTitle: "Accurate" },
-    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。", effectTitle: "Excellent" }
+    { icon: "🎉", title: "Great!", message: "その表現はそのままSpeakingで使えます。" },
+    { icon: "⚡", title: "Nice output!", message: "チャンクとして素早く出せる形に近づいています。" },
+    { icon: "🌟", title: "Excellent!", message: "正確さと自然さの両方を積み上げられています。" },
+    { icon: "🔥", title: "Keep going!", message: "この調子で使える表現を増やしましょう。" }
   ];
   return praises[currentIndex % praises.length];
 }
 
-function getWrongFeedback(data = {}) {
-  if (data.timedOut) {
-    return {
-      icon: "⏰",
-      title: "時間切れ：スピードを伸ばすチャンス",
-      message: "知識がないのではなく、取り出す速度を鍛える段階です。次は同じ型を先に声に出してから解くと効果的です。",
-      action: "次の行動：正解を1回音読してから、もう一度解き直しましょう。"
-    };
-  }
-  if (testType === "speakingErrorCorrection") {
-    return {
-      icon: "🔧",
-      title: "修正ポイントが見えました",
-      message: "このミスは、前置詞・冠詞・動詞形などの型として再利用できます。間違いを見つけた分だけ自己修正力が上がります。",
-      action: "次の行動：正しい表現だけを短いチャンクとして覚えましょう。"
-    };
-  }
-  if (TEST_CONFIG[testType]?.type === "sentence") {
-    return {
-      icon: "🧩",
-      title: "語順の組み立てポイントです",
-      message: "惜しい並びは、意味のまとまりをチャンクで捉える練習材料になります。",
-      action: "次の行動：正解を2〜3語ずつ区切って並べ直しましょう。"
-    };
-  }
-  if (TEST_CONFIG[testType]?.type === "cloze") {
-    return {
-      icon: "✍️",
-      title: "表現の精度を上げるミスです",
-      message: "穴埋めの誤答は、実際のSpeaking/Writingで言い換えが必要な場所を教えてくれます。",
-      action: "次の行動：空欄部分だけを声に出して3回確認しましょう。"
-    };
-  }
-  if (testType === "polaris3") {
-    return {
-      icon: "🧭",
-      title: "根拠に戻るサインです",
-      message: "読解の誤答は、本文中の根拠を探し直す練習になります。選択肢ではなく本文に戻ることが大切です。",
-      action: "次の行動：本文の該当段落を1つ選び、なぜ違うか確認しましょう。"
-    };
-  }
-
-  return {
-    icon: "💡",
-    title: "次に伸びるミスです",
-    message: "間違えた問題は、今の弱点を具体的に教えてくれるデータです。復習候補として保存されます。",
-    action: "次の行動：正解を見て、どの語が決め手だったか1つだけ確認しましょう。"
-  };
-}
-
 function triggerCorrectEffect(options = {}) {
-  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const streak = Number(options.streak) || 1;
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const layer = document.createElement("div");
-  layer.className = `celebration-layer ${streak >= 5 ? "combo-layer" : ""}`;
+  layer.className = `celebration-layer ${streak >= 3 ? "combo-layer" : ""} ${streak >= 7 ? "super-combo-layer" : ""}`;
 
   const badge = document.createElement("div");
   badge.className = "celebration-badge";
-  const strong = document.createElement("strong");
-  strong.textContent = streak >= 3 ? `${streak}連続正解！` : (options.title || "正解！");
-  const span = document.createElement("span");
-  span.textContent = streak >= 3 ? "集中が続いています" : "使える知識が1つ増えました";
-  badge.appendChild(strong);
-  badge.appendChild(span);
+  badge.innerHTML = `<strong>${streak >= 3 ? `${streak}連続正解！` : escapeHtml(options.title || "正解！")}</strong><span>${streak >= 3 ? "集中が続いています" : "使える知識が1つ増えました"}</span>`;
   layer.appendChild(badge);
 
   const marks = streak >= 5 ? ["★", "✦", "✓", "+1", "●", "◆", "✨"] : ["★", "✦", "✓", "+1", "●"];
@@ -1867,40 +1813,36 @@ function triggerCorrectEffect(options = {}) {
     piece.style.animationDuration = `${0.95 + Math.random() * 0.55}s`;
     layer.appendChild(piece);
   }
-
   document.body.classList.add("correct-flash");
+  if (streak >= 3) document.body.classList.add("combo-flash");
   document.body.appendChild(layer);
-  setTimeout(() => document.body.classList.remove("correct-flash"), 850);
+  setTimeout(() => document.body.classList.remove("correct-flash", "combo-flash"), streak >= 3 ? 1200 : 850);
   setTimeout(() => layer.remove(), reduceMotion ? 900 : 1550);
 }
 
-function playFeedbackTone(isCorrect, streak = 1) {
+function playFeedbackTone(isCorrect, streak = 0) {
+  if (!isSoundEnabled()) return;
   try {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (!AudioContext) return;
     const ctx = new AudioContext();
-    const gain = ctx.createGain();
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(isCorrect ? 0.06 : 0.035, ctx.currentTime + 0.015);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (isCorrect ? 0.24 : 0.18));
-    gain.connect(ctx.destination);
-
-    const frequencies = isCorrect
-      ? (streak >= 5 ? [659.25, 783.99, 987.77] : [523.25, 659.25, 783.99])
-      : [220.00, 196.00];
-
-    frequencies.forEach((freq, index) => {
+    const now = ctx.currentTime;
+    const notes = isCorrect ? (streak >= 5 ? [523, 659, 784] : [523, 659]) : [220];
+    notes.forEach((freq, index) => {
       const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.frequency.value = freq;
       osc.type = isCorrect ? "sine" : "triangle";
-      osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.055);
-      osc.connect(gain);
-      osc.start(ctx.currentTime + index * 0.055);
-      osc.stop(ctx.currentTime + index * 0.055 + 0.11);
+      gain.gain.setValueAtTime(0.001, now + index * 0.08);
+      gain.gain.exponentialRampToValueAtTime(isCorrect ? 0.09 : 0.045, now + index * 0.08 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + index * 0.08 + 0.16);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(now + index * 0.08);
+      osc.stop(now + index * 0.08 + 0.18);
     });
-
-    setTimeout(() => ctx.close(), 420);
+    setTimeout(() => ctx.close && ctx.close(), 600);
   } catch (error) {
-    // ブラウザ設定により音が鳴らない場合でも、学習機能は継続します。
+    // 音が鳴らなくても学習機能は止めない
   }
 }
 
@@ -1931,22 +1873,29 @@ async function showResult(isQuit) {
 
   updateStreak();
   showOnly("resultScreen");
-  document.getElementById("motivationMessage").innerHTML = "<strong>解答データを送信しています...</strong><br>送信後に結果を表示します。";
+  document.getElementById("motivationMessage").innerHTML = USE_LOCAL_ONLY
+    ? "<strong>端末内に記録しています...</strong><br>解答履歴はこのブラウザの localStorage に保存されます。"
+    : "<strong>記録しています...</strong><br>解答履歴は端末内に保存し、Apps Scriptへは1問ずつ軽く送信します。";
   document.getElementById("scoreDisplay").textContent = "";
   document.getElementById("dateDisplay").textContent = "";
   document.getElementById("timeDisplay").textContent = "";
-  document.getElementById("sendStatusDisplay").textContent = "スプレッドシート送信：送信中";
+  document.getElementById("sendStatusDisplay").textContent = USE_LOCAL_ONLY ? "端末内保存：保存中" : "端末内保存＋1問ごと送信：確認中";
   document.getElementById("mistakeArea").innerHTML = "";
 
   const sendStatus = await sendResultsToSpreadsheet({ isQuit, endTime, answeredCount, totalSeconds, accuracy });
 
+  const correctCount = answersLog.filter(a => a.correct).length;
   document.getElementById("motivationMessage").innerHTML = getMotivationMessage(accuracy, answeredCount);
-  document.getElementById("scoreDisplay").textContent = isQuit ? `途中終了：${answeredCount}問中 ${score}点` : `テスト終了：${answeredCount}問中 ${score}点`;
-  document.getElementById("dateDisplay").textContent = `回答日時：${endTime.toLocaleString("ja-JP")}`;
-  document.getElementById("timeDisplay").textContent = `合計解答時間：${minutes}分 ${seconds}秒`;
-  document.getElementById("sendStatusDisplay").textContent = sendStatus;
-  lastMistakeQuestions = getCurrentMistakeQuestions();
-  updateRetryMistakesButton();
+  document.getElementById("scoreDisplay").innerHTML = `
+    <span class="result-card-label">${isQuit ? "途中終了" : "Complete"}</span>
+    <strong><b>${correctCount}</b> / ${answeredCount}</strong>
+    <small>正答率 ${accuracy}%・Best ${bestCorrectStreak}連続</small>
+  `;
+  document.getElementById("dateDisplay").innerHTML = `<span class="result-card-label">回答日時</span><strong>${escapeHtml(endTime.toLocaleString("ja-JP"))}</strong>`;
+  document.getElementById("timeDisplay").innerHTML = `<span class="result-card-label">学習時間</span><strong>${minutes}分 ${seconds}秒</strong>`;
+  document.getElementById("sendStatusDisplay").innerHTML = `<span class="result-card-label">保存状態</span><strong>${escapeHtml(sendStatus)}</strong>`;
+  const retryButton = document.getElementById("retryMistakesButton");
+  if (retryButton) retryButton.classList.toggle("hidden", lastMistakeQuestions.length === 0);
   showMistakes();
 }
 
@@ -1979,11 +1928,22 @@ function showMistakes() {
   `;
 }
 
+async function sendAnswerRecordToSpreadsheet(record) {
+  if (USE_LOCAL_ONLY || !GAS_WEB_APP_URL) return false;
+  try {
+    await apiPostNoCors({ action: "appendAnswerRecord", ...record });
+    return true;
+  } catch (error) {
+    console.warn("1問ごとの送信に失敗しました。端末内履歴は保持されています。", error);
+    return false;
+  }
+}
+
 async function sendResultsToSpreadsheet(resultInfo) {
-  if (!GAS_WEB_APP_URL) return "スプレッドシート送信：未設定（現在は端末内履歴に保存）";
+  if (USE_LOCAL_ONLY || !GAS_WEB_APP_URL) return "端末内保存：完了（localStorage）";
 
   const payload = {
-    action: "submitQuizResult",
+    action: USE_PER_QUESTION_SYNC ? "submitQuizSummary" : "submitQuizResult",
     accessCode: currentAccessCode,
     studentId: currentStudentId,
     studentName: currentStudentName,
@@ -1999,15 +1959,15 @@ async function sendResultsToSpreadsheet(resultInfo) {
     totalSeconds: resultInfo.totalSeconds,
     startTime: startTime.toLocaleString("ja-JP"),
     endTime: resultInfo.endTime.toLocaleString("ja-JP"),
-    answers: answersLog
+    answers: USE_PER_QUESTION_SYNC ? [] : answersLog
   };
 
   try {
     await apiPostNoCors(payload);
-    return "スプレッドシート送信：完了";
+    return USE_PER_QUESTION_SYNC ? "端末内保存＋1問ごと送信：完了" : "端末内保存＋まとめ送信：完了";
   } catch (error) {
-    console.error("スプレッドシート送信エラー:", error);
-    return "スプレッドシート送信：失敗";
+    console.error("端末内保存エラー:", error);
+    return "端末内保存：失敗";
   }
 }
 
@@ -2069,6 +2029,8 @@ async function submitWriting() {
   const timeSpent = writingStartTime ? Math.round((new Date() - writingStartTime) / 1000) : 0;
   const payload = {
     action: "submitWriting",
+    date: new Date().toLocaleString("ja-JP"),
+    dateKey: getDateKey(new Date()),
     accessCode: currentAccessCode,
     studentId: currentStudentId,
     studentName: currentStudentName,
@@ -2082,14 +2044,15 @@ async function submitWriting() {
 
   try {
     msg.className = "muted";
-    msg.textContent = "提出中です...";
-    await apiPostNoCors(payload);
+    msg.textContent = "端末内に保存しています...";
+    appendLocalWriting(payload);
+    if (!USE_LOCAL_ONLY) await apiPostNoCors(payload);
     msg.className = "correct";
-    msg.textContent = "提出が完了しました。";
+    msg.textContent = "端末内への保存が完了しました。";
   } catch (error) {
     console.error(error);
     msg.className = "error";
-    msg.textContent = "提出に失敗しました。通信状況とApps Scriptを確認してください。";
+    msg.textContent = "保存に失敗しました。ブラウザの保存容量や設定を確認してください。";
   }
 }
 
@@ -2101,6 +2064,20 @@ function appendLocalHistory(record) {
   const history = getLocalHistory();
   history.push(record);
   localStorage.setItem(STORAGE_KEYS.answerHistory, JSON.stringify(history));
+}
+
+function appendLocalWriting(record) {
+  const history = getLocalWritingHistory();
+  history.push(record);
+  localStorage.setItem(STORAGE_KEYS.writingHistory, JSON.stringify(history));
+}
+
+function getLocalWritingHistory() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.writingHistory)) || [];
+  } catch {
+    return [];
+  }
 }
 
 function getLocalHistory() {
@@ -2198,7 +2175,7 @@ function exportHistoryCSV() {
 
 function clearHistory() {
   if (!isAdmin) return;
-  if (!confirm("この端末内の解答履歴をすべて削除しますか？スプレッドシートに送信済みのデータは削除されません。")) return;
+  if (!confirm("この端末内の解答履歴をすべて削除しますか？この操作は元に戻せません。")) return;
   localStorage.removeItem(STORAGE_KEYS.answerHistory);
   renderHistory();
   refreshDashboard();
@@ -2207,60 +2184,6 @@ function clearHistory() {
 function csvEscape(value) {
   const text = String(value ?? "").replace(/"/g, '""');
   return `"${text}"`;
-}
-
-
-function handleQuizKeyboard(event) {
-  const quizScreen = document.getElementById("quizScreen");
-  if (!quizScreen || quizScreen.classList.contains("hidden")) return;
-  if (event.isComposing) return;
-
-  const nextButton = document.getElementById("nextButton");
-  const checkButton = document.getElementById("checkButton");
-
-  if (event.key === "Enter") {
-    event.preventDefault();
-    if (nextButton && !nextButton.classList.contains("hidden")) return nextQuestion();
-    if (checkButton && !checkButton.disabled) return checkAnswer();
-  }
-
-  const canUseNumberKeys = TEST_CONFIG[testType]?.type === "choice" || (TEST_CONFIG[testType]?.type === "errorCorrection" && errorCorrectionPhase === "identify");
-  if (canUseNumberKeys && /^[1-9]$/.test(event.key)) {
-    const buttons = [...document.querySelectorAll(".choice-button")];
-    const button = buttons[Number(event.key) - 1];
-    if (button) {
-      button.click();
-      event.preventDefault();
-    }
-  }
-}
-
-function configSupportsReview(type) {
-  return Boolean(TEST_CONFIG[type]?.review);
-}
-
-function shouldKeepQuestionOrder(type) {
-  return Boolean(TEST_CONFIG[type]?.keepOrder);
-}
-
-function getCurrentMistakeQuestions() {
-  const wrongIdSet = new Set(mistakes.map(m => String(m.id)));
-  return questions.filter(q => wrongIdSet.has(String(q.id)));
-}
-
-function updateRetryMistakesButton() {
-  const button = document.getElementById("retryMistakesButton");
-  if (!button) return;
-  const canRetry = lastMistakeQuestions.length > 0;
-  button.classList.toggle("hidden", !canRetry);
-  button.textContent = canRetry ? `今回のミスを解き直す（${lastMistakeQuestions.length}問）` : "今回のミスを解き直す";
-}
-
-function retryCurrentMistakes() {
-  if (!lastMistakeQuestions.length) return alert("今回解き直すミスはありません。");
-  reviewMode = true;
-  questions = shouldKeepQuestionOrder(testType) ? [...lastMistakeQuestions] : shuffle(lastMistakeQuestions);
-  startQuizCommon();
 }
 
 /* =========================
@@ -2290,8 +2213,8 @@ function getWrongIds() {
   }
 }
 
-function getWrongKey() {
-  return `wrongWords_${testType}_${currentStudentId || "unknown"}`;
+function getWrongKey(type = testType) {
+  return `${STORAGE_KEYS.legacyWrongPrefix}_${type}_${currentStudentId || "unknown"}`;
 }
 
 function clearStoredMistakes() {
@@ -2299,6 +2222,615 @@ function clearStoredMistakes() {
   localStorage.removeItem(getWrongKey());
   updateMistakeCountInSettings();
   alert("間違い履歴を削除しました。" );
+}
+
+
+
+/* =========================
+   ホーム画面：お知らせ・Apps Script確認
+========================= */
+
+function renderSyncNotice(status = "checking", details = "") {
+  const banner = document.getElementById("syncNoticeBanner");
+  const statusText = document.getElementById("appsScriptStatusText");
+  if (!banner || !statusText) return;
+  banner.classList.remove("notice-ok", "notice-warn", "notice-local");
+  if (USE_LOCAL_ONLY) {
+    banner.classList.add("notice-local");
+    statusText.textContent = "現在はlocalStorage保存のみです。スプレッドシート送信を使う場合は USE_LOCAL_ONLY=false にしてください。";
+    return;
+  }
+  if (status === "ok") {
+    banner.classList.add("notice-ok");
+    statusText.textContent = details || "Apps Scriptは appendAnswerRecord / submitQuizSummary に対応しています。";
+    return;
+  }
+  if (status === "warn") {
+    banner.classList.add("notice-warn");
+    statusText.textContent = details || "Apps Scriptの最新反映を確認できませんでした。Webアプリを新しいバージョンで再デプロイしてください。";
+    return;
+  }
+  statusText.textContent = "Apps Scriptの反映状況を確認中です。";
+}
+
+async function checkAppsScriptIntegration() {
+  if (USE_LOCAL_ONLY || !GAS_WEB_APP_URL) {
+    renderSyncNotice("warn", "GAS_WEB_APP_URLが未設定、またはlocalStorage保存のみの設定です。");
+    return;
+  }
+  try {
+    const result = await apiGetJsonp("status");
+    const features = Array.isArray(result?.features) ? result.features : [];
+    const hasPerQuestion = features.includes("appendAnswerRecord") || features.includes("quizAnswer");
+    const hasSummary = features.includes("submitQuizSummary") || features.includes("quizSummary");
+    if (result?.ok && hasPerQuestion && hasSummary) {
+      renderSyncNotice("ok", "反映確認OK：1問ごとの送信と結果概要の保存に対応しています。");
+    } else if (result?.ok) {
+      renderSyncNotice("warn", "GASは応答していますが、1問ごと送信のfeaturesが確認できません。最新Apps Scriptを再デプロイしてください。");
+    } else {
+      renderSyncNotice("warn", result?.error || "GASのstatus応答が不正です。");
+    }
+  } catch (error) {
+    renderSyncNotice("warn", "この画面からApps Scriptへ接続確認できませんでした。デプロイURL・公開範囲・新バージョン反映を確認してください。");
+  }
+}
+
+function getComboMessageHtml(streak) {
+  if (streak >= 10) return `<div class="combo-message super"><strong>${streak}連続正解！</strong><span>かなり強い集中が続いています。ここで一度深呼吸して、正確さを維持しましょう。</span></div>`;
+  if (streak >= 5) return `<div class="combo-message"><strong>${streak}連続正解！</strong><span>知識の根が一気に伸びています。次の1問も落ち着いていきましょう。</span></div>`;
+  return `<div class="combo-message light"><strong>${streak}連続正解</strong><span>よい流れです。使える知識として定着し始めています。</span></div>`;
+}
+
+/* =========================
+   ホーム画面：知識の根
+========================= */
+
+function getCurrentStudentHistory() {
+  return getLocalHistory().filter(item => item.studentId === currentStudentId);
+}
+
+function getGrowthStage(correctCount) {
+  if (correctCount >= 500) return 5;
+  if (correctCount >= 250) return 4;
+  if (correctCount >= 100) return 3;
+  if (correctCount >= 30) return 2;
+  if (correctCount >= 1) return 1;
+  return 0;
+}
+
+function renderGrowthHome() {
+  const area = document.getElementById("growthHomeArea");
+  if (!area || !currentStudentId) return;
+  const history = getCurrentStudentHistory();
+  const correctCount = history.filter(item => item.correct).length;
+  const total = history.length;
+  const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
+  const days = new Set(history.map(item => item.dateKey).filter(Boolean)).size;
+  const stage = getGrowthStage(correctCount);
+  const nextTargets = [1, 30, 100, 250, 500, 1000];
+  const nextTarget = nextTargets.find(target => target > correctCount) || correctCount;
+  const remaining = Math.max(0, nextTarget - correctCount);
+  const rootPercent = Math.min(100, Math.round((correctCount / Math.max(nextTarget, 1)) * 100));
+
+  area.innerHTML = `
+    <div class="growth-copy">
+      <span class="panel-label">Learning Growth</span>
+      <h3>知識の根を育てるホーム</h3>
+      <p>正解が増えるほど根が広がり、植物が大きくなります。毎日の1問を積み重ねるための目印です。</p>
+      <div class="growth-stats">
+        <span><strong>${correctCount}</strong>正解</span>
+        <span><strong>${accuracy || "-"}</strong>${accuracy ? "%" : ""}正答率</span>
+        <span><strong>${days}</strong>学習日</span>
+      </div>
+    </div>
+    <div class="growth-plant-wrap">
+      <div class="plant-visual plant-stage-${stage}" style="--root-progress:${rootPercent}%;" aria-hidden="true">
+        <div class="plant-sky">
+          <div class="plant-stem"></div>
+          <div class="plant-leaf leaf-left"></div>
+          <div class="plant-leaf leaf-right"></div>
+          <div class="plant-bloom"></div>
+        </div>
+        <div class="plant-soil">
+          <span class="root root-a"></span>
+          <span class="root root-b"></span>
+          <span class="root root-c"></span>
+        </div>
+      </div>
+      <p class="growth-next">次の成長まであと <strong>${remaining}</strong> 正解</p>
+    </div>`;
+}
+
+function renderHomeLearningCalendar() {
+  const area = document.getElementById("learningCalendarHomeArea");
+  if (!area || !currentStudentId) return;
+  const history = getCurrentStudentHistory();
+  const byDate = new Map();
+  history.forEach(item => {
+    const key = item.dateKey || getDateKey(item.date || new Date());
+    if (!byDate.has(key)) byDate.set(key, { total: 0, correct: 0 });
+    const entry = byDate.get(key);
+    entry.total += 1;
+    if (item.correct) entry.correct += 1;
+  });
+  const days = [];
+  const today = new Date();
+  for (let i = 20; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = getDateKey(d);
+    const entry = byDate.get(key) || { total: 0, correct: 0 };
+    days.push({ key, day: d.getDate(), weekday: "日月火水木金土"[d.getDay()], ...entry });
+  }
+  const streak = calculateHistoryStreak(byDate);
+  const activeDays = days.filter(day => day.total > 0).length;
+  area.innerHTML = `
+    <div class="calendar-copy">
+      <span class="panel-label">Learning Calendar</span>
+      <h3>${streak}日連続で学習中</h3>
+      <p>連続して学習できた日をカレンダーで見える化します。1問だけでも記録が残れば、学習の根は切れません。</p>
+    </div>
+    <div class="mini-calendar-grid" aria-label="直近21日の学習状況">
+      ${days.map(day => `<div class="mini-day ${day.total ? "active" : ""} ${day.correct >= 5 ? "strong" : ""}" title="${day.key}: ${day.total}問">
+        <span>${day.weekday}</span><strong>${day.day}</strong><small>${day.total ? `${day.total}問` : ""}</small>
+      </div>`).join("")}
+    </div>
+    <div class="calendar-motivation"><strong>${activeDays}</strong> / 21日 学習済み　<span>今日も1問で継続達成です。</span></div>`;
+}
+
+function calculateHistoryStreak(byDate) {
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = getDateKey(d);
+    const entry = byDate.get(key);
+    if (entry && entry.total > 0) streak += 1;
+    else if (i === 0) continue;
+    else break;
+  }
+  return streak;
+}
+
+function renderReviewPlant(mastered, needReview, unlearned, plantId = "localReviewPlant", messageId = "localReviewPlantMessage") {
+  const stage = getGrowthStage(mastered);
+  const plant = document.getElementById(plantId);
+  if (plant) {
+    plant.className = `plant-visual plant-stage-${stage}`;
+    plant.style.setProperty("--root-progress", `${Math.min(100, mastered)}%`);
+  }
+  const message = mastered === 0
+    ? "最初の正解が、根を伸ばすスタートになります。"
+    : needReview > mastered
+      ? "要復習が多い教材です。根を整える復習から始めましょう。"
+      : `この教材では ${mastered} 問分の知識が根づいています。`;
+  setText(messageId, message);
+}
+
+/* =========================
+   教材開始画面：設定＋進捗の一括表示
+========================= */
+
+async function renderSettingProgressDashboard(type = testType) {
+  if (!type || !TEST_CONFIG[type] || TEST_CONFIG[type].type === "writing") return;
+  activeLocalReviewType = type;
+  const config = TEST_CONFIG[type];
+  const questionsForType = await ensureQuestionsLoaded(type);
+  const statuses = getLocalReviewStatuses(type, questionsForType);
+  const mastered = statuses.filter(item => item.status === "mastered").length;
+  const needReview = statuses.filter(item => item.status === "review").length;
+  const unlearned = statuses.filter(item => item.status === "unlearned").length;
+  const total = statuses.length || 1;
+  const percent = Math.round((mastered / total) * 100);
+  const reviewPercent = Math.round((needReview / total) * 100);
+  const settings = getLocalReviewSettings();
+  const selectedCount = getFilteredLocalReviewStatuses(statuses, settings).length;
+
+  setText("settingReviewDonutNumber", `${percent}%`);
+  setText("settingReviewMasteredCount", `${mastered}問`);
+  setText("settingReviewNeedReviewCount", `${needReview}問`);
+  setText("settingReviewUnlearnedCount", `${unlearned}問`);
+  setText("settingReviewTotalButton", `総復習 ${Math.min(selectedCount, settings.count || selectedCount)}問`);
+
+  const donut = document.getElementById("settingReviewDonut");
+  if (donut) {
+    donut.style.setProperty("--mastered-percent", `${percent}%`);
+    donut.style.setProperty("--review-percent", `${reviewPercent}%`);
+  }
+  renderReviewPlant(mastered, needReview, unlearned, "settingReviewPlant", "settingReviewPlantMessage");
+  loadSettingReviewSettingsToForm();
+  renderSettingReviewInsight(statuses, config);
+  renderSettingReviewList(statuses);
+}
+
+function getFilteredLocalReviewStatuses(statuses, settings = getLocalReviewSettings()) {
+  return statuses.filter(item => {
+    if (item.status === "mastered" && settings.includeMastered) return true;
+    if (item.status === "review" && (settings.includeReview || settings.includeWrong)) return true;
+    if (item.starred && settings.includeStarred) return true;
+    if (item.status === "unlearned" && settings.includeUnlearned) return true;
+    return false;
+  });
+}
+
+function renderSettingReviewInsight(statuses, config) {
+  const insight = document.getElementById("settingReviewInsightArea");
+  if (!insight) return;
+  const weak = statuses.filter(item => item.status === "review").slice(0, 3);
+  const mastered = statuses.filter(item => item.status === "mastered").length;
+  const total = statuses.length;
+  insight.innerHTML = weak.length ? `
+    <div class="local-insight-card compact-insight-card">
+      <strong>今日の復習ポイント</strong>
+      ${weak.map(item => `<p>・${escapeHtml(getQuestionLabel(item.question))}</p>`).join("")}
+    </div>
+  ` : `
+    <div class="local-insight-card compact-insight-card">
+      <strong>${escapeHtml(config.title)}の状態</strong>
+      <p>${total ? `習得済み ${mastered}問。未学習も含めて回すと、知識の根が広がります。` : "問題データの読み込みを確認してください。"}</p>
+    </div>
+  `;
+}
+
+function renderSettingReviewList(statuses) {
+  const list = document.getElementById("settingReviewListPanel");
+  if (!list) return;
+  list.classList.toggle("hidden", !settingReviewListVisible);
+  if (!settingReviewListVisible) return;
+  list.innerHTML = statuses.map(item => {
+    const label = item.status === "mastered" ? "習得済" : item.status === "review" ? "要復習" : "未学習";
+    return `
+      <div class="local-review-row ${item.status}">
+        <button class="star-button ${item.starred ? "active" : ""}" data-setting-star-id="${escapeHtml(item.question.id)}" type="button">?</button>
+        <div><strong>${escapeHtml(getQuestionLabel(item.question))}</strong><span>${escapeHtml(label)} / ${escapeHtml(item.question.section || "")}</span></div>
+        <button class="small-button secondary-button" data-setting-study-id="${escapeHtml(item.question.id)}" type="button">1問</button>
+      </div>`;
+  }).join("");
+  list.querySelectorAll("[data-setting-star-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      toggleStarredItem(testType, button.dataset.settingStarId);
+      renderSettingProgressDashboard(testType);
+    });
+  });
+  list.querySelectorAll("[data-setting-study-id]").forEach(button => {
+    button.addEventListener("click", () => {
+      activeLocalReviewType = testType;
+      startSingleLocalReview(button.dataset.settingStudyId);
+    });
+  });
+}
+
+function getQuestionLabel(question) {
+  return question.word || question.question || question.prompt || question.answer || question.id || "問題";
+}
+
+function toggleSettingReviewList() {
+  settingReviewListVisible = !settingReviewListVisible;
+  const button = document.getElementById("settingReviewListToggleButton");
+  if (button) button.textContent = settingReviewListVisible ? "一覧を閉じる" : "問題一覧";
+  renderSettingProgressDashboard(testType);
+}
+
+function loadSettingReviewSettingsToForm() {
+  const settings = getLocalReviewSettings();
+  const map = {
+    settingIncludeMastered: settings.includeMastered,
+    settingIncludeReview: settings.includeReview,
+    settingIncludeStarred: settings.includeStarred,
+    settingIncludeWrong: settings.includeWrong,
+    settingIncludeUnlearned: settings.includeUnlearned
+  };
+  Object.entries(map).forEach(([id, checked]) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = checked;
+  });
+  setText("settingReviewCountDisplay", `${settings.count}問`);
+}
+
+function saveSettingReviewSettingsFromForm() {
+  const settings = getLocalReviewSettings();
+  const getChecked = id => Boolean(document.getElementById(id)?.checked);
+  settings.includeMastered = getChecked("settingIncludeMastered");
+  settings.includeReview = getChecked("settingIncludeReview");
+  settings.includeStarred = getChecked("settingIncludeStarred");
+  settings.includeWrong = getChecked("settingIncludeWrong");
+  settings.includeUnlearned = getChecked("settingIncludeUnlearned");
+  localStorage.setItem(STORAGE_KEYS.localReviewSettings, JSON.stringify(settings));
+}
+
+function changeSettingReviewCount(amount) {
+  const settings = getLocalReviewSettings();
+  settings.count = Math.max(10, Math.min(2000, Number(settings.count || 1000) + amount));
+  localStorage.setItem(STORAGE_KEYS.localReviewSettings, JSON.stringify(settings));
+  loadSettingReviewSettingsToForm();
+  renderSettingProgressDashboard(testType);
+}
+
+function startSettingReviewQuiz(mode = "review") {
+  if (!testType) return;
+  activeLocalReviewType = testType;
+  saveSettingReviewSettingsFromForm();
+  startLocalReviewQuiz(mode);
+}
+
+/* =========================
+   総復習ダッシュボード（localStorage）
+========================= */
+
+function getReviewableTypes() {
+  const priority = [
+    "speakingReview", "speakingReviewCloze", "speakingErrorCorrection", "phrasalVerbs", "monitor",
+    "sentence", "polaris3", "vocab", "sokudokuVocab", "target1900Vocab",
+    "eikenConnectors", "classicalWords", "classicalGrammar", "classicalKnowledge",
+    "englishTheory", "statisticsQuestions", "writingTheoryChapter4", "writingTheoryMap", "presentationBuilderTasks"
+  ];
+  const rest = Object.keys(TEST_CONFIG).filter(type => !priority.includes(type));
+  return [...priority, ...rest].filter(type => isReviewDashboardSupported(type) && hasAccessToMaterial(type));
+}
+
+async function openLocalReviewDashboard(materialType = "") {
+  const types = getReviewableTypes();
+  if (!types.length) return alert("総復習に使える教材がありません。");
+  if (materialType && types.includes(materialType)) activeLocalReviewType = materialType;
+  if (!types.includes(activeLocalReviewType)) activeLocalReviewType = types[0];
+  applyThemeForMaterial(activeLocalReviewType);
+  showOnly("reviewDashboardScreen");
+  await renderLocalReviewDashboard();
+}
+
+async function renderLocalReviewDashboard() {
+  const type = activeLocalReviewType;
+  const config = TEST_CONFIG[type];
+  const questionsForType = await ensureQuestionsLoaded(type);
+  const statuses = getLocalReviewStatuses(type, questionsForType);
+  const mastered = statuses.filter(item => item.status === "mastered").length;
+  const needReview = statuses.filter(item => item.status === "review").length;
+  const unlearned = statuses.filter(item => item.status === "unlearned").length;
+  const total = statuses.length || 1;
+  const percent = Math.round((mastered / total) * 100);
+  const reviewPercent = Math.round((needReview / total) * 100);
+
+  setText("localReviewMaterialLabel", config.title);
+  setText("localReviewTitle", `教材別ダッシュボード - ${getLocalReviewKindLabel(type)}`);
+  setText("localReviewDonutNumber", `${percent}%`);
+  setText("localReviewMasteredCount", `${mastered}問`);
+  setText("localReviewNeedReviewCount", `${needReview}問`);
+  setText("localReviewUnlearnedCount", `${unlearned}問`);
+  setText("localReviewTotalButton", `復習 ${statuses.filter(item => item.status !== "unlearned" || getLocalReviewSettings().includeUnlearned).length}問`);
+  const donut = document.getElementById("localReviewDonut");
+  if (donut) {
+    donut.style.setProperty("--mastered-percent", `${percent}%`);
+    donut.style.setProperty("--review-percent", `${reviewPercent}%`);
+  }
+  renderReviewPlant(mastered, needReview, unlearned);
+
+  loadLocalReviewSettingsToForm();
+  renderLocalReviewPanels(statuses);
+}
+
+function getLocalReviewKindLabel(type) {
+  const config = TEST_CONFIG[type] || {};
+  if (["vocab", "sokudokuVocab", "target1900Vocab", "classicalWords"].includes(type)) return "単語";
+  if (type === "polaris3") return "読解";
+  if (["phrasalVerbs", "speakingReview", "speakingReviewCloze"].includes(type)) return "チャンク";
+  if (config.type === "sentence") return "語順";
+  if (config.type === "cloze") return "穴埋め";
+  if (config.type === "errorCorrection") return "誤り発見";
+  return "確認問題";
+}
+
+function getLocalReviewStatuses(type, sourceQuestions) {
+  const history = getLocalHistory().filter(item => item.studentId === currentStudentId && item.testType === type);
+  const wrongIds = getWrongIdsForType(type);
+  const starred = getStarredIds(type);
+  return sourceQuestions.map(q => {
+    const itemHistory = history.filter(item => String(item.questionId) === String(q.id));
+    const last = itemHistory[itemHistory.length - 1];
+    const isWrong = wrongIds.includes(String(q.id)) || (last && !last.correct);
+    const status = isWrong ? "review" : (last && last.correct ? "mastered" : "unlearned");
+    return { question: q, status, starred: starred.includes(String(q.id)), last };
+  });
+}
+
+function getWrongIdsForType(type) {
+  try {
+    return JSON.parse(localStorage.getItem(getWrongKey(type))) || [];
+  } catch {
+    return [];
+  }
+}
+
+function getStarredKey(type) {
+  return `${STORAGE_KEYS.starredPrefix}_${type}_${currentStudentId || "unknown"}`;
+}
+
+function getStarredIds(type) {
+  try {
+    return JSON.parse(localStorage.getItem(getStarredKey(type))) || [];
+  } catch {
+    return [];
+  }
+}
+
+function toggleStarredItem(type, id) {
+  const key = getStarredKey(type);
+  const ids = getStarredIds(type);
+  const textId = String(id);
+  const next = ids.includes(textId) ? ids.filter(v => v !== textId) : [...ids, textId];
+  localStorage.setItem(key, JSON.stringify(next));
+  renderLocalReviewDashboard();
+}
+
+function renderLocalReviewPanels(statuses) {
+  const list = document.getElementById("localReviewListPanel");
+  const summary = document.getElementById("localReviewSummaryPanel");
+  if (!list || !summary) return;
+  summary.classList.toggle("hidden", activeLocalReviewTab === "list");
+  list.classList.toggle("hidden", activeLocalReviewTab !== "list");
+
+  if (activeLocalReviewTab !== "list") {
+    const insight = document.getElementById("localReviewInsightArea");
+    const weak = statuses.filter(item => item.status === "review").slice(0, 3);
+    if (insight) {
+      insight.innerHTML = weak.length ? `
+        <div class="local-insight-card">
+          <strong>今日の弱点トップ${weak.length}</strong>
+          ${weak.map(item => `<p>・${escapeHtml(item.question.word || item.question.question || item.question.prompt || item.question.id)}</p>`).join("")}
+        </div>
+      ` : `<div class="local-insight-card"><strong>良い状態です</strong><p>要復習が少ない場合は、未学習・ランダムで回転数を増やしましょう。</p></div>`;
+    }
+    return;
+  }
+
+  list.innerHTML = statuses.map(item => {
+    const label = item.status === "mastered" ? "習得済" : item.status === "review" ? "要復習" : "未学習";
+    return `
+      <div class="local-review-row ${item.status}">
+        <button class="star-button ${item.starred ? "active" : ""}" data-star-id="${escapeHtml(item.question.id)}">?</button>
+        <div><strong>${escapeHtml(item.question.word || item.question.question || item.question.prompt || item.question.id)}</strong><span>${escapeHtml(label)} / ${escapeHtml(item.question.section || "")}</span></div>
+        <button class="small-button secondary-button" data-study-id="${escapeHtml(item.question.id)}">1問</button>
+      </div>`;
+  }).join("");
+  list.querySelectorAll("[data-star-id]").forEach(button => button.addEventListener("click", () => toggleStarredItem(activeLocalReviewType, button.dataset.starId)));
+  list.querySelectorAll("[data-study-id]").forEach(button => button.addEventListener("click", () => startSingleLocalReview(button.dataset.studyId)));
+}
+
+function setLocalReviewTab(tab) {
+  activeLocalReviewTab = tab;
+  document.querySelectorAll(".local-tab-button").forEach(button => button.classList.toggle("active", button.dataset.tab === tab));
+  renderLocalReviewDashboard();
+}
+
+function cycleLocalReviewType(direction) {
+  const types = getReviewableTypes();
+  const current = Math.max(0, types.indexOf(activeLocalReviewType));
+  activeLocalReviewType = types[(current + direction + types.length) % types.length];
+  renderLocalReviewDashboard();
+}
+
+function toggleLocalReviewSettings(open) {
+  const panel = document.getElementById("localReviewSettingsPanel");
+  if (panel) panel.classList.toggle("hidden", !open);
+}
+
+function getLocalReviewSettings() {
+  const defaults = {
+    includeMastered: true,
+    includeReview: true,
+    includeStarred: true,
+    includeWrong: true,
+    includeUnlearned: true,
+    count: 1000,
+    unlearnedMethod: "quiz",
+    reviewMethod: "quiz",
+    listMethod: "quiz"
+  };
+  try {
+    return { ...defaults, ...(JSON.parse(localStorage.getItem(STORAGE_KEYS.localReviewSettings)) || {}) };
+  } catch {
+    return defaults;
+  }
+}
+
+function loadLocalReviewSettingsToForm() {
+  const settings = getLocalReviewSettings();
+  const map = {
+    localIncludeMastered: settings.includeMastered,
+    localIncludeReview: settings.includeReview,
+    localIncludeStarred: settings.includeStarred,
+    localIncludeWrong: settings.includeWrong,
+    localIncludeUnlearned: settings.includeUnlearned
+  };
+  Object.entries(map).forEach(([id, checked]) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = checked;
+  });
+  setText("localReviewCountDisplay", `${settings.count}問`);
+  setRadioValue("localUnlearnedMethod", settings.unlearnedMethod);
+  setRadioValue("localReviewMethod", settings.reviewMethod);
+  setRadioValue("localListMethod", settings.listMethod);
+}
+
+function saveLocalReviewSettingsFromForm() {
+  const settings = getLocalReviewSettings();
+  settings.includeMastered = Boolean(document.getElementById("localIncludeMastered")?.checked);
+  settings.includeReview = Boolean(document.getElementById("localIncludeReview")?.checked);
+  settings.includeStarred = Boolean(document.getElementById("localIncludeStarred")?.checked);
+  settings.includeWrong = Boolean(document.getElementById("localIncludeWrong")?.checked);
+  settings.includeUnlearned = Boolean(document.getElementById("localIncludeUnlearned")?.checked);
+  settings.unlearnedMethod = getRadioValue("localUnlearnedMethod") || "quiz";
+  settings.reviewMethod = getRadioValue("localReviewMethod") || "quiz";
+  settings.listMethod = getRadioValue("localListMethod") || "quiz";
+  localStorage.setItem(STORAGE_KEYS.localReviewSettings, JSON.stringify(settings));
+  renderLocalReviewDashboard();
+}
+
+function changeLocalReviewCount(amount) {
+  const settings = getLocalReviewSettings();
+  settings.count = Math.max(10, Math.min(2000, Number(settings.count || 1000) + amount));
+  localStorage.setItem(STORAGE_KEYS.localReviewSettings, JSON.stringify(settings));
+  loadLocalReviewSettingsToForm();
+}
+
+function resetLocalReviewSettings() {
+  localStorage.removeItem(STORAGE_KEYS.localReviewSettings);
+  renderLocalReviewDashboard();
+}
+
+async function startLocalReviewQuiz(mode = "review") {
+  const type = activeLocalReviewType;
+  const sourceQuestions = await ensureQuestionsLoaded(type);
+  const settings = getLocalReviewSettings();
+  let statuses = getLocalReviewStatuses(type, sourceQuestions);
+  if (mode === "review") {
+    statuses = statuses.filter(item => {
+      if (item.status === "mastered" && settings.includeMastered) return true;
+      if (item.status === "review" && (settings.includeReview || settings.includeWrong)) return true;
+      if (item.starred && settings.includeStarred) return true;
+      if (item.status === "unlearned" && settings.includeUnlearned) return true;
+      return false;
+    });
+  }
+  const pool = statuses.map(item => item.question);
+  if (!pool.length) return alert("条件に合う問題がありません。設定を変更してください。");
+  testType = type;
+  reviewMode = mode !== "random";
+  document.getElementById("timeLimitSelect").value = String(TEST_CONFIG[type].defaultTime || 0);
+  questions = shuffle(pool).slice(0, settings.count);
+  startQuizCommon();
+}
+
+async function startSingleLocalReview(id) {
+  const sourceQuestions = await ensureQuestionsLoaded(activeLocalReviewType);
+  const q = sourceQuestions.find(item => String(item.id) === String(id));
+  if (!q) return;
+  testType = activeLocalReviewType;
+  reviewMode = true;
+  document.getElementById("timeLimitSelect").value = String(TEST_CONFIG[testType].defaultTime || 0);
+  questions = [q];
+  startQuizCommon();
+}
+
+function retryCurrentMistakes() {
+  if (!lastMistakeQuestions.length) return alert("今回解き直すミスはありません。");
+  reviewMode = true;
+  questions = shuffle(lastMistakeQuestions);
+  startQuizCommon();
+}
+
+function getRadioValue(name) {
+  return document.querySelector(`input[name='${name}']:checked`)?.value || "";
+}
+
+function setRadioValue(name, value) {
+  const el = document.querySelector(`input[name='${name}'][value='${value}']`);
+  if (el) el.checked = true;
+}
+
+function setText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
 }
 
 function updateMistakeCountInSettings() {
@@ -2379,6 +2911,10 @@ function refreshDashboard() {
   document.getElementById("streakDisplay").textContent = `${getStreakInfo().count}日`;
 }
 
+function getStreakKey() {
+  return `${STORAGE_KEYS.streakPrefix}_${currentStudentId || "unknown"}`;
+}
+
 function updateStreak() {
   const today = getDateKey(new Date());
   const info = getStreakInfo();
@@ -2386,14 +2922,35 @@ function updateStreak() {
 
   if (info.lastDate === today) return;
   const count = info.lastDate === yesterday ? info.count + 1 : 1;
-  localStorage.setItem(STORAGE_KEYS.streak, JSON.stringify({ lastDate: today, count }));
+  localStorage.setItem(getStreakKey(), JSON.stringify({ lastDate: today, count }));
 }
 
 function getStreakInfo() {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEYS.streak)) || { lastDate: "", count: 0 };
+    return JSON.parse(localStorage.getItem(getStreakKey())) || JSON.parse(localStorage.getItem(STORAGE_KEYS.streak)) || { lastDate: "", count: 0 };
   } catch {
     return { lastDate: "", count: 0 };
+  }
+}
+
+
+function handleQuizKeyboard(event) {
+  const active = document.activeElement;
+  const isTyping = active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName) && !active.readOnly;
+  if (isTyping) return;
+  if (document.getElementById("quizScreen")?.classList.contains("hidden")) return;
+
+  const checkButton = document.getElementById("checkButton");
+  const nextButton = document.getElementById("nextButton");
+  if (event.key === "Enter") {
+    event.preventDefault();
+    if (!nextButton.classList.contains("hidden")) nextQuestion();
+    else if (!checkButton.disabled) checkAnswer();
+  }
+  if (/^[1-9]$/.test(event.key) && TEST_CONFIG[testType]?.type === "choice") {
+    const index = Number(event.key) - 1;
+    const choices = [...document.querySelectorAll(".choice-button")];
+    if (choices[index]) choices[index].click();
   }
 }
 
@@ -2407,11 +2964,11 @@ function resetQuizState() {
   currentIndex = 0;
   score = 0;
   selectedChoice = "";
+  answersLog = [];
+  mistakes = [];
   errorCorrectionPhase = "identify";
   quizCorrectStreak = 0;
   bestCorrectStreak = 0;
-  answersLog = [];
-  mistakes = [];
   questions = [];
   document.getElementById("feedback").textContent = "";
   document.getElementById("questionArea").innerHTML = "";
@@ -2419,7 +2976,7 @@ function resetQuizState() {
 
 function showOnly(id) {
   [
-    "loginScreen", "studentScreen", "menuScreen", "adminAccessScreen", "materialPasswordScreen", "calendarScreen",
+    "loginScreen", "studentScreen", "menuScreen", "reviewDashboardScreen", "adminAccessScreen", "materialPasswordScreen", "calendarScreen",
     "settingScreen", "writingScreen", "quizScreen", "resultScreen", "historyScreen"
   ].forEach(screen => {
     const element = document.getElementById(screen);
@@ -2428,6 +2985,7 @@ function showOnly(id) {
 
   const target = document.getElementById(id);
   if (target) target.classList.remove("hidden");
+  document.body.classList.toggle("local-review-active", id === "reviewDashboardScreen");
 }
 
 function splitSentence(text) {
