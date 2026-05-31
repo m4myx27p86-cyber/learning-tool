@@ -1,0 +1,472 @@
+/* =========================================================
+   2026-05-31 Material screen brush-up
+   - 教材画面をラフデザインに近い「木・ポイント・対象・条件・練習/総復習」構成へ整理
+   - HTML ID / JSロジックは変更せず、追加した説明カードとCSSで見た目だけ調整
+========================================================= */
+
+.material-unified-screen {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.unified-material-head {
+  padding: 6px 2px 18px;
+  border-bottom: 1px solid rgba(191, 219, 254, .72);
+}
+
+.unified-material-head .eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #f0fdfa;
+  color: #0f766e;
+  letter-spacing: .09em;
+}
+
+#settingTitle {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 46px);
+  color: #0b2a68;
+  letter-spacing: -.04em;
+}
+
+#settingDescription {
+  max-width: 680px;
+  margin-top: 8px;
+  font-weight: 750;
+}
+
+.integrated-setting-review-card {
+  display: grid;
+  grid-template-columns: minmax(250px, .9fr) minmax(320px, 1.15fr) minmax(210px, .68fr);
+  grid-template-areas:
+    "head head target"
+    "status settings target"
+    "conditions conditions target"
+    "actions actions target"
+    "insight insight target";
+  gap: 18px;
+  padding: clamp(18px, 3vw, 30px) !important;
+  border-radius: 28px !important;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(219, 234, 254, .72), transparent 30%),
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,253,250,.96)) !important;
+}
+
+.integrated-review-head {
+  grid-area: head;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 0 !important;
+  padding: 18px 20px;
+  border: 1px solid #dbeafe;
+  border-radius: 22px;
+  background: rgba(255,255,255,.86);
+}
+
+.integrated-review-head h3 {
+  margin: 7px 0 4px;
+  font-size: clamp(21px, 3vw, 29px);
+  color: #0b2a68;
+  letter-spacing: -.03em;
+}
+
+.integrated-review-head .muted {
+  margin-bottom: 0;
+}
+
+.quest-target-panel {
+  grid-area: target;
+  align-self: stretch;
+  padding: 20px 18px;
+  border: 1px solid #dbeafe;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, .045);
+}
+
+.quest-target-panel h3 {
+  margin: 12px 0 12px;
+  color: #0b2a68;
+  font-size: 22px;
+}
+
+.quest-target-panel ul {
+  margin: 0;
+  padding-left: 1.15em;
+  display: grid;
+  gap: 12px;
+  color: #111827;
+  font-weight: 850;
+  line-height: 1.75;
+}
+
+.integrated-status-grid {
+  grid-area: status;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  align-content: start;
+  gap: 16px;
+  padding: 20px !important;
+  border-radius: 24px !important;
+  background: linear-gradient(180deg, #ffffff, #fbfffc) !important;
+}
+
+.integrated-status-grid > div:first-child {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 280px;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff);
+}
+
+.integrated-status-grid .plant-visual {
+  width: min(220px, 100%);
+  height: 218px;
+}
+
+.setting-plant-message {
+  max-width: 260px;
+  margin: 0 auto;
+  color: #0b2a68;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+.integrated-status-grid > div:nth-child(2) {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid #dbeafe;
+  border-radius: 22px;
+  background: #ffffff;
+}
+
+.integrated-status-grid > div:nth-child(2)::before {
+  content: "ポイント";
+  justify-self: start;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: #f0fdfa;
+  color: #0f766e;
+  border: 1px solid #bfdbfe;
+  font-weight: 950;
+  letter-spacing: .08em;
+}
+
+.compact-donut {
+  width: 158px !important;
+  height: 158px !important;
+  margin: 2px auto 4px !important;
+}
+
+.compact-donut span {
+  font-size: clamp(34px, 5vw, 48px) !important;
+}
+
+.setting-review-counts {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.setting-review-counts div {
+  min-height: 84px;
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  border: 1px dashed #bfdbfe;
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.setting-review-counts strong {
+  font-size: clamp(17px, 2.4vw, 24px) !important;
+}
+
+.setting-review-counts span {
+  display: grid !important;
+  gap: 3px;
+  justify-items: center;
+  font-size: 12px !important;
+  line-height: 1.25;
+}
+
+.integrated-settings-block {
+  grid-area: settings;
+  margin: 0 !important;
+  padding: 20px !important;
+  border-radius: 24px !important;
+  background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+}
+
+.integrated-settings-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.integrated-settings-grid label {
+  min-height: 94px;
+  display: grid;
+  align-content: center;
+  gap: 8px;
+  text-align: center;
+  padding: 13px !important;
+  border-radius: 16px !important;
+  color: #0f172a !important;
+}
+
+.integrated-settings-grid select,
+.integrated-settings-grid input {
+  min-height: 44px;
+  margin-top: 0 !important;
+  text-align: center;
+  font-weight: 850;
+}
+
+.integrated-start-actions {
+  margin-top: 14px !important;
+  justify-content: stretch !important;
+}
+
+.integrated-start-actions #startButton {
+  width: 100%;
+  min-height: 58px;
+  margin: 0 !important;
+  font-size: 18px;
+}
+
+.setting-review-conditions {
+  grid-area: conditions;
+  margin: 0 !important;
+  border-radius: 18px !important;
+  background: #ffffff !important;
+}
+
+.setting-review-conditions summary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 20px;
+  color: #0b2a68 !important;
+}
+
+.setting-review-conditions summary::before {
+  content: "▣";
+  color: #2563eb;
+  font-size: 16px;
+}
+
+.setting-filter-grid {
+  grid-template-columns: repeat(5, minmax(120px, 1fr)) !important;
+  gap: 10px !important;
+}
+
+.setting-filter-grid label {
+  justify-content: center;
+  min-height: 46px;
+  margin: 0;
+  border-radius: 999px !important;
+  background: #f8fbff !important;
+}
+
+.integrated-review-actions {
+  grid-area: actions;
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px !important;
+  margin: 0 !important;
+}
+
+.integrated-review-actions button {
+  min-height: 62px;
+  width: 100%;
+  margin: 0 !important;
+  font-size: 18px;
+}
+
+#settingReviewInsightArea {
+  grid-area: insight;
+}
+
+#settingReviewListPanel.setting-review-list {
+  margin-top: 18px;
+  border-radius: 24px;
+}
+
+@media (max-width: 980px) {
+  .integrated-setting-review-card {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "head head"
+      "target target"
+      "status settings"
+      "conditions conditions"
+      "actions actions"
+      "insight insight";
+  }
+
+  .quest-target-panel ul {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    padding-left: 0;
+    list-style-position: inside;
+  }
+
+  .setting-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .unified-material-head,
+  .integrated-review-head {
+    text-align: center;
+  }
+
+  .integrated-setting-review-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "head"
+      "status"
+      "settings"
+      "target"
+      "conditions"
+      "actions"
+      "insight";
+    padding: 14px !important;
+    gap: 14px;
+  }
+
+  .integrated-review-head,
+  .unified-material-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .quest-target-panel ul,
+  .integrated-settings-grid,
+  .setting-review-counts,
+  .setting-filter-grid,
+  .integrated-review-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .setting-review-counts div {
+    min-height: 64px;
+    border-radius: 16px;
+  }
+
+  .integrated-status-grid > div:first-child {
+    min-height: auto;
+  }
+
+  .compact-donut {
+    width: 148px !important;
+    height: 148px !important;
+  }
+}
+
+/* =========================================================
+   2026-05-31 Target removal + boss layout fix
+   - 教材画面の「対象」説明欄を削除/非表示化
+   - ボスカードを2列全幅に配置し、ボタン文言の横はみ出しを防止
+   - HTML ID / 採点 / 出題 / 復習ロジックは変更しない
+========================================================= */
+.integrated-setting-review-card {
+  grid-template-columns: minmax(250px, .95fr) minmax(320px, 1.05fr) !important;
+  grid-template-areas:
+    "head head"
+    "status settings"
+    "boss boss"
+    "conditions conditions"
+    "actions actions"
+    "insight insight" !important;
+  overflow: hidden;
+}
+
+.quest-target-panel {
+  display: none !important;
+}
+
+#bossBattleArea.boss-battle-card {
+  grid-area: boss;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "bossInfo bossCharacter"
+    "bossButton bossButton";
+  align-items: center;
+  gap: 14px 16px;
+  overflow: hidden;
+}
+
+#bossBattleArea .boss-info {
+  grid-area: bossInfo;
+  min-width: 0;
+}
+
+#bossBattleArea .boss-character {
+  grid-area: bossCharacter;
+  justify-self: center;
+  flex: 0 0 auto;
+}
+
+#bossBattleArea #bossBattleButton {
+  grid-area: bossButton;
+  justify-self: stretch;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  line-height: 1.45;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+}
+
+#bossBattleArea .boss-hp-preview {
+  max-width: 100%;
+}
+
+@media (max-width: 980px) {
+  .integrated-setting-review-card {
+    grid-template-columns: 1fr !important;
+    grid-template-areas:
+      "head"
+      "status"
+      "settings"
+      "boss"
+      "conditions"
+      "actions"
+      "insight" !important;
+  }
+}
+
+@media (max-width: 620px) {
+  #bossBattleArea.boss-battle-card {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "bossCharacter"
+      "bossInfo"
+      "bossButton";
+    text-align: center;
+  }
+
+  #bossBattleArea .boss-character {
+    margin: 0 auto;
+  }
+}

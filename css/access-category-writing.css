@@ -1,0 +1,144 @@
+/* =========================================================
+   Access code / category / writing update
+========================================================= */
+.admin-quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin: 18px 0 26px;
+}
+.admin-quick button,
+.admin-card {
+  background: linear-gradient(135deg, #111827, #374151);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 20px;
+  font-weight: 800;
+  box-shadow: 0 12px 24px rgba(17,24,39,.18);
+}
+
+#materialCategoryArea {
+  display: grid;
+  gap: 22px;
+  margin-top: 24px;
+}
+.category-section {
+  text-align: left;
+  padding: 22px;
+  border-radius: 26px;
+  background: rgba(255,255,255,.82);
+  border: 1px solid var(--border);
+  box-shadow: 0 18px 36px rgba(15,23,42,.08);
+}
+.category-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.category-head span {
+  display: inline-block;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: .08em;
+}
+.category-head p { margin: 6px 0 0; color: #64748b; }
+.category-toeic { border-left: 8px solid #2563eb; }
+.category-toefl { border-left: 8px solid #7c3aed; }
+.category-highschool { border-left: 8px solid #16a34a; }
+.category-eiken { border-left: 8px solid #d97706; }
+.category-classics { border-left: 8px solid #b91c1c; }
+.category-toeic .category-head span { color: #1d4ed8; }
+.category-toefl .category-head span { color: #6d28d9; }
+.category-highschool .category-head span { color: #15803d; }
+.category-eiken .category-head span { color: #b45309; }
+.category-classics .category-head span { color: #991b1b; }
+.empty-category {
+  padding: 18px;
+  border-radius: 18px;
+  background: #f8fafc;
+  color: #64748b;
+  text-align: center;
+}
+
+.theme-toeic { background: linear-gradient(135deg, #dbeafe, #f8fafc); }
+.theme-toefl { background: linear-gradient(135deg, #ede9fe, #f8fafc); }
+.theme-highschool { background: linear-gradient(135deg, #dcfce7, #f8fafc); }
+.theme-eiken { background: linear-gradient(135deg, #fef3c7, #f8fafc); }
+.theme-classics { background: linear-gradient(135deg, #fee2e2, #fff7ed); }
+
+.admin-panel,
+.writing-panel {
+  text-align: left;
+  max-width: 960px;
+  margin: 18px auto;
+}
+.admin-panel input,
+.writing-panel select,
+.writing-panel textarea {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+}
+.checkbox-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  margin: 14px 0;
+}
+.checkbox-category {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #f8fafc;
+}
+.material-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  line-height: 1.5;
+}
+.material-check input {
+  width: auto;
+  margin: 0;
+}
+.issued-code {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #ecfeff;
+  color: #155e75;
+  font-size: 24px;
+  letter-spacing: .08em;
+}
+.compact-head { align-items: center; }
+.compact-table { min-width: 920px; }
+
+#customQuestionCountInput {
+  margin-top: 10px;
+}
+.writing-prompt {
+  margin: 16px 0;
+  padding: 18px;
+  border-radius: 18px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  line-height: 1.8;
+}
+#writingText {
+  min-height: 280px;
+  line-height: 1.8;
+  resize: vertical;
+  font-size: 16px;
+}
+
+@media (max-width: 820px) {
+  .category-section { padding: 16px; }
+  .category-head { flex-direction: column; align-items: flex-start; }
+  .checkbox-grid { grid-template-columns: 1fr; }
+  .admin-quick { flex-direction: column; }
+}
+

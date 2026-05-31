@@ -1,0 +1,214 @@
+/* =========================================================
+   2026-05-31 Correct Effect Clear Luxury Patch
+   目的:
+   - 正解時だけ、少し豪華でクリアな達成感を出す
+   - 通常画面は目に優しいまま維持
+   - HTML / JavaScript / 問題判定ロジックは変更しない
+========================================================= */
+:root {
+  --clear-success: #16a34a;
+  --clear-success-deep: #0f766e;
+  --clear-blue: #2563eb;
+  --clear-sky: #38bdf8;
+  --clear-glass: rgba(255, 255, 255, 0.82);
+  --clear-glow-green: rgba(34, 197, 94, 0.30);
+  --clear-glow-blue: rgba(37, 99, 235, 0.22);
+}
+
+/* 正解カード：白くクリアなガラス感＋緑と青の達成アクセント */
+.feedback-card.feedback-correct,
+.feedback-correct {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255, 255, 255, 0.98), transparent 34%),
+    radial-gradient(circle at 92% 0%, rgba(56, 189, 248, 0.20), transparent 32%),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(236, 253, 245, 0.94) 58%, rgba(239, 246, 255, 0.92)) !important;
+  border: 1px solid rgba(34, 197, 94, 0.45) !important;
+  box-shadow:
+    0 12px 30px rgba(15, 23, 42, 0.10),
+    0 0 0 1px rgba(255, 255, 255, 0.72) inset,
+    0 0 28px rgba(34, 197, 94, 0.18) !important;
+  backdrop-filter: blur(10px);
+}
+
+.feedback-card.feedback-correct::before,
+.feedback-correct::before {
+  content: "";
+  position: absolute;
+  inset: -45% auto -45% -34%;
+  width: 34%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  transform: rotate(16deg);
+  animation: correctCrystalSweep 1.15s ease-out forwards;
+  pointer-events: none;
+}
+
+.feedback-card.feedback-correct::after,
+.feedback-correct::after {
+  content: "";
+  position: absolute;
+  right: 14px;
+  top: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(255,255,255,.92) 0 18%, rgba(34,197,94,.20) 19% 42%, transparent 43%),
+    conic-gradient(from 40deg, rgba(34,197,94,.0), rgba(34,197,94,.40), rgba(56,189,248,.36), rgba(34,197,94,.0));
+  opacity: .78;
+  animation: correctCrystalRing 1.05s ease-out forwards;
+  pointer-events: none;
+}
+
+.feedback-card.feedback-correct strong,
+.feedback-correct strong,
+#feedback.correct strong,
+#feedback .correct strong {
+  color: #0f5132 !important;
+  letter-spacing: -0.02em;
+}
+
+.feedback-card.feedback-correct p,
+.feedback-correct p {
+  color: #334155 !important;
+}
+
+.feedback-card.feedback-correct .feedback-icon,
+.feedback-correct .feedback-icon {
+  background:
+    radial-gradient(circle at 30% 20%, #ffffff, rgba(255,255,255,.72) 44%, rgba(236,253,245,.72)),
+    linear-gradient(135deg, rgba(34,197,94,.22), rgba(56,189,248,.18)) !important;
+  border: 1px solid rgba(34, 197, 94, 0.32);
+  box-shadow:
+    0 8px 18px rgba(15, 118, 110, 0.14),
+    0 0 0 5px rgba(34, 197, 94, 0.09);
+  animation: correctIconPop .62s cubic-bezier(.2, .9, .25, 1.25) both;
+}
+
+/* 画面全体の正解フラッシュ：派手すぎないクリアな光 */
+.correct-flash .app-shell {
+  animation: correctClearGlow 1.05s ease-out !important;
+}
+
+.correct-flash #questionArea {
+  border-color: rgba(34, 197, 94, 0.50) !important;
+  box-shadow:
+    0 10px 28px rgba(15, 23, 42, 0.08),
+    0 0 0 4px rgba(34, 197, 94, 0.08),
+    0 0 34px rgba(56, 189, 248, 0.12) !important;
+}
+
+/* 正解時のバッジ：黒系は維持しつつ、ガラス感と緑の達成感を追加 */
+.celebration-badge {
+  min-width: min(340px, calc(100vw - 42px));
+  padding: 16px 22px !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(15, 118, 110, 0.84), rgba(37, 99, 235, 0.78)) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  box-shadow:
+    0 16px 42px rgba(15, 23, 42, 0.26),
+    0 0 32px rgba(34, 197, 94, 0.22) !important;
+  backdrop-filter: blur(14px);
+  animation: badgePopClear 1.25s ease forwards !important;
+}
+
+.celebration-badge strong {
+  font-size: clamp(20px, 5vw, 30px);
+  letter-spacing: -0.03em;
+}
+
+.celebration-badge span {
+  color: rgba(255,255,255,.84);
+  font-weight: 750;
+}
+
+/* コンフェッティ：少し豪華に。ただし粒は細く透明感を出す */
+.celebration-layer {
+  opacity: .88 !important;
+}
+
+.confetti-piece,
+.combo-layer .confetti-piece {
+  font-size: 22px !important;
+  text-shadow: 0 4px 12px rgba(15, 23, 42, .14);
+  animation-duration: 1.15s !important;
+}
+
+.confetti-piece { color: #16a34a !important; }
+.confetti-piece:nth-child(3n) { color: #38bdf8 !important; }
+.confetti-piece:nth-child(3n+1) { color: #facc15 !important; }
+.confetti-piece:nth-child(4n) { color: #2563eb !important; }
+.confetti-piece:nth-child(5n) { color: #86efac !important; }
+
+@keyframes correctCrystalSweep {
+  0% { left: -38%; opacity: 0; }
+  16% { opacity: .82; }
+  100% { left: 122%; opacity: 0; }
+}
+
+@keyframes correctCrystalRing {
+  0% { transform: scale(.62) rotate(-28deg); opacity: 0; }
+  26% { opacity: .82; }
+  100% { transform: scale(1.28) rotate(24deg); opacity: 0; }
+}
+
+@keyframes correctIconPop {
+  0% { transform: scale(.78); opacity: .72; }
+  58% { transform: scale(1.10); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes correctClearGlow {
+  0%, 100% { filter: none; }
+  42% { filter: drop-shadow(0 0 18px rgba(34, 197, 94, .22)) drop-shadow(0 0 14px rgba(56, 189, 248, .14)); }
+}
+
+@keyframes badgePopClear {
+  0% { opacity: 0; transform: translateX(-50%) scale(.86) translateY(10px); }
+  16% { opacity: 1; transform: translateX(-50%) scale(1.03) translateY(0); }
+  72% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) scale(.98) translateY(-12px); }
+}
+
+@media (max-width: 720px) {
+  .feedback-card.feedback-correct,
+  .feedback-correct {
+    border-radius: 20px !important;
+    box-shadow:
+      0 10px 24px rgba(15, 23, 42, 0.09),
+      0 0 22px rgba(34, 197, 94, 0.15) !important;
+  }
+
+  .feedback-card.feedback-correct::after,
+  .feedback-correct::after {
+    width: 42px;
+    height: 42px;
+    right: 10px;
+    top: 10px;
+  }
+
+  .confetti-piece,
+  .combo-layer .confetti-piece {
+    font-size: 19px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback-card.feedback-correct::before,
+  .feedback-correct::before,
+  .feedback-card.feedback-correct::after,
+  .feedback-correct::after,
+  .feedback-card.feedback-correct .feedback-icon,
+  .feedback-correct .feedback-icon,
+  .correct-flash .app-shell,
+  .celebration-badge,
+  .confetti-piece,
+  .combo-layer .confetti-piece {
+    animation: none !important;
+  }
+}
+
+

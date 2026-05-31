@@ -1,0 +1,107 @@
+/* =========================================================
+   Polaris3 passage-first display fix v3
+   - 本文を大きく、設問を小さめにする
+   - Summary Clozeではサマリー全体を表示する
+========================================================= */
+.material-polaris3 .words.polaris-question-wrap {
+  max-width: 980px;
+  margin: 12px auto 18px;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.material-polaris3 .polaris-passage-card {
+  max-height: 56vh;
+  padding: clamp(18px, 3vw, 28px);
+  margin: 8px 0 14px;
+  border-radius: 24px;
+  background: rgba(255,255,255,.94);
+}
+
+.material-polaris3 .polaris-passage-summary strong {
+  display: block;
+  margin-top: 4px;
+  font-size: clamp(20px, 3.2vw, 34px);
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.material-polaris3 .polaris-passage-summary small {
+  display: block;
+  margin-top: 6px;
+  color: #64748b;
+  font-size: .82rem;
+}
+
+.material-polaris3 .polaris-passage-body {
+  margin-top: 16px;
+  white-space: pre-wrap;
+  font-size: clamp(18px, 2.2vw, 23px);
+  line-height: 1.9;
+  color: #111827;
+  font-weight: 650;
+}
+
+.material-polaris3 .polaris-question-card {
+  padding: 12px 14px;
+  margin: 10px 0 8px;
+  border-radius: 18px;
+  background: rgba(248,250,252,.92);
+}
+
+.material-polaris3 .polaris-question-text,
+.material-polaris3 .polaris-current-summary {
+  font-size: clamp(15px, 1.7vw, 18px);
+  line-height: 1.65;
+  font-weight: 750;
+  color: #172033;
+}
+
+.material-polaris3 .polaris-summary-label {
+  display: inline-flex;
+  margin: 4px 0 8px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .05em;
+}
+
+.material-polaris3 .polaris-summary-text {
+  white-space: pre-wrap;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  font-size: clamp(16px, 1.9vw, 20px);
+  line-height: 1.8;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.material-polaris3 .polaris-current-summary {
+  margin-top: 10px;
+  color: #334155;
+}
+
+.material-polaris3 .double-press-hint {
+  font-size: .82rem;
+  margin: 6px 0 10px;
+}
+
+.material-polaris3 .choice-button {
+  max-width: 980px;
+  padding: 11px 14px;
+  font-size: clamp(15px, 1.8vw, 17px);
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .material-polaris3 .polaris-passage-card { max-height: 60vh; }
+  .material-polaris3 .polaris-passage-body { font-size: 17px; line-height: 1.85; }
+  .material-polaris3 .polaris-question-card { padding: 10px 12px; }
+  .material-polaris3 .polaris-summary-text { font-size: 15.5px; }
+}
+

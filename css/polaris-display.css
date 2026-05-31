@@ -1,0 +1,63 @@
+/* =========================================================
+   Polaris3 passage display fix
+   - manifest.csvのpath/descriptionが本文に見えないように、本文カード内部を明確化
+========================================================= */
+.polaris-passage-card {
+  max-height: 46vh;
+  overflow: hidden;
+}
+.polaris-passage-summary {
+  cursor: pointer;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+.polaris-passage-summary::-webkit-details-marker {
+  display: none;
+}
+.polaris-passage-summary::before {
+  content: "本文を表示 / 非表示";
+  width: fit-content;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: .76rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+}
+.polaris-passage-summary strong {
+  color: #172033;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1.45;
+}
+.polaris-passage-summary small {
+  color: #64748b;
+  font-size: .84rem;
+  font-weight: 700;
+}
+.polaris-passage-body {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #e2e8f0;
+  max-height: 34vh;
+  overflow-y: auto;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  color: #172033;
+  font-size: clamp(15px, 2.3vw, 18px);
+  line-height: 1.85;
+  font-weight: 600;
+}
+.polaris-question-text {
+  margin-top: 6px;
+  color: #172033;
+  font-size: clamp(20px, 3vw, 30px);
+  line-height: 1.45;
+  font-weight: 900;
+}
+@media (max-width: 520px) {
+  .polaris-passage-card { max-height: 44vh; }
+  .polaris-passage-body { max-height: 30vh; }
+}
+

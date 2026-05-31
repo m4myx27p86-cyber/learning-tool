@@ -2796,33 +2796,12 @@ function getZodiacInfo(date = new Date()) {
   return zodiacs[((dayNumber % zodiacs.length) + zodiacs.length) % zodiacs.length];
 }
 
-function getDailyZodiacLevelInfo(todayCorrectCount) {
-  const count = Math.max(0, Number(todayCorrectCount || 0));
-  const thresholds = [0, 3, 10, 20, 30];
-  let level = 1;
-
-  for (let i = 1; i < thresholds.length; i++) {
-    if (count >= thresholds[i]) level = i + 1;
-  }
-
-  const currentBase = thresholds[level - 1] || 0;
-  const nextTarget = thresholds[level] || null;
-  const remaining = nextTarget ? Math.max(0, nextTarget - count) : 0;
-  const progress = nextTarget
-    ? Math.min(100, Math.max(count > 0 ? 8 : 0, Math.round(((count - currentBase) / Math.max(1, nextTarget - currentBase)) * 100)))
-    : 100;
-
-  return {
-    level,
-    nextTarget,
-    remaining,
-    progress,
-    isMaxLevel: !nextTarget
-  };
-}
-
 function getDailyZodiacLevel(todayCorrectCount) {
-  return getDailyZodiacLevelInfo(todayCorrectCount).level;
+  if (todayCorrectCount >= 30) return 5;
+  if (todayCorrectCount >= 20) return 4;
+  if (todayCorrectCount >= 10) return 3;
+  if (todayCorrectCount >= 3) return 2;
+  return 1;
 }
 
 function getTreeLevel(correctCount) {
@@ -2847,11 +2826,7 @@ function renderGrowthHome() {
   const remaining = Math.max(0, nextTarget - correctCount);
   const rootPercent = Math.min(100, Math.round((correctCount / Math.max(nextTarget, 1)) * 100));
   const zodiac = getZodiacInfo();
-  const zodiacLevelInfo = getDailyZodiacLevelInfo(todayCorrect);
-  const zodiacLevel = zodiacLevelInfo.level;
-  const zodiacNextText = zodiacLevelInfo.isMaxLevel
-    ? "本日の最高Lv.達成"
-    : `次のLv.まであと ${zodiacLevelInfo.remaining}問`;
+  const zodiacLevel = getDailyZodiacLevel(todayCorrect);
   const streakInfo = getProtectedStreakInfo();
   const bonusProgress = Math.min(6, Math.max(0, Number(streakInfo.count || 0) % 6 || (streakInfo.count >= 6 ? 6 : streakInfo.count)));
   const revivalTickets = getRevivalTicketCount();
@@ -2896,12 +2871,8 @@ function renderGrowthHome() {
         </div>
         <h4>${zodiac.key}：${zodiac.name} Lv.${zodiacLevel}</h4>
         <p>${escapeHtml(zodiac.trait)}の日です。今日の正解数で、表情とレベルが変わります。</p>
-        <div class="zodiac-level-meta">
-          <span>今日の正解 ${todayCorrect}問</span>
-          <strong>${escapeHtml(zodiacNextText)}</strong>
-        </div>
-        <div class="zodiac-exp" aria-label="十二支の次レベルまでの進捗"><i style="width:${zodiacLevelInfo.progress}%"></i></div>
-        <small>${zodiacLevelInfo.isMaxLevel ? "明日また新しい十二支を育てましょう。" : `Lv.${zodiacLevel + 1} 目標：${zodiacLevelInfo.nextTarget}問`}</small>
+        <div class="zodiac-exp"><i style="width:${Math.min(100, todayCorrect * 10)}%"></i></div>
+        <small>今日の正解 ${todayCorrect}問</small>
       </article>
     </div>
 

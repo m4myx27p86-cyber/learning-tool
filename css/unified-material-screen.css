@@ -1,0 +1,243 @@
+/* =========================================================
+   Unified material screen: settings + progress in one view
+   2026-05-31
+========================================================= */
+.material-unified-screen {
+  text-align: left;
+}
+
+.unified-material-head {
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.unified-head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.unified-material-grid {
+  display: grid;
+  grid-template-columns: minmax(320px, 0.95fr) minmax(360px, 1.05fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.unified-card {
+  background: rgba(255,255,255,.94);
+  border: 1px solid rgba(203, 213, 225, .78);
+  border-radius: 28px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, .08);
+  padding: clamp(18px, 3vw, 28px);
+}
+
+.start-settings-card h3,
+.setting-review-card h3 {
+  margin: 8px 0 8px;
+  font-size: 24px;
+  color: #0f172a;
+}
+
+.unified-settings-grid {
+  grid-template-columns: 1fr;
+  margin: 18px 0;
+}
+
+.unified-settings-grid label {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 14px;
+}
+
+.unified-settings-grid select,
+.unified-settings-grid input {
+  margin-bottom: 0;
+}
+
+.compact-review-panel {
+  margin: 14px 0 0;
+  max-width: none;
+  text-align: center;
+}
+
+.start-action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 14px;
+}
+
+.setting-review-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.setting-review-visual-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, .95fr) minmax(220px, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin: 18px 0;
+}
+
+.setting-review-card .plant-visual {
+  width: min(100%, 280px);
+  margin: 0 auto 12px;
+}
+
+.setting-plant-message {
+  display: block;
+  text-align: center;
+  font-size: 17px;
+  line-height: 1.65;
+  color: #0f172a;
+}
+
+.compact-donut {
+  width: 210px;
+  height: 210px;
+  margin: 0 auto 16px;
+}
+
+.compact-donut span {
+  font-size: clamp(42px, 6vw, 64px);
+}
+
+.setting-review-counts {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.setting-review-counts div {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 12px;
+  text-align: center;
+}
+
+.setting-review-conditions {
+  border: 1px solid #e5e7eb;
+  border-radius: 20px;
+  background: #f8fafc;
+  padding: 14px 16px;
+  margin: 16px 0;
+}
+
+.setting-review-conditions summary {
+  cursor: pointer;
+  font-weight: 900;
+  color: #334155;
+}
+
+.setting-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.setting-filter-grid label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-weight: 800;
+  color: #334155;
+}
+
+.setting-filter-grid input {
+  width: auto;
+  margin: 0;
+}
+
+.setting-stepper-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.setting-stepper-inline div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.setting-stepper-inline button {
+  min-width: 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0;
+}
+
+#settingReviewCountDisplay {
+  min-width: 92px;
+  text-align: center;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.setting-review-actions {
+  margin-top: 12px;
+}
+
+.setting-review-list {
+  margin-top: 22px;
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  background: rgba(255,255,255,.94);
+  padding: 12px;
+}
+
+.compact-insight-card {
+  margin-top: 12px;
+}
+
+@media (max-width: 960px) {
+  .unified-material-grid,
+  .setting-review-visual-grid {
+    grid-template-columns: 1fr;
+  }
+  .unified-material-head,
+  .setting-review-head {
+    align-items: stretch;
+  }
+  .unified-head-actions {
+    justify-content: stretch;
+  }
+  .setting-review-counts {
+    grid-template-columns: 1fr;
+  }
+  .compact-donut {
+    width: 190px;
+    height: 190px;
+  }
+}
+
+@media (max-width: 620px) {
+  .unified-card {
+    border-radius: 22px;
+    padding: 16px;
+  }
+  .setting-stepper-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .setting-stepper-inline div {
+    justify-content: center;
+  }
+}
+
+

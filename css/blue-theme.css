@@ -1,0 +1,490 @@
+/* =========================================================
+   2026-05-31 Blue Theme Update
+   目的: 問題機能を変更せず、配色を青系主体に統一
+   変更範囲: CSSのみ。HTML構造・JSの判定ロジックは変更しない。
+   参考: 冒険感・余白・透明感だけを抽象化し、画像や固有デザインは模倣しない。
+========================================================= */
+
+:root {
+  --bg1: #eaf2ff;
+  --bg2: #f8fbff;
+  --card: rgba(255, 255, 255, 0.94);
+  --text: #0f172a;
+  --muted: #64748b;
+  --primary: #2563eb;
+  --primary-dark: #1d4ed8;
+  --secondary: #475569;
+  --success: #0284c7;
+  --danger: #dc2626;
+  --border: #dbeafe;
+  --shadow: 0 22px 50px rgba(30, 64, 175, 0.13);
+
+  --quest-bg-deep: #0b1f44;
+  --quest-ink: #0f2344;
+  --quest-paper: rgba(248, 251, 255, 0.94);
+  --quest-paper-strong: rgba(255, 255, 255, 0.97);
+  --quest-gold: #3b82f6;
+  --quest-gold-soft: #bfdbfe;
+  --quest-green: #0ea5e9;
+  --quest-green-deep: #1e40af;
+  --quest-blue: #2563eb;
+  --quest-shadow: 0 22px 54px rgba(30, 64, 175, 0.18);
+}
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(191, 219, 254, 0.92) 0, transparent 34%),
+    radial-gradient(circle at 86% 8%, rgba(224, 242, 254, 0.86) 0, transparent 32%),
+    linear-gradient(135deg, #eaf2ff 0%, #f8fbff 52%, #eef6ff 100%);
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(96, 165, 250, 0.22), transparent 25%),
+    radial-gradient(circle at 12% 82%, rgba(14, 165, 233, 0.15), transparent 27%);
+}
+
+.container::before {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb, #38bdf8, #60a5fa, #1e40af);
+}
+
+button,
+.admin-card,
+.admin-quick button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+}
+
+button:hover,
+.admin-card:hover,
+.admin-quick button:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.secondary-button {
+  background: linear-gradient(135deg, #64748b, #475569);
+}
+
+.small-button.secondary-button,
+.material-progress-button,
+.local-tab-button,
+.star-button {
+  box-shadow: none;
+}
+
+.timer {
+  border-color: rgba(96, 165, 250, 0.46);
+  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  color: #1d4ed8;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 10px 22px rgba(37, 99, 235, 0.12);
+}
+
+.timer-warning {
+  background: linear-gradient(180deg, #eef2ff, #dbeafe);
+  color: #1e40af;
+  border-color: rgba(59, 130, 246, 0.46);
+}
+
+.progress-wrap {
+  border-color: rgba(96, 165, 250, 0.35);
+  background: rgba(239, 246, 255, 0.78);
+}
+
+.progress-bar,
+.quest-xp i {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb, #38bdf8);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.42);
+}
+
+.material-card,
+.stat-card,
+.result-summary-card,
+.review-plant-card,
+.review-chart-card,
+.local-insight-card,
+.category-section,
+#questionArea,
+.question-prompt,
+.cloze-prompt,
+.error-correction-card {
+  border-color: rgba(147, 197, 253, 0.52);
+}
+
+.material-card {
+  background: linear-gradient(180deg, #ffffff, #f0f7ff);
+}
+
+.material-card:hover {
+  background: linear-gradient(180deg, #ffffff, #eaf4ff);
+  box-shadow: 0 18px 36px rgba(37, 99, 235, .16);
+  border-color: rgba(37, 99, 235, .38);
+}
+
+.material-card span,
+.eyebrow,
+.panel-label,
+.result-card-label,
+.task-badge {
+  color: #1d4ed8;
+}
+
+.panel-label,
+.result-card-label,
+.task-badge {
+  background: rgba(219, 234, 254, 0.86);
+}
+
+.category-toeic,
+.category-toefl,
+.category-highschool,
+.category-eiken,
+.category-classics,
+.category-teacher {
+  border-left-color: #2563eb;
+}
+
+.category-toeic .category-head span,
+.category-toefl .category-head span,
+.category-highschool .category-head span,
+.category-eiken .category-head span,
+.category-classics .category-head span,
+.category-teacher .category-head span,
+.category-title {
+  color: #1d4ed8 !important;
+}
+
+.category-section {
+  background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(240, 247, 255, .93));
+}
+
+.category-tip,
+.accordion-marker {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #1d4ed8;
+}
+
+.theme-toeic,
+.theme-toefl,
+.theme-highschool,
+.theme-eiken,
+.theme-classics,
+.theme-teacher {
+  background: linear-gradient(135deg, #dbeafe, #f8fbff) !important;
+}
+
+.notice-banner,
+.notice-banner.notice-ok,
+.notice-banner.notice-warn,
+.notice-banner.notice-local,
+.growth-home-card,
+.home-learning-calendar,
+.result-hero,
+.local-insight-card {
+  background:
+    radial-gradient(circle at 92% 12%, rgba(59, 130, 246, .16), transparent 33%),
+    linear-gradient(135deg, rgba(255,255,255,.97), rgba(239,246,255,.92));
+  border-color: rgba(147, 197, 253, .74);
+}
+
+.notice-icon,
+.notice-banner.notice-ok .notice-icon,
+.notice-banner.notice-warn .notice-icon,
+.notice-banner.notice-local .notice-icon {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+.growth-stats strong,
+.growth-next strong,
+.calendar-motivation strong,
+.calendar-motivation span,
+.main-result-card strong b,
+.sync-result-card strong {
+  color: #1d4ed8;
+}
+
+.mini-day.active,
+.mini-day.strong {
+  background: linear-gradient(180deg, #dbeafe, #eff6ff);
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+.mini-day.active strong {
+  color: #1d4ed8;
+}
+
+.combo-message,
+.combo-message.super {
+  background: linear-gradient(135deg, #dbeafe, #e0f2fe, #eef2ff);
+  border-color: #93c5fd;
+}
+
+.combo-message strong,
+.combo-message.super strong {
+  color: #1d4ed8;
+}
+
+body.quiz-active-body {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(191, 219, 254, 0.40), transparent 34%),
+    radial-gradient(circle at 85% 10%, rgba(14, 165, 233, 0.22), transparent 38%),
+    linear-gradient(180deg, #f8fbff 0%, #eaf2ff 100%);
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    background:
+      radial-gradient(circle at 20% 0%, rgba(191, 219, 254, 0.42), transparent 34%),
+      radial-gradient(circle at 85% 10%, rgba(56, 189, 248, 0.23), transparent 38%),
+      linear-gradient(180deg, #f8fbff 0%, #eaf2ff 100%);
+  }
+}
+
+#quizScreen:not(.hidden)::before {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(191, 219, 254, 0.72), transparent 31%),
+    radial-gradient(circle at 88% 10%, rgba(56, 189, 248, 0.25), transparent 32%),
+    linear-gradient(135deg, rgba(30, 64, 175, 0.12), rgba(37, 99, 235, 0.09));
+}
+
+#quizScreen:not(.hidden)::after {
+  color: rgba(30, 64, 175, 0.055);
+}
+
+.quiz-top {
+  border-color: rgba(147, 197, 253, 0.52);
+  background: linear-gradient(180deg, rgba(255,255,255,.94), rgba(239,246,255,.90));
+  box-shadow: 0 16px 36px rgba(30, 64, 175, 0.12);
+}
+
+#questionNumber::before {
+  color: #2563eb;
+}
+
+#questionArea {
+  border-color: rgba(147, 197, 253, 0.58);
+  background:
+    linear-gradient(180deg, var(--quest-paper-strong), var(--quest-paper)),
+    radial-gradient(circle at 0% 0%, rgba(191, 219, 254, 0.30), transparent 38%);
+}
+
+#questionArea::before {
+  border-color: rgba(147, 197, 253, 0.30);
+}
+
+.question-prompt,
+.cloze-prompt,
+.error-correction-card,
+.answer-support,
+.source-expression,
+.target-expression {
+  border-color: rgba(147, 197, 253, 0.58);
+  background: linear-gradient(180deg, rgba(255,255,255,.90), rgba(239,246,255,.84));
+}
+
+.answer-support {
+  color: #1e40af;
+}
+
+.answer-support span {
+  background: rgba(219, 234, 254, .90);
+  color: #1d4ed8;
+}
+
+.choice-button {
+  border-color: rgba(147, 197, 253, 0.62);
+  background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(239,246,255,.96));
+  box-shadow:
+    0 10px 22px rgba(30, 64, 175, 0.09),
+    inset 0 1px 0 rgba(255,255,255,.86);
+}
+
+.choice-button::before {
+  background: linear-gradient(135deg, #bfdbfe, #2563eb);
+  box-shadow: 0 0 0 5px rgba(37, 99, 235, 0.12);
+}
+
+.choice-button::after {
+  background: linear-gradient(90deg, rgba(59,130,246,.15), transparent 44%);
+}
+
+.choice-button:hover,
+.choice-button:focus-visible {
+  border-color: rgba(37, 99, 235, 0.74);
+  background: linear-gradient(180deg, #ffffff, #dbeafe);
+  box-shadow: 0 14px 26px rgba(30, 64, 175, 0.14);
+}
+
+.choice-button.selected,
+.choice-button.ready-to-submit {
+  border-color: rgba(29, 78, 216, 0.72);
+  background:
+    linear-gradient(180deg, #dbeafe, #bfdbfe),
+    linear-gradient(90deg, rgba(37,99,235,.14), transparent);
+  box-shadow:
+    0 16px 28px rgba(37, 99, 235, 0.18),
+    inset 0 0 0 1px rgba(255,255,255,.70);
+}
+
+.choice-button.selected::before,
+.choice-button.ready-to-submit::before {
+  background: linear-gradient(135deg, #60a5fa, #1d4ed8);
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.16), 0 0 16px rgba(37, 99, 235, 0.34);
+}
+
+.choice-button.ready-to-submit::after {
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.20), transparent 58%);
+}
+
+@keyframes choiceReadyGlow {
+  from { box-shadow: 0 14px 24px rgba(37,99,235,.13), inset 0 0 0 1px rgba(255,255,255,.70); }
+  to { box-shadow: 0 18px 34px rgba(37,99,235,.24), inset 0 0 0 1px rgba(255,255,255,.82); }
+}
+
+.word-chip {
+  border-color: rgba(147, 197, 253, 0.56);
+  background: linear-gradient(180deg, #ffffff, #eff6ff);
+  color: #1e3a8a;
+  box-shadow: 0 8px 16px rgba(30, 64, 175, 0.08);
+}
+
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: #1d4ed8;
+  background: linear-gradient(180deg, #eff6ff, #dbeafe);
+  outline: 3px solid rgba(37, 99, 235, 0.16);
+}
+
+.feedback-card {
+  border-color: rgba(147, 197, 253, 0.46);
+}
+
+.feedback-correct {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(191, 219, 254, 0.42), transparent 33%),
+    linear-gradient(135deg, #e0f2fe, #dbeafe);
+  border-color: #93c5fd;
+}
+
+.feedback-wrong {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(191, 219, 254, 0.22), transparent 34%),
+    linear-gradient(135deg, #eff6ff, #fee2e2);
+}
+
+.feedback-correct strong,
+#feedback.correct,
+#feedback .correct,
+.correct {
+  color: #0369a1;
+}
+
+#checkButton,
+#nextButton,
+#startButton,
+.start-action-row button {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.22);
+}
+
+#checkButton:hover,
+#nextButton:hover,
+#startButton:hover,
+.start-action-row button:hover {
+  background: linear-gradient(135deg, #1d4ed8, #1e40af);
+}
+
+.combo-layer .celebration-badge,
+.super-combo-layer .celebration-badge,
+.celebration-badge {
+  background: linear-gradient(135deg, rgba(15, 23, 42, .93), rgba(37, 99, 235, .88), rgba(14, 165, 233, .82));
+}
+
+.confetti-piece,
+.combo-layer .confetti-piece {
+  color: #2563eb;
+}
+.confetti-piece:nth-child(3n),
+.combo-layer .confetti-piece:nth-child(3n) { color: #38bdf8; }
+.confetti-piece:nth-child(3n+1),
+.combo-layer .confetti-piece:nth-child(3n+1) { color: #60a5fa; }
+.confetti-piece:nth-child(4n),
+.combo-layer .confetti-piece:nth-child(4n) { color: #1d4ed8; }
+
+.local-donut {
+  background:
+    conic-gradient(#2563eb 0 var(--mastered-percent), #38bdf8 var(--mastered-percent) calc(var(--mastered-percent) + var(--review-percent)), #cbd5e1 0 100%);
+}
+
+.dot.mastered { background: #2563eb; }
+.dot.review { background: #38bdf8; }
+.dot.unlearned { background: #94a3b8; }
+.dot.starred { background: #6366f1; }
+.star-button.active { background: #2563eb; }
+
+/* 木の見た目は維持しつつ、画面全体に合う青緑寄りに調整 */
+.plant-visual {
+  --tree-trunk: #37527a;
+  --tree-trunk-dark: #1e3a5f;
+  --tree-leaf-1: #38bdf8;
+  --tree-leaf-2: #0284c7;
+  --tree-leaf-3: #075985;
+  filter: drop-shadow(0 16px 28px rgba(37, 99, 235, .18));
+}
+
+.plant-sky {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(191, 219, 254, .54), transparent 25%),
+    linear-gradient(180deg, #eff6ff 0%, #e0f2fe 72%, #f8fbff 100%);
+  border-color: #bfdbfe;
+}
+
+.plant-soil {
+  background: linear-gradient(180deg, #1e3a5f, #172554);
+}
+
+.plant-soil::before {
+  background: linear-gradient(90deg, rgba(147,197,253,.46), transparent);
+}
+
+.plant-stem {
+  background: linear-gradient(90deg, var(--tree-trunk-dark), var(--tree-trunk), #60a5fa);
+}
+
+.plant-leaf {
+  background: radial-gradient(circle at 30% 30%, #bae6fd, var(--tree-leaf-1) 42%, var(--tree-leaf-2) 100%);
+  box-shadow: 0 8px 14px rgba(37, 99, 235, .18);
+}
+
+.plant-bloom {
+  background:
+    radial-gradient(circle at 30% 25%, #dbeafe 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 34%, rgba(255,255,255,.25) 0 9%, transparent 10%),
+    linear-gradient(135deg, #7dd3fc, #0284c7 55%, #075985);
+  box-shadow:
+    inset 0 -10px 18px rgba(7, 89, 133, .18),
+    0 18px 28px rgba(37, 99, 235, .22);
+}
+
+.plant-bloom::before,
+.plant-bloom::after {
+  background: linear-gradient(135deg, #bae6fd, #0284c7);
+  box-shadow: inset 0 -8px 14px rgba(7,89,133,.15);
+}
+
+.plant-bloom::after {
+  background: linear-gradient(135deg, #7dd3fc, #075985);
+}
+
+@keyframes correctGlow {
+  0%, 100% { filter: none; }
+  45% { filter: drop-shadow(0 0 22px rgba(37,99,235,.30)); }
+}
+
+@keyframes comboContainerGlow {
+  0%, 100% { box-shadow: var(--shadow); }
+  45% { box-shadow: 0 0 0 5px rgba(37,99,235,.15), 0 30px 70px rgba(37,99,235,.24); }
+}
+
+

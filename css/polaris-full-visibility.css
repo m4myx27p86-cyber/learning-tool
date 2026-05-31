@@ -1,0 +1,69 @@
+/* =========================================================
+   2026-05-31 Polaris3 full passage visibility patch
+   目的:
+   - ポラリス3の本文が途中で切れて見える問題を解消
+   - 本文カード内スクロールをやめ、ページ全体のスクロールで本文全体を読めるようにする
+   - 問題ロジック / 本文読み込み / Speaking Review は変更しない
+========================================================= */
+.material-polaris3 .polaris-passage-card,
+body[data-current-material="polaris3"] .polaris-passage-card {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+}
+
+.material-polaris3 .polaris-passage-body,
+body[data-current-material="polaris3"] .polaris-passage-body {
+  max-height: none !important;
+  height: auto !important;
+  overflow: visible !important;
+  white-space: pre-wrap !important;
+  padding-bottom: 10px;
+}
+
+/* detailsタグ内の本文も、開いた時に全文が自然に伸びるようにする */
+.material-polaris3 details.polaris-passage-card[open],
+body[data-current-material="polaris3"] details.polaris-passage-card[open] {
+  overflow: visible !important;
+}
+
+/* ページ全体でスクロールして本文を読めるようにする */
+body.quiz-active-body.material-polaris3,
+body.quiz-active-body[data-current-material="polaris3"] {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow-y: auto !important;
+  overscroll-behavior-y: auto !important;
+}
+
+body.quiz-active-body.material-polaris3 .container,
+body.quiz-active-body[data-current-material="polaris3"] .container,
+body.quiz-active-body.material-polaris3 #quizScreen:not(.hidden),
+body.quiz-active-body[data-current-material="polaris3"] #quizScreen:not(.hidden) {
+  height: auto !important;
+  min-height: 100dvh !important;
+  overflow-y: visible !important;
+}
+
+/* 本文が長いLessonでも、設問・選択肢との境目が分かるように控えめに調整 */
+.material-polaris3 .polaris-question-card,
+body[data-current-material="polaris3"] .polaris-question-card {
+  margin-top: 16px !important;
+  border-top: 1px solid #dfe7e2 !important;
+}
+
+/* スマホでは本文を少しだけ小さくし、全文を読みやすくする */
+@media (max-width: 640px) {
+  .material-polaris3 .polaris-passage-card,
+  body[data-current-material="polaris3"] .polaris-passage-card {
+    max-height: none !important;
+    padding: 16px !important;
+  }
+
+  .material-polaris3 .polaris-passage-body,
+  body[data-current-material="polaris3"] .polaris-passage-body {
+    max-height: none !important;
+    font-size: 16px !important;
+    line-height: 1.82 !important;
+  }
+}

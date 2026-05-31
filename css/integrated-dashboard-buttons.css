@@ -1,0 +1,246 @@
+/* =========================================================
+   2026-05-31 Integrated dashboard + black simple buttons patch
+   目的:
+   - 「演習設定」と「習得状況と総復習」を1画面に統合
+   - 参考画像に近い黒系・シンプルな操作ボタンへ統一
+   - 青は集中・画面背景、緑は成長・習得に使い分ける
+   - 木のイラスト以外の茶色系をできるだけ排除
+========================================================= */
+:root {
+  --bg1: #eaf3ff;
+  --bg2: #f6fff8;
+  --card: rgba(255, 255, 255, 0.96);
+  --text: #0f172a;
+  --muted: #5f6f67;
+  --primary: #0f766e;
+  --primary-dark: #0f172a;
+  --secondary: #1f2937;
+  --success: #16803f;
+  --danger: #dc2626;
+  --border: #dbeafe;
+  --shadow: 0 8px 22px rgba(15, 23, 42, 0.075);
+
+  --material-accent: #0f766e;
+  --material-accent-2: #2563eb;
+  --material-soft: #f0fdfa;
+  --material-soft-2: #f8fbff;
+  --material-border: #bfdbfe;
+  --material-ink: #0f172a;
+  --material-muted: #5f6f67;
+
+  --quest-gold: #2563eb;
+  --quest-gold-soft: #dbeafe;
+  --quest-green: #0f766e;
+  --quest-green-deep: #14532d;
+  --quest-blue: #2563eb;
+  --quest-paper: rgba(248, 253, 250, 0.96);
+  --quest-paper-strong: rgba(255, 255, 255, 0.98);
+}
+
+body {
+  background:
+    radial-gradient(circle at 8% 0%, rgba(191, 219, 254, 0.55), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgba(187, 247, 208, 0.38), transparent 30%),
+    linear-gradient(135deg, #eef6ff 0%, #f8fffb 54%, #eefcf4 100%) !important;
+}
+
+body::before {
+  background:
+    radial-gradient(circle at 84% 10%, rgba(37, 99, 235, 0.13), transparent 25%),
+    radial-gradient(circle at 12% 82%, rgba(15, 118, 110, 0.12), transparent 27%) !important;
+}
+
+.container::before,
+.progress-bar,
+.quest-xp i {
+  background: linear-gradient(90deg, #2563eb, #0f766e, #22c55e) !important;
+  box-shadow: none !important;
+}
+
+.unified-material-grid,
+.unified-material-single {
+  display: block;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.integrated-setting-review-card {
+  width: 100%;
+  text-align: left;
+  background:
+    radial-gradient(circle at 100% 0%, rgba(219, 234, 254, .72), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(248,253,250,.96)) !important;
+  border: 1px solid rgba(191, 219, 254, .92) !important;
+}
+
+.integrated-review-head,
+.integrated-settings-block,
+.setting-review-conditions,
+.integrated-status-grid,
+.local-insight-card {
+  border-color: rgba(191, 219, 254, .86) !important;
+}
+
+.integrated-review-head { align-items: start; }
+
+.integrated-settings-block {
+  margin: 22px 0;
+  padding: clamp(16px, 2.4vw, 24px);
+  border: 1px solid rgba(191, 219, 254, .86);
+  border-radius: 26px;
+  background: linear-gradient(180deg, #ffffff, #f8fbff) !important;
+}
+
+.integrated-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(220px, 1fr));
+  gap: 14px 18px;
+  margin-top: 14px;
+}
+
+.integrated-settings-grid label {
+  margin: 0;
+  padding: 14px;
+  border: 1px solid #dbeafe;
+  border-radius: 18px;
+  background: rgba(248, 251, 255, .94);
+  font-weight: 900;
+  color: #233247;
+}
+
+.integrated-settings-grid select,
+.integrated-settings-grid input {
+  margin-bottom: 0;
+  max-width: none;
+  background: #ffffff;
+}
+
+.integrated-start-actions {
+  justify-content: flex-start;
+  margin-top: 14px;
+}
+
+.integrated-status-grid {
+  margin: 10px 0 18px;
+  padding: clamp(16px, 2.4vw, 22px);
+  border: 1px solid #dbeafe;
+  border-radius: 26px;
+  background: linear-gradient(135deg, #ffffff, #f0fdfa) !important;
+}
+
+.review-condition-note {
+  margin: 6px 0 12px;
+  font-size: .92rem;
+}
+
+.integrated-review-actions {
+  justify-content: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.material-card-wrap .material-progress-button,
+.material-progress-note { display: none !important; }
+.material-card-wrap { display: flex; }
+.material-card[data-material] { width: 100%; }
+
+button:not(.material-card):not(.choice-button):not(.word-chip) {
+  border: 1px solid rgba(255, 255, 255, .22) !important;
+  border-radius: 13px !important;
+  background: linear-gradient(180deg, #111827, #020617) !important;
+  color: #f8fafc !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, .16) !important;
+  letter-spacing: .01em;
+}
+
+button:not(.material-card):not(.choice-button):not(.word-chip):hover,
+button:not(.material-card):not(.choice-button):not(.word-chip):focus-visible {
+  background: linear-gradient(180deg, #1f2937, #0f172a) !important;
+  transform: translateY(-1px);
+  outline: 2px solid rgba(37, 99, 235, .22);
+  outline-offset: 2px;
+}
+
+button:not(.material-card):not(.choice-button):not(.word-chip):disabled {
+  background: #94a3b8 !important;
+  color: #f8fafc !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.small-button,
+.secondary-button.small-button { border-radius: 12px !important; }
+.choice-button,
+.material-polaris3 .choice-button,
+.error-choice-grid .choice-button { padding-left: 16px !important; }
+
+.local-donut {
+  background:
+    conic-gradient(#16a34a 0 var(--mastered-percent), #2563eb var(--mastered-percent) calc(var(--mastered-percent) + var(--review-percent)), #cbd5e1 0 100%) !important;
+}
+.dot.mastered { background: #16a34a !important; }
+.dot.review { background: #2563eb !important; }
+.dot.unlearned { background: #94a3b8 !important; }
+.dot.starred { background: #0f766e !important; }
+.star-button.active { background: #0f172a !important; }
+
+.timer,
+.quiz-progress-note,
+.panel-label,
+.result-card-label,
+.task-badge,
+.polaris-summary-label,
+.category-tip,
+.accordion-marker {
+  color: #0f766e !important;
+  background: #f0fdfa !important;
+  border-color: #bfdbfe !important;
+}
+
+.feedback-wrong {
+  background: linear-gradient(180deg, #ffffff, #fff1f2) !important;
+  border-color: #fecdd3 !important;
+}
+
+.plant-visual {
+  --tree-trunk: #7c4a21;
+  --tree-trunk-dark: #4a2f16;
+  --tree-leaf-1: #4ade80;
+  --tree-leaf-2: #16a34a;
+  --tree-leaf-3: #166534;
+}
+
+.material-polaris3 .polaris-passage-card { max-height: 62vh; }
+.material-polaris3 .polaris-passage-body {
+  max-height: 44vh;
+  font-size: clamp(18px, 2.25vw, 23px);
+  line-height: 1.9;
+}
+.material-polaris3 .polaris-question-card { padding: 10px 12px; }
+.material-polaris3 .polaris-question-text,
+.material-polaris3 .polaris-current-summary { font-size: clamp(14px, 1.55vw, 17px); }
+.material-polaris3 .polaris-summary-text {
+  font-size: clamp(16px, 1.85vw, 20px);
+  line-height: 1.85;
+}
+
+@media (max-width: 760px) {
+  .integrated-settings-grid,
+  .setting-review-visual-grid,
+  .integrated-status-grid { grid-template-columns: 1fr !important; }
+  .integrated-review-head,
+  .unified-material-head {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  .integrated-review-actions button,
+  .integrated-start-actions button {
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+  .integrated-settings-block { padding: 14px; }
+}
+
+

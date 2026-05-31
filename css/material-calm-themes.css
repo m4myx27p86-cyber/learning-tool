@@ -1,0 +1,404 @@
+/* =========================================================
+   2026-05-31 Material-specific Calm Theme Update
+   目的:
+   - 教材ごとに色味を少し変える
+   - 問題画面の派手さ・影・発光を抑える
+   - 木は青緑ではなく自然な緑に戻す
+   - 機能は変更せず、CSS変数と body[data-current-material] のみで見た目を調整する
+========================================================= */
+
+:root {
+  --material-accent: #2563eb;
+  --material-accent-2: #38bdf8;
+  --material-soft: #eff6ff;
+  --material-soft-2: #f8fbff;
+  --material-border: #bfdbfe;
+  --material-ink: #0f172a;
+  --material-muted: #64748b;
+  --calm-shadow: 0 6px 16px rgba(15, 23, 42, 0.055);
+  --calm-shadow-soft: 0 3px 10px rgba(15, 23, 42, 0.045);
+}
+
+/* 教材カテゴリの基本色 */
+body.theme-toeic {
+  --material-accent: #2563eb;
+  --material-accent-2: #0ea5e9;
+  --material-soft: #eff6ff;
+  --material-soft-2: #f8fbff;
+  --material-border: #bfdbfe;
+}
+body.theme-toefl {
+  --material-accent: #4f46e5;
+  --material-accent-2: #60a5fa;
+  --material-soft: #eef2ff;
+  --material-soft-2: #f8fbff;
+  --material-border: #c7d2fe;
+}
+body.theme-highschool {
+  --material-accent: #0f766e;
+  --material-accent-2: #14b8a6;
+  --material-soft: #f0fdfa;
+  --material-soft-2: #f8fffd;
+  --material-border: #99f6e4;
+}
+body.theme-eiken {
+  --material-accent: #1d4ed8;
+  --material-accent-2: #f59e0b;
+  --material-soft: #eff6ff;
+  --material-soft-2: #fffbeb;
+  --material-border: #bfdbfe;
+}
+body.theme-classics {
+  --material-accent: #7c3aed;
+  --material-accent-2: #a78bfa;
+  --material-soft: #f5f3ff;
+  --material-soft-2: #fff7ed;
+  --material-border: #ddd6fe;
+}
+body.theme-teacher {
+  --material-accent: #0f766e;
+  --material-accent-2: #475569;
+  --material-soft: #f0fdfa;
+  --material-soft-2: #f8fafc;
+  --material-border: #99f6e4;
+}
+
+/* 教材ごとの微調整 */
+body[data-current-material="vocab"], .material-card[data-material="vocab"] {
+  --material-accent: #0f766e; --material-accent-2: #14b8a6; --material-soft: #f0fdfa; --material-border: #99f6e4;
+}
+body[data-current-material="sokudokuVocab"], .material-card[data-material="sokudokuVocab"] {
+  --material-accent: #0369a1; --material-accent-2: #38bdf8; --material-soft: #f0f9ff; --material-border: #bae6fd;
+}
+body[data-current-material="target1900Vocab"], .material-card[data-material="target1900Vocab"] {
+  --material-accent: #1d4ed8; --material-accent-2: #60a5fa; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="polaris3"], .material-card[data-material="polaris3"] {
+  --material-accent: #334155; --material-accent-2: #64748b; --material-soft: #f8fafc; --material-border: #cbd5e1;
+}
+body[data-current-material="sentence"], .material-card[data-material="sentence"] {
+  --material-accent: #4f46e5; --material-accent-2: #818cf8; --material-soft: #eef2ff; --material-border: #c7d2fe;
+}
+body[data-current-material="monitor"], .material-card[data-material="monitor"] {
+  --material-accent: #2563eb; --material-accent-2: #38bdf8; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="speakingReview"], .material-card[data-material="speakingReview"] {
+  --material-accent: #0284c7; --material-accent-2: #06b6d4; --material-soft: #ecfeff; --material-border: #a5f3fc;
+}
+body[data-current-material="speakingReviewCloze"], .material-card[data-material="speakingReviewCloze"] {
+  --material-accent: #1e40af; --material-accent-2: #60a5fa; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="speakingErrorCorrection"], .material-card[data-material="speakingErrorCorrection"] {
+  --material-accent: #0f766e; --material-accent-2: #22c55e; --material-soft: #f0fdf4; --material-border: #bbf7d0;
+}
+body[data-current-material="phrasalVerbs"], .material-card[data-material="phrasalVerbs"] {
+  --material-accent: #475569; --material-accent-2: #94a3b8; --material-soft: #f8fafc; --material-border: #cbd5e1;
+}
+body[data-current-material="eikenConnectors"], .material-card[data-material="eikenConnectors"] {
+  --material-accent: #1d4ed8; --material-accent-2: #f59e0b; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="eikenWriting"], .material-card[data-material="eikenWriting"] {
+  --material-accent: #0f766e; --material-accent-2: #f59e0b; --material-soft: #f0fdfa; --material-border: #99f6e4;
+}
+body[data-current-material="englishTheory"], .material-card[data-material="englishTheory"] {
+  --material-accent: #0f766e; --material-accent-2: #475569; --material-soft: #f0fdfa; --material-border: #99f6e4;
+}
+body[data-current-material="statisticsQuestions"], .material-card[data-material="statisticsQuestions"] {
+  --material-accent: #1e40af; --material-accent-2: #64748b; --material-soft: #eff6ff; --material-border: #bfdbfe;
+}
+body[data-current-material="writingTheoryChapter4"], .material-card[data-material="writingTheoryChapter4"],
+body[data-current-material="writingTheoryMap"], .material-card[data-material="writingTheoryMap"] {
+  --material-accent: #7c3aed; --material-accent-2: #60a5fa; --material-soft: #f5f3ff; --material-border: #ddd6fe;
+}
+body[data-current-material="presentationBuilderTasks"], .material-card[data-material="presentationBuilderTasks"] {
+  --material-accent: #0369a1; --material-accent-2: #0f766e; --material-soft: #f0f9ff; --material-border: #bae6fd;
+}
+body[data-current-material="classicalWords"], .material-card[data-material="classicalWords"],
+body[data-current-material="classicalGrammar"], .material-card[data-material="classicalGrammar"],
+body[data-current-material="classicalKnowledge"], .material-card[data-material="classicalKnowledge"] {
+  --material-accent: #7c3aed; --material-accent-2: #a78bfa; --material-soft: #f5f3ff; --material-border: #ddd6fe;
+}
+
+/* 全体の影を控えめにする */
+.container,
+.category-section,
+.material-card,
+.stat-card,
+.growth-home-card,
+.home-learning-calendar,
+.result-hero,
+.result-summary-card,
+.review-plant-card,
+.review-chart-card,
+.local-insight-card,
+.unified-card,
+#questionArea,
+.quiz-top,
+.feedback-card,
+.choice-button,
+.word-chip,
+.notice-banner,
+.calendar-card,
+.panel,
+.mistake-list {
+  box-shadow: var(--calm-shadow-soft) !important;
+}
+button,
+#checkButton,
+#nextButton,
+#startButton,
+.start-action-row button,
+.admin-card,
+.admin-quick button,
+.sound-toggle-button {
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08) !important;
+}
+.material-card:hover,
+.category-section:hover,
+.stat-card:hover {
+  box-shadow: var(--calm-shadow) !important;
+  transform: translateY(-1px);
+}
+
+/* 教材カード：色分けはするが、主張しすぎない */
+.material-card[data-material] {
+  border-left: 6px solid var(--material-accent);
+  border-color: var(--material-border);
+  background: linear-gradient(180deg, #ffffff 0%, var(--material-soft) 100%);
+}
+.material-card[data-material] span { color: var(--material-accent); }
+.material-progress-button:hover {
+  color: var(--material-accent);
+  border-color: var(--material-border);
+  background: var(--material-soft);
+}
+
+/* 背景：教材色は薄く反映するだけ */
+body[class*="material-"] {
+  background:
+    radial-gradient(circle at 12% 0%, rgba(147, 197, 253, 0.22), transparent 34%),
+    linear-gradient(135deg, #f8fbff, var(--material-soft-2));
+}
+
+/* 設定・結果・復習画面にも教材色を薄く反映 */
+body[class*="material-"] .panel-label,
+body[class*="material-"] .task-badge,
+body[class*="material-"] .result-card-label {
+  color: var(--material-accent);
+  background: var(--material-soft);
+}
+body[class*="material-"] .progress-bar,
+body[class*="material-"] .quest-xp i {
+  background: linear-gradient(90deg, var(--material-accent), var(--material-accent-2));
+  box-shadow: none !important;
+}
+body[class*="material-"] #checkButton,
+body[class*="material-"] #nextButton,
+body[class*="material-"] #startButton,
+body[class*="material-"] .start-action-row button {
+  background: linear-gradient(135deg, var(--material-accent), var(--material-accent-2));
+}
+
+/* 問題画面：派手な装飾・発光・大きい影を抑える */
+#quizScreen:not(.hidden)::after { display: none; }
+#quizScreen:not(.hidden)::before {
+  height: min(130px, 22vh);
+  opacity: 0.5;
+  border-radius: 0 0 26px 26px;
+  background: linear-gradient(180deg, var(--material-soft), transparent);
+}
+.quiz-top {
+  border-color: var(--material-border);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+}
+#testTitle { color: var(--material-ink); }
+#questionNumber::before { color: var(--material-accent); }
+.timer {
+  color: var(--material-accent);
+  border-color: var(--material-border);
+  background: var(--material-soft);
+}
+.progress-wrap {
+  height: 8px;
+  margin: 12px 0 14px;
+  border-color: #e2e8f0;
+  background: rgba(241, 245, 249, 0.9);
+  box-shadow: none !important;
+}
+.quiz-progress-note {
+  color: var(--material-muted);
+  background: rgba(255,255,255,.72);
+  border-color: #e2e8f0;
+}
+#questionArea {
+  border-color: var(--material-border);
+  background: linear-gradient(180deg, rgba(255,255,255,.97), var(--material-soft));
+}
+#questionArea::before { display: none; }
+.question-prompt,
+.cloze-prompt,
+.error-correction-card,
+.polaris-passage-card,
+.polaris-question-card,
+.answer-support,
+.source-expression,
+.target-expression {
+  border-color: #e2e8f0;
+  background: rgba(255,255,255,.82);
+  box-shadow: none !important;
+}
+.words {
+  color: #172033;
+  font-weight: 800;
+}
+
+/* 選択ボタン：落ち着いたカード型へ */
+.choice-button {
+  min-height: 56px;
+  border-color: #dbe3ef;
+  background: #ffffff;
+  color: #172033;
+  box-shadow: none !important;
+}
+.choice-button::before {
+  background: var(--material-accent);
+  box-shadow: 0 0 0 4px var(--material-soft);
+}
+.choice-button::after { display: none; }
+.choice-button:hover,
+.choice-button:focus-visible {
+  border-color: var(--material-border);
+  background: var(--material-soft);
+  transform: translateY(-1px);
+  box-shadow: none !important;
+}
+.choice-button.selected,
+.choice-button.ready-to-submit {
+  color: #0f172a;
+  border-color: var(--material-accent);
+  background: linear-gradient(180deg, #ffffff, var(--material-soft));
+  box-shadow: none !important;
+}
+.choice-button.selected::before,
+.choice-button.ready-to-submit::before {
+  background: var(--material-accent);
+  box-shadow: 0 0 0 5px var(--material-soft);
+}
+.choice-button.ready-to-submit {
+  animation: none !important;
+  outline: 2px solid var(--material-border);
+  outline-offset: 2px;
+}
+
+.word-chip {
+  border-color: #dbe3ef;
+  background: #ffffff;
+  color: #172033;
+  box-shadow: none !important;
+}
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: var(--material-accent);
+  background: var(--material-soft);
+  outline: 2px solid var(--material-border);
+}
+
+/* フィードバック：達成感は残し、演出を控えめに */
+.feedback-card {
+  border-color: var(--material-border);
+  background: #ffffff;
+}
+.feedback-correct {
+  background: linear-gradient(180deg, #ffffff, #f0fdf4);
+  border-color: #bbf7d0;
+}
+.feedback-wrong {
+  background: linear-gradient(180deg, #ffffff, #fff7ed);
+  border-color: #fed7aa;
+}
+.celebration-layer { opacity: 0.55; }
+.confetti-piece,
+.combo-layer .confetti-piece {
+  font-size: 18px;
+  animation-duration: 0.85s !important;
+}
+.celebration-badge {
+  background: rgba(15, 23, 42, 0.78) !important;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.14) !important;
+}
+.correct-flash .app-shell,
+.combo-flash .container {
+  animation: none !important;
+}
+
+/* 木：青緑ではなく自然な緑へ。影も控えめ */
+.plant-visual {
+  --tree-trunk: #7c4a21;
+  --tree-trunk-dark: #4a2f16;
+  --tree-leaf-1: #4ade80;
+  --tree-leaf-2: #16a34a;
+  --tree-leaf-3: #166534;
+  filter: drop-shadow(0 6px 10px rgba(20,83,45,.10));
+}
+.plant-sky {
+  background: linear-gradient(180deg, #eff6ff 0%, #f0fdf4 72%, #f8fafc 100%);
+  border-color: #dbeafe;
+}
+.plant-soil {
+  background: linear-gradient(180deg, #92400e, #78350f);
+}
+.plant-soil::before {
+  background: linear-gradient(90deg, rgba(250, 204, 21, .36), transparent);
+}
+.plant-stem {
+  background: linear-gradient(90deg, var(--tree-trunk-dark), var(--tree-trunk), #a16207);
+}
+.plant-leaf {
+  background: radial-gradient(circle at 30% 30%, #bbf7d0, var(--tree-leaf-1) 42%, var(--tree-leaf-2) 100%);
+  box-shadow: none;
+}
+.plant-bloom {
+  background:
+    radial-gradient(circle at 30% 25%, #dcfce7 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 34%, rgba(255,255,255,.24) 0 9%, transparent 10%),
+    linear-gradient(135deg, #86efac, #16a34a 55%, #166534);
+  box-shadow: inset 0 -8px 14px rgba(20,83,45,.13);
+}
+.plant-bloom::before,
+.plant-bloom::after {
+  background: linear-gradient(135deg, #bbf7d0, #16a34a);
+  box-shadow: none;
+}
+.plant-bloom::after {
+  background: linear-gradient(135deg, #86efac, #166534);
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    background: linear-gradient(180deg, #f8fbff 0%, var(--material-soft) 100%);
+  }
+  .quiz-top {
+    border-radius: 18px;
+  }
+  #questionArea {
+    border-radius: 20px;
+  }
+  .choice-button {
+    border-radius: 15px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .confetti-piece,
+  .celebration-badge,
+  .choice-button,
+  .word-chip,
+  .material-card,
+  .category-section {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+

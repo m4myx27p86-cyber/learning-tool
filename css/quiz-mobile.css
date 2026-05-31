@@ -1,0 +1,632 @@
+/* =========================================================
+   Quiz Motivation & Mobile Stability Patch
+   2026-05-31
+   目的: 問題機能を変更せず、問題画面・選択ボタン・木の成長表示をCSS中心で改善
+   適用: 既存 style.css の後に読み込む、または末尾へ追記
+========================================================= */
+
+:root {
+  --quest-bg-deep: #11231f;
+  --quest-ink: #13231f;
+  --quest-paper: rgba(255, 253, 244, 0.94);
+  --quest-paper-strong: rgba(255, 255, 255, 0.96);
+  --quest-gold: #c99a3d;
+  --quest-gold-soft: #f7d889;
+  --quest-green: #2f855a;
+  --quest-green-deep: #14532d;
+  --quest-blue: #2563eb;
+  --quest-shadow: 0 20px 48px rgba(17, 35, 31, 0.18);
+  --safe-bottom-space: max(16px, env(safe-area-inset-bottom));
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+button,
+.choice-button,
+.word-chip {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 問題画面: スマホで画面全体が揺れにくい、かつ中身はスクロール可能 */
+body.quiz-active-body {
+  overscroll-behavior-y: none;
+}
+
+@media (max-width: 720px) {
+  body.quiz-active-body {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow: hidden;
+    padding: 0;
+    background:
+      radial-gradient(circle at 20% 0%, rgba(247, 216, 137, 0.26), transparent 34%),
+      radial-gradient(circle at 85% 10%, rgba(47, 133, 90, 0.24), transparent 38%),
+      linear-gradient(180deg, #f7faf7 0%, #edf4ee 100%);
+  }
+
+  body.quiz-active-body .app-shell {
+    max-width: none;
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+  }
+
+  body.quiz-active-body .app-header {
+    display: none;
+  }
+
+  body.quiz-active-body .container {
+    width: 100%;
+    min-height: 100dvh;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  body.quiz-active-body #quizScreen:not(.hidden) {
+    height: 100dvh;
+    min-height: 100dvh;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: calc(12px + env(safe-area-inset-top)) 12px var(--safe-bottom-space);
+  }
+}
+
+/* 問題画面の冒険カード風デザイン */
+#quizScreen:not(.hidden) {
+  position: relative;
+  isolation: isolate;
+  max-width: 920px;
+  margin: 0 auto;
+  padding-bottom: 24px;
+}
+
+#quizScreen:not(.hidden)::before {
+  content: "";
+  position: absolute;
+  inset: -24px -18px auto;
+  height: min(260px, 42vh);
+  z-index: -2;
+  border-radius: 0 0 44px 44px;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(247, 216, 137, 0.56), transparent 30%),
+    radial-gradient(circle at 88% 10%, rgba(34, 197, 94, 0.20), transparent 32%),
+    linear-gradient(135deg, rgba(20, 83, 45, 0.10), rgba(37, 99, 235, 0.08));
+}
+
+#quizScreen:not(.hidden)::after {
+  content: "Daily Quest";
+  position: absolute;
+  top: 10px;
+  right: 8px;
+  z-index: -1;
+  color: rgba(17, 35, 31, 0.05);
+  font-size: clamp(42px, 12vw, 104px);
+  font-weight: 1000;
+  letter-spacing: -0.06em;
+  pointer-events: none;
+}
+
+.quiz-top {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(201, 154, 61, 0.30);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(255, 253, 244, 0.88));
+  box-shadow: 0 16px 36px rgba(17, 35, 31, 0.10);
+  backdrop-filter: blur(16px);
+  text-align: left;
+}
+
+#testTitle {
+  margin: 0;
+  color: var(--quest-ink);
+  font-size: clamp(20px, 4vw, 30px);
+  letter-spacing: -0.02em;
+}
+
+#questionNumber {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  color: #5b6472;
+  font-weight: 900;
+}
+
+#questionNumber::before {
+  content: "◆";
+  color: var(--quest-gold);
+  font-size: 12px;
+}
+
+.timer {
+  min-width: 94px;
+  border: 1px solid rgba(201, 154, 61, 0.35);
+  background: linear-gradient(180deg, #fff8e1, #fef3c7);
+  color: #8a5a10;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.72), 0 10px 22px rgba(146, 64, 14, 0.10);
+}
+
+.timer-warning {
+  background: linear-gradient(180deg, #fff1f2, #ffe4e6);
+  color: #b91c1c;
+  border-color: rgba(225, 29, 72, 0.34);
+}
+
+.progress-wrap {
+  height: 12px;
+  margin: 14px 0 12px;
+  border: 1px solid rgba(201, 154, 61, 0.28);
+  background: rgba(255, 255, 255, 0.60);
+  box-shadow: inset 0 1px 3px rgba(17, 35, 31, 0.08);
+}
+
+.progress-bar {
+  background: linear-gradient(90deg, #22c55e, #f7d889, #c99a3d);
+  box-shadow: 0 0 18px rgba(247, 216, 137, 0.55);
+}
+
+.quiz-progress-note {
+  max-width: 820px;
+  margin: 0 auto 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #55606f;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+}
+
+#questionArea {
+  position: relative;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: clamp(14px, 3vw, 22px);
+  border: 1px solid rgba(201, 154, 61, 0.34);
+  border-radius: 30px;
+  background:
+    linear-gradient(180deg, var(--quest-paper-strong), var(--quest-paper)),
+    radial-gradient(circle at 0% 0%, rgba(247, 216, 137, 0.20), transparent 38%);
+  box-shadow: var(--quest-shadow);
+  overflow: hidden;
+}
+
+#questionArea::before {
+  content: "";
+  position: absolute;
+  inset: 10px;
+  border: 1px solid rgba(201, 154, 61, 0.18);
+  border-radius: 24px;
+  pointer-events: none;
+}
+
+.words {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 18px;
+  color: var(--quest-ink);
+  font-size: clamp(20px, 5vw, 30px);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.monitor-label,
+.task-instruction {
+  color: #475569;
+}
+
+.question-prompt,
+.cloze-prompt,
+.error-correction-card {
+  position: relative;
+  z-index: 1;
+  border-color: rgba(201, 154, 61, 0.35);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.86), rgba(255, 253, 244, 0.82));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.7);
+}
+
+/* 選択ボタン: 見た目を整え、二度押し準備状態も分かるようにする */
+.choice-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 760px;
+  min-height: 58px;
+  margin: 12px auto;
+  padding: 15px 18px 15px 52px;
+  border: 1px solid rgba(201, 154, 61, 0.38);
+  border-radius: 18px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.98), rgba(255, 250, 235, .94));
+  color: #1f2937;
+  box-shadow:
+    0 10px 22px rgba(17, 35, 31, 0.08),
+    inset 0 1px 0 rgba(255,255,255,.86);
+  text-align: left;
+  line-height: 1.55;
+  letter-spacing: .01em;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.choice-button::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(135deg, #fef3c7, #c99a3d);
+  box-shadow: 0 0 0 5px rgba(201, 154, 61, 0.12);
+}
+
+.choice-button::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(247,216,137,.18), transparent 44%);
+  opacity: 0;
+  transition: opacity .18s ease;
+  pointer-events: none;
+}
+
+.choice-button:hover,
+.choice-button:focus-visible {
+  border-color: rgba(201, 154, 61, 0.70);
+  background: linear-gradient(180deg, #ffffff, #fff8e1);
+  color: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgba(17, 35, 31, 0.12);
+  outline: none;
+}
+
+.choice-button:hover::after,
+.choice-button:focus-visible::after {
+  opacity: 1;
+}
+
+.choice-button.selected,
+.choice-button.ready-to-submit {
+  color: #0f172a;
+  border-color: rgba(37, 99, 235, 0.62);
+  background:
+    linear-gradient(180deg, #eef6ff, #dbeafe),
+    linear-gradient(90deg, rgba(37,99,235,.12), transparent);
+  box-shadow:
+    0 16px 28px rgba(37, 99, 235, 0.16),
+    inset 0 0 0 1px rgba(255,255,255,.7);
+}
+
+.choice-button.selected::before,
+.choice-button.ready-to-submit::before {
+  background: linear-gradient(135deg, #93c5fd, #2563eb);
+  box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.14), 0 0 16px rgba(37, 99, 235, 0.30);
+}
+
+.choice-button.ready-to-submit::after {
+  opacity: 1;
+  background: linear-gradient(90deg, rgba(37, 99, 235, 0.18), transparent 58%);
+}
+
+.choice-button.ready-to-submit {
+  animation: choiceReadyGlow 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes choiceReadyGlow {
+  from { box-shadow: 0 14px 24px rgba(37,99,235,.12), inset 0 0 0 1px rgba(255,255,255,.7); }
+  to { box-shadow: 0 18px 34px rgba(37,99,235,.22), inset 0 0 0 1px rgba(255,255,255,.8); }
+}
+
+.error-choice-grid .choice-button {
+  max-width: none;
+}
+
+/* 語順並べ替えのチップもスマホで押しやすく */
+.word-chip {
+  min-height: 44px;
+  border-color: rgba(20, 83, 45, 0.18);
+  border-radius: 15px;
+  background: linear-gradient(180deg, #ffffff, #f0fdf4);
+  color: #13351f;
+  box-shadow: 0 8px 16px rgba(17, 35, 31, 0.08);
+}
+
+.word-chip:hover,
+.word-chip:focus-visible {
+  color: #14532d;
+  background: linear-gradient(180deg, #ecfdf5, #dcfce7);
+  outline: 3px solid rgba(34, 197, 94, 0.18);
+}
+
+.answer-support,
+.source-expression,
+.target-expression,
+.answer-input {
+  position: relative;
+  z-index: 1;
+}
+
+.answer-input {
+  min-height: 52px;
+  border-radius: 18px;
+  background: rgba(255,255,255,.94);
+}
+
+#feedback {
+  min-height: 76px;
+}
+
+.feedback-card {
+  border: 1px solid rgba(201, 154, 61, 0.22);
+  border-radius: 24px;
+}
+
+.feedback-correct {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(247, 216, 137, 0.30), transparent 32%),
+    linear-gradient(135deg, #dcfce7, #fef9c3);
+}
+
+.feedback-wrong {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(253, 186, 116, 0.26), transparent 34%),
+    linear-gradient(135deg, #fff7ed, #fee2e2);
+}
+
+#checkButton,
+#nextButton,
+#quitButton,
+#startButton,
+.start-action-row button {
+  min-height: 52px;
+  border-radius: 18px;
+}
+
+#checkButton {
+  background: linear-gradient(135deg, #14532d, #2f855a);
+  box-shadow: 0 14px 26px rgba(20, 83, 45, 0.20);
+}
+
+#nextButton {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+}
+
+/* 花ではなく木に見えるように上書き */
+.plant-visual {
+  --tree-trunk: #7c4a21;
+  --tree-trunk-dark: #4a2f16;
+  --tree-leaf-1: #22c55e;
+  --tree-leaf-2: #15803d;
+  --tree-leaf-3: #166534;
+  filter: drop-shadow(0 16px 28px rgba(20,83,45,.18));
+}
+
+.plant-sky {
+  background:
+    radial-gradient(circle at 18% 16%, rgba(247, 216, 137, .36), transparent 24%),
+    linear-gradient(180deg, #ecfeff 0%, #f4fff3 72%, #fefce8 100%);
+}
+
+.plant-stem {
+  width: 13px;
+  border-radius: 999px 999px 4px 4px;
+  background: linear-gradient(90deg, var(--tree-trunk-dark), var(--tree-trunk), #a16207);
+  box-shadow: inset 2px 0 rgba(255,255,255,.12);
+}
+
+.plant-leaf {
+  width: 52px;
+  height: 34px;
+  border-radius: 70% 30% 70% 30%;
+  background: radial-gradient(circle at 30% 30%, #86efac, var(--tree-leaf-1) 42%, var(--tree-leaf-2) 100%);
+  box-shadow: 0 8px 14px rgba(20,83,45,.18);
+}
+
+.plant-bloom {
+  left: 50%;
+  bottom: 112px;
+  width: 92px;
+  height: 74px;
+  margin-left: -46px;
+  border-radius: 48% 52% 44% 56% / 54% 48% 52% 46%;
+  background:
+    radial-gradient(circle at 30% 25%, #bbf7d0 0 10%, transparent 11%),
+    radial-gradient(circle at 62% 34%, rgba(255,255,255,.22) 0 9%, transparent 10%),
+    linear-gradient(135deg, #4ade80, #16a34a 55%, #166534);
+  box-shadow:
+    inset 0 -10px 18px rgba(20,83,45,.18),
+    0 18px 28px rgba(20,83,45,.20);
+}
+
+.plant-bloom::before,
+.plant-bloom::after {
+  content: "";
+  position: absolute;
+  top: 12px;
+  width: 58px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #86efac, #15803d);
+  z-index: -1;
+  box-shadow: inset 0 -8px 14px rgba(20,83,45,.15);
+}
+
+.plant-bloom::before { left: -25px; }
+.plant-bloom::after { right: -25px; top: 18px; background: linear-gradient(135deg, #6ee7b7, #166534); }
+
+.plant-stage-0 .plant-stem { height: 10px; width: 10px; background: #65a30d; }
+.plant-stage-1 .plant-stem { height: 44px; }
+.plant-stage-2 .plant-stem { height: 76px; }
+.plant-stage-3 .plant-stem { height: 104px; width: 14px; }
+.plant-stage-4 .plant-stem,
+.plant-stage-5 .plant-stem { height: 126px; width: 16px; }
+
+.plant-stage-4 .plant-bloom,
+.plant-stage-5 .plant-bloom {
+  opacity: 1;
+  transform: scale(.86);
+}
+
+.plant-stage-5 .plant-bloom {
+  transform: scale(1.04);
+}
+
+.plant-stage-5 .plant-bloom::before,
+.plant-stage-5 .plant-bloom::after {
+  opacity: 1;
+}
+
+/* スマホ最適化 */
+@media (max-width: 720px) {
+  .quiz-top {
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 22px;
+  }
+
+  #testTitle {
+    font-size: 18px;
+    line-height: 1.25;
+  }
+
+  #questionNumber {
+    font-size: 13px;
+  }
+
+  .timer {
+    min-width: 82px;
+    padding: 9px 10px;
+    font-size: 14px;
+  }
+
+  #questionArea {
+    padding: 14px 10px;
+    border-radius: 24px;
+  }
+
+  #questionArea::before {
+    inset: 7px;
+    border-radius: 19px;
+  }
+
+  .words {
+    margin: 10px 0 14px;
+    font-size: clamp(19px, 5.5vw, 24px);
+    line-height: 1.55;
+  }
+
+  .choice-button {
+    min-height: 56px;
+    margin: 9px auto;
+    padding: 13px 14px 13px 46px;
+    border-radius: 17px;
+    font-size: 15.5px;
+    line-height: 1.5;
+  }
+
+  .choice-button::before {
+    left: 16px;
+    width: 14px;
+    height: 14px;
+  }
+
+  .question-prompt,
+  .cloze-prompt,
+  .error-correction-card,
+  .answer-support,
+  .source-expression,
+  .target-expression {
+    border-radius: 18px;
+    padding: 12px;
+  }
+
+  .answer-input {
+    font-size: 16px;
+    min-height: 52px;
+  }
+
+  .word-chip {
+    min-height: 42px;
+    margin: 5px 3px;
+    padding: 8px 10px;
+    border-radius: 14px;
+    font-size: 15px;
+  }
+
+  #checkButton,
+  #nextButton,
+  #quitButton {
+    width: 100%;
+    max-width: none;
+    margin: 7px 0;
+  }
+
+  #feedback {
+    margin: 12px auto 8px;
+    min-height: 66px;
+  }
+
+  .feedback-card {
+    gap: 10px;
+    padding: 12px;
+    border-radius: 20px;
+  }
+
+  .feedback-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    font-size: 26px;
+  }
+
+  .plant-visual {
+    width: min(210px, 68vw);
+    height: 210px;
+  }
+
+  .plant-bloom {
+    width: 78px;
+    height: 64px;
+    margin-left: -39px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .choice-button,
+  .choice-button.ready-to-submit,
+  .feedback-card,
+  .plant-stem,
+  .plant-leaf,
+  .plant-bloom {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+
+

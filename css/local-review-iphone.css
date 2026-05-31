@@ -1,0 +1,505 @@
+/* =========================================================
+   Local Review / iPhone-style dashboard
+   - 既存教材・判定ロジックは触らず、総復習画面だけ追加
+========================================================= */
+
+.review-launch-card {
+  border-color: rgba(20, 184, 166, 0.35) !important;
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.16), rgba(99, 102, 241, 0.10)) !important;
+}
+
+.local-review-screen {
+  --lr-bg: #1f1f20;
+  --lr-card: #2b2b2d;
+  --lr-card-2: #363638;
+  --lr-text: #f6f6f7;
+  --lr-muted: #a9a9b2;
+  --lr-line: rgba(142, 142, 160, 0.28);
+  --lr-mastered: #10cdb6;
+  --lr-review: #ff5271;
+  --lr-unlearned: #5e6077;
+  --lr-starred: #9b5ab6;
+  position: relative;
+  min-height: min(860px, calc(100vh - 40px));
+  max-width: 470px;
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px 96px;
+  color: var(--lr-text);
+  background: var(--lr-bg);
+  border-radius: 0;
+  overflow: hidden;
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.28);
+}
+
+.local-review-screen .muted { color: var(--lr-muted); }
+
+.phone-status-space {
+  height: 8px;
+}
+
+.local-review-topbar,
+.local-review-subbar,
+.settings-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.local-review-topbar {
+  min-height: 56px;
+  font-size: 1.2rem;
+}
+
+.round-icon-button,
+.plain-arrow,
+.pill-button {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--lr-text);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.round-icon-button {
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 1.7rem;
+  line-height: 1;
+}
+
+.pill-button {
+  width: auto;
+  min-width: 92px;
+  height: 52px;
+  padding: 0 18px;
+  border-radius: 28px;
+}
+
+.plain-arrow {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #aeb0ba;
+  font-size: 2.4rem;
+  box-shadow: none;
+}
+
+.local-review-subbar {
+  margin-top: 12px;
+  text-align: center;
+}
+
+.local-review-subbar h2 {
+  margin: 0;
+  color: var(--lr-text);
+  font-size: 1.15rem;
+}
+
+.local-review-subbar p {
+  margin: 4px 0 0;
+  font-size: .8rem;
+}
+
+.local-review-main {
+  margin-top: 112px;
+}
+
+.local-donut {
+  --mastered-percent: 0%;
+  width: 256px;
+  height: 256px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: conic-gradient(var(--lr-mastered) 0 var(--mastered-percent), var(--lr-review) var(--mastered-percent) calc(var(--mastered-percent) + 6%), var(--lr-unlearned) 0 100%);
+  position: relative;
+}
+
+.local-donut::after {
+  content: "";
+  position: absolute;
+  inset: 28px;
+  border-radius: 50%;
+  background: var(--lr-bg);
+}
+
+.local-donut span {
+  position: relative;
+  z-index: 1;
+  color: var(--lr-text);
+  font-size: clamp(2.6rem, 12vw, 4.2rem);
+  font-weight: 300;
+  letter-spacing: -.06em;
+}
+
+.local-review-counts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 72px 0 32px;
+  text-align: center;
+}
+
+.local-review-counts strong {
+  display: block;
+  color: var(--lr-text);
+  font-size: clamp(1.8rem, 7vw, 2.6rem);
+  font-weight: 400;
+  letter-spacing: -.04em;
+}
+
+.local-review-counts span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--lr-muted);
+  font-size: .95rem;
+}
+
+.dot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.dot.mastered { background: var(--lr-mastered); }
+.dot.review { background: var(--lr-review); }
+.dot.unlearned { background: var(--lr-unlearned); }
+.dot.starred { background: var(--lr-starred); }
+
+.local-review-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.local-review-actions button,
+.done-button {
+  min-height: 50px;
+  border: none;
+  border-radius: 7px;
+  background: #f7f7f8;
+  color: #1f1f20;
+  font-weight: 800;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.16);
+}
+
+.local-insight-card {
+  margin-top: 24px;
+  padding: 18px;
+  border: 1px solid var(--lr-line);
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.local-insight-card p {
+  margin: 8px 0 0;
+  color: var(--lr-muted);
+}
+
+.local-review-list {
+  margin-top: 24px;
+  max-height: calc(100vh - 190px);
+  overflow-y: auto;
+  padding-bottom: 86px;
+}
+
+.local-review-row {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0;
+  padding: 12px;
+  border: 1px solid var(--lr-line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.local-review-row strong,
+.local-review-row span {
+  display: block;
+}
+
+.local-review-row span {
+  color: var(--lr-muted);
+  font-size: .82rem;
+  margin-top: 3px;
+}
+
+.star-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--lr-line);
+  background: rgba(255,255,255,.04);
+  color: var(--lr-muted);
+}
+
+.star-button.active {
+  background: var(--lr-starred);
+  color: white;
+  border-color: transparent;
+}
+
+.local-review-settings {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  max-width: 470px;
+  margin: 0 auto;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+  color: var(--lr-text);
+  background: var(--lr-bg);
+  overflow-y: auto;
+}
+
+.local-review-settings h3 {
+  margin: 24px 0 12px;
+  color: var(--lr-text);
+}
+
+.setting-check,
+.radio-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 58px;
+  padding: 8px 0;
+  border-bottom: 1px solid transparent;
+  color: var(--lr-text);
+}
+
+.setting-check span {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  gap: 0 10px;
+  align-items: center;
+}
+
+.setting-check small {
+  grid-column: 2;
+  color: var(--lr-muted);
+}
+
+.setting-check input[type="checkbox"],
+.radio-row input[type="radio"] {
+  width: 30px;
+  height: 30px;
+  accent-color: #f7f7f8;
+}
+
+.settings-stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 0;
+  border-top: 1px solid var(--lr-line);
+  border-bottom: 1px solid var(--lr-line);
+}
+
+.settings-stepper div {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.settings-stepper button {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--lr-text);
+  font-size: 2rem;
+  box-shadow: none;
+}
+
+.done-button {
+  width: 100%;
+  margin: 20px 0 36px;
+}
+
+.local-review-tabbar {
+  position: fixed;
+  left: 50%;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: min(328px, calc(100vw - 54px));
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 36px;
+  background: rgba(59,59,62,.86);
+  backdrop-filter: blur(20px);
+  z-index: 10;
+}
+
+.local-tab-button {
+  min-height: 62px;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 31px;
+  background: transparent;
+  color: #fff;
+  font-size: 1.2rem;
+  box-shadow: none;
+}
+
+.local-tab-button span {
+  display: block;
+  margin-top: 2px;
+  font-size: .72rem;
+}
+
+.local-tab-button.active {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.choice-button.ready-to-submit {
+  outline: 2px solid rgba(20, 184, 166, .55);
+  outline-offset: 2px;
+}
+
+.polaris-question-wrap {
+  text-align: left;
+  font-size: 1rem;
+}
+
+.polaris-passage-card,
+.polaris-question-card,
+.error-correction-card {
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid rgba(148, 163, 184, .28);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .72);
+  line-height: 1.75;
+}
+
+.polaris-passage-card {
+  max-height: 42vh;
+  overflow-y: auto;
+}
+
+.polaris-passage-card span,
+.polaris-question-card span,
+.source-expression span,
+.target-expression span,
+.task-badge {
+  display: block;
+  margin-bottom: 6px;
+  color: #64748b;
+  font-size: .78rem;
+  font-weight: 800;
+  letter-spacing: .06em;
+}
+
+.double-press-hint {
+  margin-top: 8px;
+  color: #64748b;
+  font-size: .86rem;
+}
+
+.error-choice-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.feedback-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.feedback-stats span {
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .65);
+  color: #0f172a;
+  font-size: .78rem;
+  font-weight: 700;
+}
+
+.celebration-badge {
+  position: fixed;
+  left: 50%;
+  top: 18%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  min-width: 180px;
+  padding: 14px 18px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, .82);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 18px 60px rgba(0,0,0,.28);
+  backdrop-filter: blur(10px);
+  animation: badgePop 1.1s ease forwards;
+}
+
+.celebration-badge strong,
+.celebration-badge span { display:block; }
+.celebration-badge span { font-size: .78rem; opacity: .82; margin-top: 2px; }
+.correct-flash .app-shell { animation: correctGlow .8s ease; }
+
+@keyframes badgePop {
+  0% { opacity: 0; transform: translateX(-50%) scale(.82) translateY(8px); }
+  16% { opacity: 1; transform: translateX(-50%) scale(1.03) translateY(0); }
+  100% { opacity: 0; transform: translateX(-50%) scale(.96) translateY(-10px); }
+}
+
+@keyframes correctGlow {
+  0%, 100% { filter: none; }
+  45% { filter: drop-shadow(0 0 22px rgba(20,184,166,.28)); }
+}
+
+@media (max-width: 520px) {
+  .local-review-screen,
+  .local-review-settings {
+    max-width: none;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+  .local-review-main { margin-top: 82px; }
+  .local-donut { width: 230px; height: 230px; }
+  .local-review-counts { margin-top: 56px; }
+  .settings-stepper { align-items: flex-start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .celebration-badge,
+  .correct-flash .app-shell { animation: none; }
+}
+
+body.local-review-active .app-header {
+  display: none;
+}
+body.local-review-active .app-shell {
+  max-width: none;
+  min-height: 100vh;
+  padding: 0;
+  background: #1f1f20;
+}
+body.local-review-active .container {
+  width: 100%;
+  max-width: none;
+  padding: 0;
+}
+
