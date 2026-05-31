@@ -1128,27 +1128,71 @@ async function loadErrorCorrectionQuestions(filePath) {
 
   const text = await response.text();
   const rows = parseCSV(text);
-  rows.shift();
+  const header = (rows.shift() || []).map(cell => String(cell || "").trim());
+  const isCurrentReviewCsv =
+    header.includes("sentence") &&
+    header.includes("correctAnswer") &&
+    header.includes("correctionPrompt") &&
+    header.includes("clozeAnswer");
 
   return rows.map(row => {
-    const incorrectPhrase = row[4] || row[3] || "";
-    const correctPhrase = row[5] || row[6] || "";
-    const correctedSentence = row[6] || row[5] || correctPhrase;
-    const choices = [row[4], row[7], row[8], row[9]].filter(Boolean);
-    if (!choices.includes(incorrectPhrase) && incorrectPhrase) choices.unshift(incorrectPhrase);
+    let prompt = "";
+    let wrongSentence = "";
+    let incorrectPhrase = "";
+    let correctPhrase = "";
+    let choices = [];
+    let explanation = "";
+    let points = 1;
+
+    if (isCurrentReviewCsv) {
+      // Current TOEIC error-correction CSV:
+      // id, section, sentence, correctAnswer(=誤り), choice1-3, correctionPrompt,
+      // clozeAnswer(=修正後), hint, explanation, points
+      wrongSentence = row[2] || "";
+      incorrectPhrase = row[3] || "";
+      prompt = row[7] || `「${incorrectPhrase}」を、より自然なTOEIC S&W表現に直してください。`;
+      correctPhrase = row[8] || "";
+      choices = [row[4], row[5], row[6], incorrectPhrase];
+      explanation = row[10] || "";
+      points = Number(row[11]) || 1;
+    } else {
+      // Legacy format support:
+      // id, section, prompt, wrongSentence, incorrectPhrase, correctPhrase,
+      // correctedSentence, distractor1-3, explanation, points
+      prompt = row[2] || row[3] || "";
+      wrongSentence = row[3] || row[2] || "";
+      incorrectPhrase = row[4] || row[3] || "";
+      correctPhrase = row[5] || row[6] || "";
+      choices = [row[4], row[7], row[8], row[9]];
+      explanation = row[10] || row[9] || "";
+      points = Number(row[11]) || 1;
+    }
+
+    const cleanChoices = [...new Set(
+      choices
+        .map(choice => String(choice || "").trim())
+        .filter(Boolean)
+        .filter(choice => normalizeForCompare(choice) !== normalizeForCompare(correctPhrase))
+        .filter(choice => normalizeForCompare(choice) !== normalizeForCompare(prompt))
+    )];
+
+    if (incorrectPhrase && !cleanChoices.some(choice => normalizeForCompare(choice) === normalizeForCompare(incorrectPhrase))) {
+      cleanChoices.unshift(incorrectPhrase);
+    }
+
     return {
       id: row[0],
       section: row[1],
-      prompt: row[2] || row[3] || "",
-      wrongSentence: row[3] || row[2] || "",
+      prompt,
+      wrongSentence,
       incorrectPhrase,
       correctPhrase,
-      answer: correctedSentence,
-      choices: [...new Set(choices)].filter(Boolean),
-      explanation: row[10] || row[9] || "",
-      points: Number(row[11]) || 1
+      answer: correctPhrase,
+      choices: cleanChoices,
+      explanation,
+      points
     };
-  }).filter(q => q.id && q.section && q.wrongSentence && q.incorrectPhrase && q.correctPhrase);
+  }).filter(q => q.id && q.section && q.wrongSentence && q.incorrectPhrase && q.correctPhrase && q.choices.length > 0);
 }
 
 async function loadSentenceQuestions(files) {
