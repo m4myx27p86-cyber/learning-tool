@@ -1,27 +1,31 @@
 {
-  "version": "mockup-aligned-v3-20260603",
+  "version": "opinion-template-paraphrase-20260603",
   "split_css_concat_sha256": "9acf099c5a82c22b2ce394e0ee8ea8a564456c94eb6f06177fa5e2896034361f",
   "style_css_sha256": "d14868a7e715caa4f7495969b42c21a8fa32e4056325c7842b3ca9a90f329572",
   "split_js_concat_sha256": "8abec08c32f2f273e4e34a34a9f46c98b57bfa5441fa1d70fd1c25f867210a4f",
   "script_js_sha256": "1323e38e8572ecd7ec88cb09ccdbb5fdc70a7c7bd330699ce28c23304eefae47",
   "css_files_count": 19,
   "js_files_count": 23,
-  "last_update": "mockup_aligned_home_material_screen_restore_session_2026-06-03",
+  "last_update": "add_toeic_opinion_template4_and_paraphrase_2026-06-03",
   "node_check": "ok",
   "changed_scope": [
-    "main.js: restore saved session to menu screen after reload",
-    "js/auth.js: restoreSession reads saved session again; auto return is controlled from main.js",
-    "js/game-ui-override.js: mockup-aligned home and material screen layout enhancer without continuous MutationObserver",
-    "js/materials.js: material cards now include local character images and progress layout",
-    "css/game-ui-override.css: final mockup-aligned responsive layout for home/material/material screen",
-    "index.html: cache-busting query strings updated for modified files"
+    "js/config.js: added opinionTemplate4 and opinionParaphrase as TOEIC cloze materials",
+    "index.html: cache-busting query string for config.js updated",
+    "data/speaking_review/toeic_opinion_template4.csv: added 40 cloze template-completion items",
+    "data/speaking_review/toeic_opinion_paraphrase.csv: added 40 cloze paraphrase items",
+    "script.js: monolithic fallback updated with the same TEST_CONFIG additions"
   ],
   "unchanged_checklist": [
     "ログイン判定・管理者ログイン9999の基本処理は維持",
     "GAS URL と送信処理は未変更",
-    "CSV読み込み処理は未変更",
-    "Speaking Review の出題・採点処理は未変更",
+    "既存CSVは未変更",
+    "既存のSpeaking Review・誤り修正・穴埋め・語順並べ替えの判定処理は未変更",
     "正解エフェクト・履歴保存ロジックは未変更",
-    "教材カテゴリ・教材キーは未変更"
-  ]
+    "新規2教材は既存のclozeローダーを再利用"
+  ],
+  "js_config.js_sha256": "366301c91494c52c28e6820b74ec75107e66d6309e99e4cc3811483a927a85a3",
+  "script.js_sha256": "97b7bfe1038a0888a9f90e3dcb319fca9feda5eed26a7a0902d698e0a37ecfc7",
+  "index.html_sha256": "b10c49eadb50af2069ab438e4c899e3c5483702a3209947980eaa0c2c577fbea",
+  "data_speaking_review_toeic_opinion_template4.csv_sha256": "ac9abe75fdd9cd75fac50e491e17ee15bc08eec7b67d70de30f965ed99382ef7",
+  "data_speaking_review_toeic_opinion_paraphrase.csv_sha256": "385935bde60e0c29afbf1f4c541fc6150b2b8a387898fa2b4f45829a13ea86c6"
 }

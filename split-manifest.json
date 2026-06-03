@@ -1,6 +1,6 @@
 {
-  "version": "mockup-aligned-v3-20260603",
-  "note": "Mockup-aligned v3: restores saved-session auto return, unifies tree character, integrates review conditions into Practice Settings, and fixes crushed auto-next label with responsive two-column settings.",
+  "version": "opinion-template-paraphrase-20260603",
+  "note": "Adds TOEIC Opinion 4文テンプレ完成 and TOEIC Opinion 言い換え練習 as new cloze-based materials without changing existing quiz logic.",
   "css_files": [
     "css/base.css",
     "css/access-category-writing.css",
@@ -60,7 +60,10 @@
     "assets/characters/tree.svg",
     "assets/characters/boss.svg",
     "assets/characters/zodiac-*.svg",
-    "js/auth.js"
+    "js/auth.js",
+    "data/speaking_review/toeic_opinion_template4.csv",
+    "data/speaking_review/toeic_opinion_paraphrase.csv",
+    "js/config.js"
   ],
-  "unchanged_policy": "No CSV files, GAS endpoint, authentication flow, TEST_CONFIG material definitions, Speaking Review answer logic, quiz render/check logic, correct-effect logic, history/localStorage keys, result screen logic, or GitHub Pages CSV loader logic were changed."
+  "unchanged_policy": "Existing CSVs, GAS endpoint, authentication flow, Speaking Review answer logic, quiz render/check logic, correct-effect logic, history/localStorage keys, and result screen logic were not changed. New materials reuse the existing cloze loader."
 }

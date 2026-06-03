@@ -158,6 +158,26 @@ const TEST_CONFIG = {
     review: true,
     description: "Speaking/Writingの誤りを、誤り発見→修正の2段階で直します。"
   },
+  opinionTemplate4: {
+    title: "TOEIC Opinion 4文テンプレ完成",
+    category: "toeic",
+    type: "cloze",
+    password: "2180",
+    defaultTime: 25,
+    path: "data/speaking_review/toeic_opinion_template4.csv",
+    review: true,
+    description: "短く正確に話すため、Opinionの4文テンプレに必要な表現を穴埋めで固定します。"
+  },
+  opinionParaphrase: {
+    title: "TOEIC Opinion 言い換え練習",
+    category: "toeic",
+    type: "cloze",
+    password: "2180",
+    defaultTime: 25,
+    path: "data/speaking_review/toeic_opinion_paraphrase.csv",
+    review: true,
+    description: "これまでの直訳・不自然表現を、自然なTOEIC S&W表現へ言い換えます。"
+  },
   phrasalVerbs: {
     title: "Phrasal Verbs / 実用チャンク",
     category: "toeic",

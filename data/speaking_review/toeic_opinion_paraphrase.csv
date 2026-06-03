@@ -1,0 +1,41 @@
+﻿id,section,prompt,answer,hint,explanation,points
+1,Opinion Paraphrase｜Productivity,Rewrite the unnatural expression naturally: “the productivity will be better”,productivity will improve,productivity + improve,「生産性が良くなる」は productivity will improve が自然。,1
+2,Opinion Paraphrase｜Benefit,Rewrite the unnatural expression naturally: “companies can get more benefits”,companies can improve productivity,get benefitsを避ける,効果を具体化して companies can improve productivity と言う。,1
+3,Opinion Paraphrase｜Conclusion,"Rewrite the unnatural expression naturally: “by online training, benefit both employees and companies”",online training can benefit both employees and companies,主語を入れる,benefitを動詞で使うなら主語が必要。,1
+4,Opinion Paraphrase｜Cost,Rewrite the unnatural expression naturally: “reduce the costs to pay for employees”,reduce travel expenses,reduce costs,交通費なら reduce travel expenses が自然。,1
+5,Opinion Paraphrase｜Breaks,Rewrite the unnatural expression naturally: “take short time breaks”,take short breaks,short breaks,「短い休憩を取る」は take short breaks。,1
+6,Opinion Paraphrase｜Workweek,Rewrite the unnatural expression naturally: “work for four days a week”,work four days a week,work + 日数,「週4日働く」は work four days a week。,1
+7,Opinion Paraphrase｜Stress,Rewrite the unnatural expression naturally: “make employees reduce their stress”,reduce employees’ stress,reduce stress,makeを使わず reduce employees’ stress。,1
+8,Opinion Paraphrase｜Opportunity,Rewrite the unnatural expression naturally: “more opportunity to learn”,more opportunities to learn,opportunities to V,more の後は opportunities が自然。,1
+9,Opinion Paraphrase｜Benefit,Rewrite the unnatural expression naturally: “provide benefit”,provide benefits,benefitの数,名詞で使うなら provide benefits。動詞なら benefit people。,1
+10,Opinion Paraphrase｜Perspective,Rewrite the unnatural expression naturally: “from the perspective of them”,for them,短く自然に,Speakingでは for them の方が自然。,1
+11,Opinion Paraphrase｜Homework,Rewrite the unnatural expression naturally: “less homeworks”,less homework,不可算名詞,homework は不可算名詞。,1
+12,Opinion Paraphrase｜Money,Rewrite the unnatural expression naturally: “save money to buy clothes”,save money on clothes,save money on,「服にかかるお金を節約」は save money on clothes。,1
+13,Opinion Paraphrase｜Homework,Rewrite the unnatural expression naturally: “score homework”,grade homework,grade homework,宿題を採点するは grade homework。,1
+14,Opinion Paraphrase｜Age,Rewrite the unnatural expression naturally: “at early age”,at an early age,冠詞,age は可算名詞なので an が必要。,1
+15,Opinion Paraphrase｜Exposure,Rewrite the unnatural expression naturally: “opportunity of acquire vocabulary”,opportunities to acquire vocabulary,opportunity to V,opportunity of V ではなく opportunities to V。,1
+16,Opinion Paraphrase｜Health,Rewrite the unnatural expression naturally: “control employees’ health”,support employees’ health,support health,control は強すぎるので support が自然。,1
+17,Opinion Paraphrase｜Meals,Rewrite the unnatural expression naturally: “healthy food to employees”,healthy meals for employees,meals for,会社の昼食なら healthy meals for employees。,1
+18,Opinion Paraphrase｜Teamwork,Rewrite the unnatural expression naturally: “more productivity of a certain time”,higher productivity,higher productivity,生産性が高いは higher productivity。,1
+19,Opinion Paraphrase｜Online meetings,Rewrite the unnatural expression naturally: “more easier”,easier,比較級,more + 比較級は避ける。easierだけでよい。,1
+20,Opinion Paraphrase｜Meetings,Rewrite the unnatural expression naturally: “benefit the procedure of meetings”,make meetings more efficient,make A efficient,会議を効率化するは make meetings more efficient。,1
+21,Opinion Paraphrase｜Working hours,Rewrite the unnatural expression naturally: “the final productivity would be better”,overall productivity will improve,overall productivity,全体の生産性は overall productivity。,1
+22,Opinion Paraphrase｜AI,Rewrite the unnatural expression naturally: “without caring for a working load”,without increasing employees’ workload,workload,負担を増やさずには without increasing employees’ workload。,1
+23,Opinion Paraphrase｜Vacation,Rewrite the unnatural expression naturally: “these relaxing time”,time to relax,time は不可算,time to relax が自然で使いやすい。,1
+24,Opinion Paraphrase｜Training,Rewrite the unnatural expression naturally: “make new employees increase their confidence”,help new employees increase their confidence,help 人 V,makeよりhelpの方が自然。,1
+25,Opinion Paraphrase｜Training,Rewrite the unnatural expression naturally: “reduce the failure by new employees”,reduce mistakes made by new employees,reduce mistakes,failureよりmistakesが自然。,1
+26,Opinion Paraphrase｜Casual clothes,Rewrite the unnatural expression naturally: “save money to buy uniforms”,save money on uniforms,save money on,制服代を節約は save money on uniforms。,1
+27,Opinion Paraphrase｜Public transportation,Rewrite the unnatural expression naturally: “business persons”,workers,workers,一般的には workers が安全。,1
+28,Opinion Paraphrase｜Public transportation,Rewrite the unnatural expression naturally: “make their flexibility better”,make it easier for them to commute,make it easier for 人 to V,抽象的なflexibilityより、通勤しやすいと具体化する。,1
+29,Opinion Paraphrase｜Smartphones,Rewrite the unnatural expression naturally: “This can lead to literacy”,This can improve digital literacy,improve literacy,literacy は improve digital literacy と言う。,1
+30,Opinion Paraphrase｜Smartphones,Rewrite the unnatural expression naturally: “less opportunity”,fewer opportunities,fewer + 可算名詞,opportunitiesは可算名詞なので fewer。,1
+31,Opinion Paraphrase｜Money,Rewrite the unnatural expression naturally: “limitation of time”,limited time,limited time,時間の制約は limited time。,1
+32,Opinion Paraphrase｜Money,Rewrite the unnatural expression naturally: “social study”,social studies,教科名,教科名は social studies。,1
+33,Opinion Paraphrase｜Meetings,Rewrite the unnatural expression naturally: “spend time doing other things”,spend more time on important tasks,important tasks,other thingsよりimportant tasksが具体的。,1
+34,Opinion Paraphrase｜Meetings,Rewrite the unnatural expression naturally: “current meeting room are a place”,use meeting rooms for team activities,use A for B,use meeting rooms for team activities と短く言う。,1
+35,Opinion Paraphrase｜Mental health,Rewrite the unnatural expression naturally: “mental support”,mental health support,mental health,今回のテーマでは mental health support。,1
+36,Opinion Paraphrase｜Mental health,Rewrite the unnatural expression naturally: “the person’s productivity”,employees’ productivity,一般論,一般論では employees’ productivity。,1
+37,Opinion Paraphrase｜Skills,Rewrite the unnatural expression naturally: “by this knowledge”,by using these skills,by using,知識・技能を使っては by using these skills。,1
+38,Opinion Paraphrase｜Breaks,Rewrite the unnatural expression naturally: “employees can get more benefit”,employees can work more efficiently,具体化,benefitを具体的な効果にする。,1
+39,Opinion Paraphrase｜Training,"Rewrite the unnatural expression naturally: “because, efficient”",because training becomes more efficient,S becomes 形容詞,形容詞だけで終わらず文を完成させる。,1
+40,Opinion Paraphrase｜Conclusion,Rewrite the unnatural expression naturally: “it is good to allow employees to take short breaks”,short breaks can benefit both employees and companies,結論を強く,最後は benefit both A and B で締める。,1

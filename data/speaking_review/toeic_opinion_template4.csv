@@ -1,0 +1,41 @@
+﻿id,section,prompt,answer,hint,explanation,points
+1,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should _____.,reduce the number of meetings,reduce + 名詞,「会議の数を減らす」は reduce the number of meetings。,1
+2,Opinion Template｜Reason 1,"Complete the blank: First, employees can spend more time on _____.",important tasks,important + tasks,other things より important tasks の方が具体的でTOEIC向き。,1
+3,Opinion Template｜Reason 2,"Complete the blank: Second, companies can reduce _____.",preparation time,reduce + 名詞,「準備時間を減らす」は reduce preparation time。,1
+4,Opinion Template｜Conclusion,"Complete the blank: For these reasons, reducing meetings can help employees _____.",work more efficiently,work + 副詞,「より効率的に働く」は work more efficiently。,1
+5,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should offer _____ for employees.,mental health support,mental health + support,mental support より mental health support が自然。,1
+6,Opinion Template｜Reason 1,"Complete the blank: First, this can reduce employees’ _____ and prevent burnout.",stress,reduce stress,「ストレスを減らす」は reduce stress。,1
+7,Opinion Template｜Reason 2,"Complete the blank: Second, employees can concentrate better on _____.",their work,concentrate on,concentrate on their work は仕事系Opinionで使える。,1
+8,Opinion Template｜Conclusion,"Complete the blank: For these reasons, mental health support can benefit both _____ and _____.",employees and companies,both A and B,benefit both employees and companies を固定する。,1
+9,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should give employees more _____ to learn new skills.,opportunities,opportunities to V,more opportunity ではなく more opportunities。,1
+10,Opinion Template｜Reason 1,"Complete the blank: First, employees can improve their skills and work more _____.",effectively,work effectively,「効果的に働く」は work effectively。,1
+11,Opinion Template｜Example,"Complete the blank: For example, if they learn data science, they can analyze _____.",business data,business data,dataだけでなく business data と具体化すると自然。,1
+12,Opinion Template｜Conclusion,"Complete the blank: For these reasons, giving employees opportunities to learn can _____ both employees and companies.",benefit,benefit + 目的語,provide benefit より benefit を動詞で使う。,1
+13,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should allow employees to take _____.,short breaks,take short breaks,take short time breaks ではなく take short breaks。,1
+14,Opinion Template｜Reason 1,"Complete the blank: First, short breaks can help employees _____.",refresh themselves,refresh oneself,休憩の効果は refresh themselves で表せる。,1
+15,Opinion Template｜Reason 2,"Complete the blank: Second, short breaks can prevent mistakes caused by _____.",tiredness,caused by,疲れによるミスは mistakes caused by tiredness。,1
+16,Opinion Template｜Conclusion,"Complete the blank: For these reasons, short breaks can improve _____.",productivity,improve productivity,productivity will be better より improve productivity。,1
+17,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should let employees work _____ days a week.,four,work four days a week,work for four days ではなく work four days a week。,1
+18,Opinion Template｜Reason 1,"Complete the blank: First, employees can have more time _____.",to rest,time to V,have more breaks より have more time to rest が自然。,1
+19,Opinion Template｜Reason 2,"Complete the blank: Second, a four-day workweek can improve _____.",work-life balance,work-life balance,働き方系では work-life balance が強い表現。,1
+20,Opinion Template｜Conclusion,"Complete the blank: For these reasons, a four-day workweek can benefit both employees and _____.",companies,benefit both A and B,結論は benefit both employees and companies に固定。,1
+21,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should use _____ training instead of face-to-face training.,online,online training,オンライン研修は online training。,1
+22,Opinion Template｜Reason 1,"Complete the blank: First, companies can save time and reduce _____.",costs,reduce costs,reduce the costs to pay for employees より reduce costs。,1
+23,Opinion Template｜Reason 2,"Complete the blank: Second, employees can learn from _____.",anywhere,from anywhere,場所に関係なく学べるは learn from anywhere。,1
+24,Opinion Template｜Conclusion,"Complete the blank: For these reasons, online training can make training more _____.",efficient,make A efficient,efficient だけで終わらず make training more efficient とする。,1
+25,Opinion Template｜Opening,Complete the blank: I agree with the opinion that companies should give employees regular _____ on their work.,feedback,give feedback,仕事へのフィードバックは give employees feedback on their work。,1
+26,Opinion Template｜Reason 1,"Complete the blank: First, feedback helps employees know what they need to _____.",improve,need to V,what they need to improve は高頻度の型。,1
+27,Opinion Template｜Reason 2,"Complete the blank: Second, feedback can reduce _____.",mistakes,reduce mistakes,失敗ではなく mistakes を使う。,1
+28,Opinion Template｜Conclusion,"Complete the blank: For these reasons, regular feedback can improve employees’ _____.",performance,improve performance,performance は仕事の成果を表す自然な語。,1
+29,Opinion Template｜Opening,Complete the blank: I agree with the opinion that public transportation should be free for _____.,everyone,for everyone,公共交通無料化の基本表現。,1
+30,Opinion Template｜Reason 1,"Complete the blank: First, free public transportation can help people travel without worrying about _____.",transportation costs,transportation costs,交通費は transportation costs。,1
+31,Opinion Template｜Reason 2,"Complete the blank: Second, it can make it easier for workers _____.",to commute,make it easier for 人 to V,通勤しやすくするは make it easier for workers to commute。,1
+32,Opinion Template｜Conclusion,"Complete the blank: For these reasons, free public transportation can make daily life more _____.",convenient,make life convenient,生活を便利にするは make daily life more convenient。,1
+33,Opinion Template｜Opening,Complete the blank: I agree with the opinion that students should use smartphones in class for _____.,learning,for learning,問題文に合わせて for learning。,1
+34,Opinion Template｜Reason 1,"Complete the blank: First, students can quickly look up information on their _____.",smartphones,look up information on,スマホで調べるは look up information on smartphones。,1
+35,Opinion Template｜Reason 2,"Complete the blank: Second, students can learn how to use digital tools _____.",properly,use A properly,デジタルツールを適切に使うは use digital tools properly。,1
+36,Opinion Template｜Conclusion,"Complete the blank: For these reasons, smartphones can support students’ learning when used _____.",appropriately,when used appropriately,反論されやすいテーマでは when used appropriately が有効。,1
+37,Opinion Template｜Opening,Complete the blank: I agree with the opinion that schools should teach students how to _____ money.,manage,manage money,お金を管理するは manage money。,1
+38,Opinion Template｜Reason 1,"Complete the blank: First, students need to manage money by themselves after they graduate from _____.",school,graduate from school,一般的には from school。,1
+39,Opinion Template｜Reason 2,"Complete the blank: Second, some parents do not have enough time to teach their children about _____.",money,about money,teach children about money が自然。,1
+40,Opinion Template｜Conclusion,"Complete the blank: For these reasons, learning how to manage money is useful for students’ future _____.",lives,future lives,将来の生活は future lives。,1
