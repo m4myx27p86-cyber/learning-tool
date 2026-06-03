@@ -174,8 +174,9 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 30,
-    path: "data/english_theory/chapter3_theory.csv",
-    description: "SLA Chapter 3 の重要概念を四択で確認します。"
+    path: "data/english_theory/sla_theory_map.csv",
+    review: true,
+    description: "SLA Chapter 3・Chapter 5 の重要概念を四択で確認します。"
   },
   statisticsQuestions: {
     title: "統計：基礎概念確認",
