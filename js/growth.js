@@ -63,8 +63,32 @@ function getDailyZodiacLevel(todayCorrectCount) {
   return getDailyZodiacLevelInfo(todayCorrectCount).level;
 }
 
+function getTreeLevelInfo(correctCount) {
+  const count = Math.max(0, Number(correctCount || 0));
+  const thresholds = [0, 5, 15, 30, 60, 100, 160, 250, 380, 550, 750, 1000];
+  let level = 1;
+  for (let i = 1; i < thresholds.length; i++) {
+    if (count >= thresholds[i]) level = i + 1;
+  }
+  const currentBase = thresholds[level - 1] || 0;
+  const nextTarget = thresholds[level] || null;
+  const remaining = nextTarget ? Math.max(0, nextTarget - count) : 0;
+  const progress = nextTarget
+    ? Math.min(100, Math.max(count > 0 ? 6 : 0, Math.round(((count - currentBase) / Math.max(1, nextTarget - currentBase)) * 100)))
+    : 100;
+  return {
+    level,
+    maxLevel: thresholds.length,
+    nextTarget,
+    remaining,
+    progress,
+    isMaxLevel: !nextTarget,
+    maxTarget: thresholds[thresholds.length - 1]
+  };
+}
+
 function getTreeLevel(correctCount) {
-  return Math.max(1, Math.floor(Number(correctCount || 0) / 25) + 1);
+  return getTreeLevelInfo(correctCount).level;
 }
 
 function renderGrowthHome() {
@@ -79,11 +103,10 @@ function renderGrowthHome() {
   const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
   const days = new Set(history.map(item => item.dateKey).filter(Boolean)).size;
   const stage = getGrowthStage(correctCount);
-  const treeLevel = getTreeLevel(correctCount);
-  const nextTargets = [1, 30, 100, 250, 500, 1000];
-  const nextTarget = nextTargets.find(target => target > correctCount) || correctCount;
-  const remaining = Math.max(0, nextTarget - correctCount);
-  const rootPercent = Math.min(100, Math.round((correctCount / Math.max(nextTarget, 1)) * 100));
+  const treeLevelInfo = getTreeLevelInfo(correctCount);
+  const treeLevel = treeLevelInfo.level;
+  const remaining = treeLevelInfo.remaining;
+  const rootPercent = treeLevelInfo.progress;
   const zodiac = getZodiacInfo();
   const zodiacLevelInfo = getDailyZodiacLevelInfo(todayCorrect);
   const zodiacLevel = zodiacLevelInfo.level;
@@ -104,7 +127,7 @@ function renderGrowthHome() {
         <h3>通算の木と本日の十二支</h3>
         <p>通算では木が育ち、日替わりでは十二支キャラが育ちます。継続・復習・正解の積み重ねを、画面上で見える化します。</p>
       </div>
-      <div class="growth-level-badge">木 Lv.${treeLevel}</div>
+      <div class="growth-level-badge">木 Lv.${treeLevel} / Max ${treeLevelInfo.maxLevel}</div>
     </div>
 
     <div class="growth-dashboard-grid">
@@ -123,7 +146,7 @@ function renderGrowthHome() {
             <span class="root root-c"></span>
           </div>
         </div>
-        <p class="growth-next">次の成長まであと <strong>${remaining}</strong> 正解</p>
+        <p class="growth-next">${treeLevelInfo.isMaxLevel ? `最大レベル達成：${treeLevelInfo.maxTarget}正解到達` : `次の成長まであと <strong>${remaining}</strong> 正解`}</p>
       </article>
 
       <article class="daily-zodiac-panel zodiac-${characterMood}">

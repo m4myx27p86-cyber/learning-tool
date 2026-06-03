@@ -470,3 +470,116 @@
     margin: 0 auto;
   }
 }
+
+
+/* =========================================================
+   2026-06-03 Material screen final compact patch
+   - ボスは挑戦可能時だけ最上部バナーとして表示
+   - 問題一覧ボタンをPractice Settings内に配置
+   - 1画面に近づけるため、PC/タブレットは2カラム、スマホは圧縮
+========================================================= */
+.practice-settings-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.practice-settings-topline #settingReviewListToggleButton {
+  min-height: 40px !important;
+  min-width: 132px;
+  margin: 0 !important;
+}
+.integrated-review-head #settingReviewListToggleButton { display: none !important; }
+.boss-top-banner.hidden { display: none !important; }
+.boss-character-img {
+  display: block;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  filter: drop-shadow(0 10px 14px rgba(15,23,42,.16));
+}
+.boss-top-banner .boss-character {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+.boss-top-banner.boss-ready {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  border: 2px solid #f59e0b !important;
+  background:
+    radial-gradient(circle at 86% 18%, rgba(254, 240, 138, .55), transparent 26%),
+    linear-gradient(135deg, #fff7ed, #fef3c7 45%, #eef2ff) !important;
+}
+.boss-top-banner.boss-ready .boss-character-img { animation: bossFloatTiny 1.8s ease-in-out infinite; }
+@media (min-width: 981px) {
+  .material-unified-screen { max-width: min(1180px, calc(100vw - 36px)); }
+  .unified-material-head {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    gap: 14px;
+    align-items: center;
+    padding-bottom: 10px !important;
+    margin-bottom: 8px !important;
+  }
+  #settingTitle { font-size: clamp(26px, 3.1vw, 38px) !important; }
+  #settingDescription { margin-top: 4px !important; }
+  .integrated-setting-review-card {
+    grid-template-columns: minmax(300px, .95fr) minmax(360px, 1.05fr) !important;
+    grid-template-areas:
+      "head head"
+      "status settings"
+      "conditions conditions"
+      "actions actions"
+      "insight insight" !important;
+    gap: 12px !important;
+    padding: 16px !important;
+  }
+  .integrated-review-head { padding: 12px 14px !important; }
+  .integrated-review-head h3 { margin: 4px 0 !important; }
+  .integrated-review-head .muted { margin-top: 4px !important; }
+  .integrated-status-grid, .integrated-settings-block { padding: 14px !important; }
+  .integrated-status-grid > div:first-child { min-height: 158px !important; padding: 10px !important; }
+  .integrated-status-grid .plant-visual { width: 150px !important; height: 138px !important; }
+  .setting-plant-message { font-size: 14px !important; line-height: 1.45 !important; }
+  .compact-donut { width: 112px !important; height: 112px !important; }
+  .compact-donut span { font-size: 34px !important; }
+  .setting-review-counts div { min-height: 56px !important; border-radius: 16px !important; padding: 7px !important; }
+  .integrated-settings-grid label { min-height: 66px !important; padding: 8px !important; gap: 5px !important; }
+  .integrated-settings-grid select, .integrated-settings-grid input { min-height: 38px !important; }
+  .integrated-start-actions #startButton { min-height: 46px !important; font-size: 16px !important; }
+  .setting-review-conditions { padding: 12px !important; }
+  .setting-review-conditions summary { font-size: 17px !important; }
+  .review-condition-note { margin: 4px 0 8px !important; }
+  .setting-filter-grid { grid-template-columns: repeat(5, minmax(90px, 1fr)) !important; gap: 8px !important; }
+  .setting-filter-grid label { min-height: 38px !important; padding: 8px !important; }
+  .integrated-review-actions button { min-height: 50px !important; font-size: 16px !important; }
+  .compact-insight-card { margin-top: 8px !important; padding: 12px !important; }
+}
+@media (max-width: 720px) {
+  .practice-settings-topline { display: grid; grid-template-columns: 1fr; justify-items: stretch; }
+  .practice-settings-topline .panel-label { justify-self: center; }
+  .practice-settings-topline #settingReviewListToggleButton { width: 100%; }
+  .unified-material-head { padding-bottom: 8px !important; margin-bottom: 8px !important; }
+  #settingTitle { font-size: clamp(24px, 7vw, 32px) !important; }
+  #settingDescription { font-size: 13px !important; }
+  .integrated-setting-review-card {
+    grid-template-areas:
+      "head"
+      "status"
+      "settings"
+      "conditions"
+      "actions"
+      "insight" !important;
+    gap: 10px !important;
+    padding: 12px !important;
+  }
+  .integrated-review-head { padding: 12px !important; }
+  .integrated-status-grid, .integrated-settings-block { padding: 12px !important; }
+  .integrated-status-grid .plant-visual { width: 132px !important; height: 124px !important; }
+  .compact-donut { width: 108px !important; height: 108px !important; }
+  .setting-filter-grid label { min-height: 40px !important; }
+  .boss-character-img { width: 78px; height: 78px; }
+}

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="知識の木">
+  <defs>
+    <linearGradient id="sky" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="#ecfeff"/><stop offset="1" stop-color="#f0fdf4"/></linearGradient>
+    <linearGradient id="leaf" x1="0" x2="1"><stop offset="0" stop-color="#86efac"/><stop offset="1" stop-color="#16a34a"/></linearGradient>
+    <linearGradient id="trunk" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#a16207"/><stop offset="1" stop-color="#7c2d12"/></linearGradient>
+  </defs>
+  <rect x="14" y="14" width="152" height="152" rx="34" fill="url(#sky)" stroke="#bfdbfe" stroke-width="3"/>
+  <path d="M90 78v62" stroke="url(#trunk)" stroke-width="16" stroke-linecap="round"/>
+  <ellipse cx="66" cy="64" rx="32" ry="26" fill="url(#leaf)"/>
+  <ellipse cx="96" cy="53" rx="38" ry="30" fill="#22c55e"/>
+  <ellipse cx="122" cy="70" rx="30" ry="24" fill="#15803d"/>
+  <circle cx="79" cy="69" r="4" fill="#052e16"/><circle cx="105" cy="69" r="4" fill="#052e16"/>
+  <path d="M80 84c7 7 22 7 29 0" fill="none" stroke="#052e16" stroke-width="4" stroke-linecap="round"/>
+  <path d="M62 140h56c15 0 24-10 24-24v-7H38v7c0 14 9 24 24 24z" fill="#b45309"/>
+  <path d="M90 130v-28M90 130l-22-22M90 130l22-22" stroke="#fde68a" stroke-width="4" stroke-linecap="round"/>
+</svg>

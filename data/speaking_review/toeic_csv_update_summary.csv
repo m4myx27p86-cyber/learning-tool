@@ -1,5 +1,0 @@
-﻿file,rows,main_changes
-toeic_error_correction_updated.csv,500,現在のチャットで出た誤りに基づき、Photo/Responding/Opinion/E-mailの4セクションを同じ問題数で差し替え
-toeic_speaking_review_cloze_updated.csv,130,穴埋め復習を現在の誤りチャンク中心に差し替え
-toeic_speaking_review_sentence_updated.csv,130,語順並び替え復習を現在の誤りチャンク中心に差し替え
-phrasal_verbs_updated.csv,12,TOEICビジネス場面で使った動作チャンクに差し替え

@@ -49,8 +49,10 @@ function getFilteredLocalReviewStatuses(statuses, settings = getLocalReviewSetti
 }
 
 function renderSettingReviewInsight(statuses, config) {
+  const settingPanel = document.getElementById("settingReviewPanel");
+  const single = document.querySelector(".unified-material-single");
   const insight = document.getElementById("settingReviewInsightArea");
-  if (!insight) return;
+  if (!settingPanel && !insight) return;
   const weak = statuses.filter(item => item.status === "review").slice(0, 3);
   const mastered = statuses.filter(item => item.status === "mastered").length;
   const total = statuses.length;
@@ -151,11 +153,13 @@ function startSettingReviewQuiz(mode = "review") {
 
 function ensureBossBattleArea() {
   if (document.getElementById("bossBattleArea")) return;
+  const settingPanel = document.getElementById("settingReviewPanel");
+  const single = document.querySelector(".unified-material-single");
   const insight = document.getElementById("settingReviewInsightArea");
-  if (!insight) return;
+  if (!settingPanel && !insight) return;
   const area = document.createElement("div");
   area.id = "bossBattleArea";
-  area.className = "boss-battle-card hidden";
+  area.className = "boss-battle-card boss-top-banner hidden";
   area.innerHTML = `
     <div class="boss-info">
       <span class="panel-label">Boss Battle</span>
@@ -166,7 +170,11 @@ function ensureBossBattleArea() {
     <div class="boss-character" aria-hidden="true">👾</div>
     <button id="bossBattleButton" class="secondary-button" type="button">ボスに挑戦</button>
   `;
-  insight.parentNode.insertBefore(area, insight);
+  if (single && settingPanel) {
+    single.insertBefore(area, settingPanel);
+  } else {
+    insight.parentNode.insertBefore(area, insight);
+  }
 }
 
 function getBossKey(type = testType) {

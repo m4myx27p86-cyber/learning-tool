@@ -1,26 +1,27 @@
 {
-  "version": "split-target-boss-fix-20260531",
-  "split_css_concat_sha256": "e6d77b502e0a39e6ea62f0b1f83a5da36b54ff5364718f3496585102f726effd",
+  "version": "mockup-aligned-v3-20260603",
+  "split_css_concat_sha256": "9acf099c5a82c22b2ce394e0ee8ea8a564456c94eb6f06177fa5e2896034361f",
   "style_css_sha256": "d14868a7e715caa4f7495969b42c21a8fa32e4056325c7842b3ca9a90f329572",
-  "split_js_concat_sha256": "7bbd37c60627ca6774619d7a7feedd0bebee081d2572818ab23ba1e6ac905125",
-  "script_js_sha256": "d021b40f7c9686cb21502f1633b5239ae721cbf15a4e4b8cbe69304e24eca43f",
+  "split_js_concat_sha256": "8abec08c32f2f273e4e34a34a9f46c98b57bfa5441fa1d70fd1c25f867210a4f",
+  "script_js_sha256": "1323e38e8572ecd7ec88cb09ccdbb5fdc70a7c7bd330699ce28c23304eefae47",
   "css_files_count": 19,
   "js_files_count": 23,
-  "last_update": "target_panel_removal_and_boss_layout_fix_2026-05-31",
+  "last_update": "mockup_aligned_home_material_screen_restore_session_2026-06-03",
   "node_check": "ok",
   "changed_scope": [
-    "index.html: removed the quest-target-panel block and updated css/material-screen-brushup.css cache-bust query",
-    "css/material-screen-brushup.css: changed integrated material grid areas from target-based layout to a 2-column layout with full-width boss area",
-    "css/material-screen-brushup.css: added display:none fallback for .quest-target-panel in case older HTML is cached",
-    "css/material-screen-brushup.css: made #bossBattleArea full-width, gave it an explicit grid-area, and allowed #bossBattleButton text to wrap safely",
-    "style.css: added the same monolithic fallback CSS patch"
+    "main.js: restore saved session to menu screen after reload",
+    "js/auth.js: restoreSession reads saved session again; auto return is controlled from main.js",
+    "js/game-ui-override.js: mockup-aligned home and material screen layout enhancer without continuous MutationObserver",
+    "js/materials.js: material cards now include local character images and progress layout",
+    "css/game-ui-override.css: final mockup-aligned responsive layout for home/material/material screen",
+    "index.html: cache-busting query strings updated for modified files"
   ],
   "unchanged_checklist": [
-    "ログイン画面・管理者ログイン 9999 は未変更",
-    "教材カテゴリ TOEIC / TOEFL / 高校英語 / 英検 / 古文 / 教師用 は未変更",
-    "ポラリス3・Speaking Review の開始/出題ロジックは未変更",
-    "四択・語順並べ替え・穴埋め・一語ずつ採点・結果表示は未変更",
-    "ボス戦の解放条件、50問ごとの判定、間違えた問題から5問を出すロジックは未変更",
-    "GAS URL と送信処理、CSV/教材データは未変更"
+    "ログイン判定・管理者ログイン9999の基本処理は維持",
+    "GAS URL と送信処理は未変更",
+    "CSV読み込み処理は未変更",
+    "Speaking Review の出題・採点処理は未変更",
+    "正解エフェクト・履歴保存ロジックは未変更",
+    "教材カテゴリ・教材キーは未変更"
   ]
 }

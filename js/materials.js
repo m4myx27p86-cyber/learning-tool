@@ -76,6 +76,17 @@ function renderMaterialCategories() {
   document.querySelectorAll("[data-action='history']").forEach(button => button.addEventListener("click", openHistoryScreen));
 }
 
+
+function getMaterialCharacterFile(type) {
+  if (["speakingReview", "speakingReviewCloze", "phrasalVerbs"].includes(type)) return "tree.svg";
+  if (["speakingErrorCorrection", "monitor", "eikenConnectors"].includes(type)) return "zodiac-寅.svg";
+  if (["vocab", "sokudokuVocab", "target1900Vocab", "polaris3"].includes(type)) return "tree.svg";
+  if (["sentence", "writingTheoryChapter4", "writingTheoryMap"].includes(type)) return "zodiac-卯.svg";
+  if (["englishTheory", "statisticsQuestions", "presentationBuilderTasks"].includes(type)) return "zodiac-申.svg";
+  if (String(type || "").startsWith("classical")) return "zodiac-辰.svg";
+  return "tree.svg";
+}
+
 function materialCardHtml(type) {
   const config = TEST_CONFIG[type];
   const categoryLabel = CATEGORY_INFO[config.category]?.label || config.category;
@@ -86,15 +97,21 @@ function materialCardHtml(type) {
   const level = Math.max(1, Math.floor(correct / 20) + 1);
   const progress = Math.min(100, (correct % 20) * 5);
   const progressLabel = total ? `${accuracy}% / ${total}問` : "未学習";
+  const characterFile = getMaterialCharacterFile(type);
   return `
     <div class="material-card-wrap">
       <button class="material-card" data-material="${escapeHtml(type)}">
-        <span>${escapeHtml(categoryLabel)}</span>
-        <strong>${escapeHtml(config.title)}</strong>
-        <small>${escapeHtml(config.description || "")}</small>
-        <div class="material-card-progress" aria-label="教材進捗">
-          <b>Lv.${level}</b><em>${escapeHtml(progressLabel)}</em>
-          <i><u style="width:${progress}%"></u></i>
+        <div class="material-card-main">
+          <div>
+            <span class="material-tag">${escapeHtml(categoryLabel)}</span>
+            <strong class="material-title">${escapeHtml(config.title)}</strong>
+            <small>${escapeHtml(config.description || "")}</small>
+            <div class="material-card-progress" aria-label="教材進捗">
+              <b>Lv.${level}</b><i><u style="width:${progress}%"></u></i><em>${escapeHtml(progressLabel)}</em>
+            </div>
+          </div>
+          <img class="material-card-character" src="assets/characters/${escapeHtml(characterFile)}" alt="" loading="lazy" aria-hidden="true">
+          <span class="material-card-arrow" aria-hidden="true">›</span>
         </div>
       </button>
     </div>

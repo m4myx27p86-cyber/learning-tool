@@ -663,33 +663,69 @@ function renderGameHomeHero() {
   const history = getCurrentStudentHistory();
   const todayKey = getDateKey(new Date());
   const today = history.filter(item => item.dateKey === todayKey);
+  const todayCorrect = today.filter(item => item.correct).length;
   const correct = history.filter(item => item.correct).length;
   const total = history.length;
-  const level = Math.max(1, Math.floor(correct / 25) + 1);
-  const nextNeed = 25 - (correct % 25 || 25);
-  const rank = level >= 8 ? "Master Learner" : level >= 4 ? "Quest Learner" : "New Adventurer";
-  const xpPercent = Math.min(100, (correct % 25) * 4);
+  const days = new Set(history.map(item => item.dateKey).filter(Boolean)).size;
+  const streakInfo = getProtectedStreakInfo();
+  const tree = getTreeLevelInfo(correct);
+  const treeStage = getGrowthStage(correct);
+  const zodiac = getZodiacInfo();
+  const zodiacLevelInfo = getDailyZodiacLevelInfo(todayCorrect);
+  const bossStep = 50;
+  const nextBossAt = Math.max(bossStep, (Math.floor(total / bossStep) + 1) * bossStep);
+  const bossRemain = Math.max(0, nextBossAt - total);
+  const bossProgress = Math.min(100, Math.round((total % bossStep) / bossStep * 100));
+  const rank = tree.level >= 10 ? "Master Learner" : tree.level >= 5 ? "Quest Learner" : "New Adventurer";
+  const treeNextText = tree.isMaxLevel ? "最大Lv.達成" : `次のLv.まで ${tree.remaining}正解`;
+  const zodiacNextText = zodiacLevelInfo.isMaxLevel ? "本日の最高Lv." : `次のLv.まで ${zodiacLevelInfo.remaining}問`;
 
   area.innerHTML = `
-    <div class="game-hero-copy">
-      <span class="panel-label">AI Learning Tool</span>
+    <div class="game-hero-copy compact-home-copy">
+      <span class="panel-label">AI Learning Quest</span>
       <h3>今日のLearning Quest</h3>
-      <p>このホームは、ゲームのような達成感を足しながら、点数だけでなく「使える知識」「復習」「継続」を見える化するためのオリジナル設計です。</p>
-      <div class="hero-action-row">
+      <p>木・十二支・ボスで、通算の成長・今日の学習・次の挑戦を一画面で確認できます。</p>
+      <div class="hero-action-row compact-home-actions">
         <button id="heroMaterialButton" type="button">教材へ</button>
-        <span class="hero-rank">Lv.${level} / ${escapeHtml(rank)}</span>
+        <button id="heroCalendarButton" class="secondary-button" type="button">カレンダー</button>
+        <span class="hero-rank">Lv.${tree.level} / ${escapeHtml(rank)}</span>
       </div>
     </div>
-    <div class="quest-status-card">
-      <span>Today</span>
-      <strong>${today.length}問</strong>
-      <small>次のレベルまで ${nextNeed} 正解</small>
-      <div class="quest-xp"><i style="width:${xpPercent}%"></i></div>
-      <p>${total ? `累計 ${total}問・正解 ${correct}問` : "まずは1問から始められます。"}</p>
+    <div class="compact-quest-board" aria-label="学習クエスト状況">
+      <article class="quest-mini-card quest-tree-mini">
+        <span>木</span>
+        <div class="mini-tree-icon plant-stage-${treeStage}" aria-hidden="true"><i></i><b></b><em></em></div>
+        <strong>木 Lv.${tree.level}</strong>
+        <small>${escapeHtml(treeNextText)}</small>
+        <div class="quest-xp"><i style="width:${tree.progress}%"></i></div>
+      </article>
+      <article class="quest-mini-card quest-zodiac-mini">
+        <span>十二支</span>
+        <div class="mini-zodiac-icon" aria-hidden="true">${zodiac.icon}</div>
+        <strong>${zodiac.key} Lv.${zodiacLevelInfo.level}</strong>
+        <small>${escapeHtml(zodiacNextText)}</small>
+        <div class="quest-xp"><i style="width:${zodiacLevelInfo.progress}%"></i></div>
+      </article>
+      <article class="quest-mini-card quest-boss-mini">
+        <span>ボス</span>
+        <div class="mini-boss-icon" aria-hidden="true">👾</div>
+        <strong>Boss Lv.${Math.max(1, Math.floor(total / bossStep) + 1)}</strong>
+        <small>挑戦まであと${bossRemain}問</small>
+        <div class="quest-xp"><i style="width:${bossProgress}%"></i></div>
+      </article>
+    </div>
+    <div class="compact-home-meta">
+      <span>今日 ${today.length}問</span>
+      <span>通算 ${total}問</span>
+      <span>${days}学習日</span>
+      <span>${streakInfo.count || 0}日連続</span>
     </div>`;
 
   document.getElementById("heroMaterialButton")?.addEventListener("click", () => {
     document.getElementById("materialShelf")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  document.getElementById("heroCalendarButton")?.addEventListener("click", () => {
+    document.getElementById("learningCalendarHomeArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -2825,8 +2861,32 @@ function getDailyZodiacLevel(todayCorrectCount) {
   return getDailyZodiacLevelInfo(todayCorrectCount).level;
 }
 
+function getTreeLevelInfo(correctCount) {
+  const count = Math.max(0, Number(correctCount || 0));
+  const thresholds = [0, 5, 15, 30, 60, 100, 160, 250, 380, 550, 750, 1000];
+  let level = 1;
+  for (let i = 1; i < thresholds.length; i++) {
+    if (count >= thresholds[i]) level = i + 1;
+  }
+  const currentBase = thresholds[level - 1] || 0;
+  const nextTarget = thresholds[level] || null;
+  const remaining = nextTarget ? Math.max(0, nextTarget - count) : 0;
+  const progress = nextTarget
+    ? Math.min(100, Math.max(count > 0 ? 6 : 0, Math.round(((count - currentBase) / Math.max(1, nextTarget - currentBase)) * 100)))
+    : 100;
+  return {
+    level,
+    maxLevel: thresholds.length,
+    nextTarget,
+    remaining,
+    progress,
+    isMaxLevel: !nextTarget,
+    maxTarget: thresholds[thresholds.length - 1]
+  };
+}
+
 function getTreeLevel(correctCount) {
-  return Math.max(1, Math.floor(Number(correctCount || 0) / 25) + 1);
+  return getTreeLevelInfo(correctCount).level;
 }
 
 function renderGrowthHome() {
@@ -2841,11 +2901,10 @@ function renderGrowthHome() {
   const accuracy = total ? Math.round((correctCount / total) * 100) : 0;
   const days = new Set(history.map(item => item.dateKey).filter(Boolean)).size;
   const stage = getGrowthStage(correctCount);
-  const treeLevel = getTreeLevel(correctCount);
-  const nextTargets = [1, 30, 100, 250, 500, 1000];
-  const nextTarget = nextTargets.find(target => target > correctCount) || correctCount;
-  const remaining = Math.max(0, nextTarget - correctCount);
-  const rootPercent = Math.min(100, Math.round((correctCount / Math.max(nextTarget, 1)) * 100));
+  const treeLevelInfo = getTreeLevelInfo(correctCount);
+  const treeLevel = treeLevelInfo.level;
+  const remaining = treeLevelInfo.remaining;
+  const rootPercent = treeLevelInfo.progress;
   const zodiac = getZodiacInfo();
   const zodiacLevelInfo = getDailyZodiacLevelInfo(todayCorrect);
   const zodiacLevel = zodiacLevelInfo.level;
@@ -2866,7 +2925,7 @@ function renderGrowthHome() {
         <h3>通算の木と本日の十二支</h3>
         <p>通算では木が育ち、日替わりでは十二支キャラが育ちます。継続・復習・正解の積み重ねを、画面上で見える化します。</p>
       </div>
-      <div class="growth-level-badge">木 Lv.${treeLevel}</div>
+      <div class="growth-level-badge">木 Lv.${treeLevel} / Max ${treeLevelInfo.maxLevel}</div>
     </div>
 
     <div class="growth-dashboard-grid">
@@ -2885,7 +2944,7 @@ function renderGrowthHome() {
             <span class="root root-c"></span>
           </div>
         </div>
-        <p class="growth-next">次の成長まであと <strong>${remaining}</strong> 正解</p>
+        <p class="growth-next">${treeLevelInfo.isMaxLevel ? `最大レベル達成：${treeLevelInfo.maxTarget}正解到達` : `次の成長まであと <strong>${remaining}</strong> 正解`}</p>
       </article>
 
       <article class="daily-zodiac-panel zodiac-${characterMood}">
@@ -3053,8 +3112,10 @@ function getFilteredLocalReviewStatuses(statuses, settings = getLocalReviewSetti
 }
 
 function renderSettingReviewInsight(statuses, config) {
+  const settingPanel = document.getElementById("settingReviewPanel");
+  const single = document.querySelector(".unified-material-single");
   const insight = document.getElementById("settingReviewInsightArea");
-  if (!insight) return;
+  if (!settingPanel && !insight) return;
   const weak = statuses.filter(item => item.status === "review").slice(0, 3);
   const mastered = statuses.filter(item => item.status === "mastered").length;
   const total = statuses.length;
@@ -3155,11 +3216,13 @@ function startSettingReviewQuiz(mode = "review") {
 
 function ensureBossBattleArea() {
   if (document.getElementById("bossBattleArea")) return;
+  const settingPanel = document.getElementById("settingReviewPanel");
+  const single = document.querySelector(".unified-material-single");
   const insight = document.getElementById("settingReviewInsightArea");
-  if (!insight) return;
+  if (!settingPanel && !insight) return;
   const area = document.createElement("div");
   area.id = "bossBattleArea";
-  area.className = "boss-battle-card hidden";
+  area.className = "boss-battle-card boss-top-banner hidden";
   area.innerHTML = `
     <div class="boss-info">
       <span class="panel-label">Boss Battle</span>
@@ -3170,7 +3233,11 @@ function ensureBossBattleArea() {
     <div class="boss-character" aria-hidden="true">👾</div>
     <button id="bossBattleButton" class="secondary-button" type="button">ボスに挑戦</button>
   `;
-  insight.parentNode.insertBefore(area, insight);
+  if (single && settingPanel) {
+    single.insertBefore(area, settingPanel);
+  } else {
+    insight.parentNode.insertBefore(area, insight);
+  }
 }
 
 function getBossKey(type = testType) {

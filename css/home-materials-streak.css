@@ -276,3 +276,21 @@
   .result-summary-grid { grid-template-columns: 1fr; }
 }
 
+
+/* 2026-06-03 home compact calendar/material shelf patch */
+.home-learning-calendar {
+  margin: 12px 0 16px;
+  padding: clamp(14px, 2.5vw, 20px);
+}
+.home-learning-calendar .calendar-copy h3 { font-size: clamp(19px, 2.4vw, 26px); }
+.home-learning-calendar .calendar-copy p { font-size: 13px; line-height: 1.6; }
+.mini-calendar-grid { gap: 6px; }
+.mini-day { min-height: 56px; border-radius: 14px; }
+.mini-day strong { font-size: 16px; }
+.section-title-row { margin: 18px 0 12px; }
+.material-shelf { scroll-margin-top: 10px; }
+@media (orientation: landscape) and (max-height: 620px) {
+  .home-learning-calendar { padding: 12px; }
+  .mini-day { min-height: 46px; }
+  .calendar-copy p { display: none; }
+}

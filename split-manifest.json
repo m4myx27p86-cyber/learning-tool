@@ -1,6 +1,6 @@
 {
-  "version": "split-target-boss-fix-20260531",
-  "note": "Split management version: removed the Target explanation panel from the material screen and fixed the Boss Battle card layout so it no longer collapses or clips disabled text. Only index/CSS layout files were changed.",
+  "version": "mockup-aligned-v3-20260603",
+  "note": "Mockup-aligned v3: restores saved-session auto return, unifies tree character, integrates review conditions into Practice Settings, and fixes crushed auto-next label with responsive two-column settings.",
   "css_files": [
     "css/base.css",
     "css/access-category-writing.css",
@@ -20,7 +20,8 @@
     "css/eye-friendly-interactions.css",
     "css/correct-effect-luxury.css",
     "css/polaris-full-visibility.css",
-    "css/material-screen-brushup.css"
+    "css/material-screen-brushup.css",
+    "css/game-ui-override.css"
   ],
   "js_files": [
     "js/config.js",
@@ -45,16 +46,21 @@
     "js/local-review.js",
     "js/calendar.js",
     "js/dashboard-streak.js",
-    "js/utils.js"
+    "js/utils.js",
+    "js/game-ui-override.js"
   ],
   "edited_files": [
-    "CHECKLIST.md",
-    "README.md",
     "index.html",
-    "css/material-screen-brushup.css",
-    "style.css",
+    "css/game-ui-override.css",
+    "js/game-ui-override.js",
+    "js/main.js",
+    "js/materials.js",
     "split-manifest.json",
-    "static-checks.json"
+    "static-checks.json",
+    "assets/characters/tree.svg",
+    "assets/characters/boss.svg",
+    "assets/characters/zodiac-*.svg",
+    "js/auth.js"
   ],
-  "unchanged_policy": "No CSV files, GAS endpoint, authentication logic, login flow, material list, quiz render/check logic, cloze word-level feedback, boss battle unlock logic, result screen logic, or JS files were changed."
+  "unchanged_policy": "No CSV files, GAS endpoint, authentication flow, TEST_CONFIG material definitions, Speaking Review answer logic, quiz render/check logic, correct-effect logic, history/localStorage keys, result screen logic, or GitHub Pages CSV loader logic were changed."
 }

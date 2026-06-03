@@ -94,6 +94,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initSoundToggle();
   restoreSession();
+  if (currentStudentId) {
+    renderMenu();
+    showOnly("menuScreen");
+  }
 });
 
 
