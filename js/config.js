@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   sessionName: "learningTool_sessionName",
   sessionAccessCode: "learningTool_sessionAccessCode",
   allowedMaterials: "learningTool_allowedMaterials",
+  featureFlags: "learningTool_featureFlags",
   answerHistory: "learningTool_answerHistory",
   writingHistory: "learningTool_writingHistory",
   localReviewSettings: "learningTool_localReviewSettings",
@@ -267,6 +268,87 @@ const TEST_CONFIG = {
     description: "古文常識を選択問題で確認します。"
   }
 };
+
+
+const DEFAULT_FEATURE_FLAGS = Object.freeze({
+  learningTree: true,
+  zodiac: true,
+  boss: true
+});
+
+const FEATURE_FLAG_DEFINITIONS = Object.freeze([
+  { key: "learningTree", param: "learningTreeEnabled", label: "学習の木", description: "ホームや教材画面の木の成長表示" },
+  { key: "zodiac", param: "zodiacEnabled", label: "十二支", description: "日替わり十二支キャラクター" },
+  { key: "boss", param: "bossEnabled", label: "ボス", description: "50問ごとのボスバトル" }
+]);
+
+let featureFlags = { ...DEFAULT_FEATURE_FLAGS };
+
+function normalizeFeatureFlags(value = {}) {
+  let source = value;
+  if (typeof source === "string") {
+    const text = source.trim();
+    if (!text) {
+      source = {};
+    } else {
+      try { source = JSON.parse(text); } catch { source = {}; }
+    }
+  }
+  if (!source || typeof source !== "object") source = {};
+
+  const pick = keys => {
+    for (const key of keys) {
+      if (source[key] !== undefined) return source[key];
+    }
+    return undefined;
+  };
+
+  return {
+    learningTree: toFeatureFlagBoolean(pick(["learningTree", "learningTreeEnabled", "tree", "treeEnabled"]), true),
+    zodiac: toFeatureFlagBoolean(pick(["zodiac", "zodiacEnabled"]), true),
+    boss: toFeatureFlagBoolean(pick(["boss", "bossEnabled"]), true)
+  };
+}
+
+function toFeatureFlagBoolean(value, defaultValue = true) {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "boolean") return value;
+  const text = String(value).trim().toLowerCase();
+  if (["false", "0", "off", "no", "disabled", "hide", "hidden", "無効", "非表示", "オフ"].includes(text)) return false;
+  if (["true", "1", "on", "yes", "enabled", "show", "visible", "有効", "表示", "オン"].includes(text)) return true;
+  return defaultValue;
+}
+
+function setFeatureFlags(nextFlags = {}) {
+  featureFlags = normalizeFeatureFlags(nextFlags);
+  applyFeatureVisibilityFlags();
+  return featureFlags;
+}
+
+function getEffectiveFeatureFlags() {
+  return isAdmin ? { ...DEFAULT_FEATURE_FLAGS } : normalizeFeatureFlags(featureFlags);
+}
+
+function isFeatureEnabled(key) {
+  return getEffectiveFeatureFlags()[key] !== false;
+}
+
+function featureFlagParams(flags = featureFlags) {
+  const normalized = normalizeFeatureFlags(flags);
+  return {
+    learningTreeEnabled: normalized.learningTree,
+    zodiacEnabled: normalized.zodiac,
+    bossEnabled: normalized.boss
+  };
+}
+
+function applyFeatureVisibilityFlags() {
+  if (typeof document === "undefined" || !document.body) return;
+  const flags = getEffectiveFeatureFlags();
+  document.body.classList.toggle("feature-learning-tree-off", flags.learningTree === false);
+  document.body.classList.toggle("feature-zodiac-off", flags.zodiac === false);
+  document.body.classList.toggle("feature-boss-off", flags.boss === false);
+}
 
 let currentStudentId = "";
 let currentStudentName = "";

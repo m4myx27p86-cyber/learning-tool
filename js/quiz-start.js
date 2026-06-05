@@ -79,6 +79,10 @@ function startQuizCommon() {
 
 
 async function startBossQuiz() {
+  if (typeof isFeatureEnabled === "function" && !isFeatureEnabled("boss")) {
+    alert("この学習者コードではボス機能がOFFになっています。");
+    return;
+  }
   if (!testType || !TEST_CONFIG[testType]) return;
   const sourceQuestions = await ensureQuestionsLoaded(testType);
   const statuses = getLocalReviewStatuses(testType, sourceQuestions);

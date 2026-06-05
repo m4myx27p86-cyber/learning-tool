@@ -195,6 +195,11 @@ function getBossMilestoneForType(type) {
 }
 
 function renderBossBattleArea(type = testType, statuses = []) {
+  if (typeof isFeatureEnabled === "function" && !isFeatureEnabled("boss")) {
+    const existing = document.getElementById("bossBattleArea");
+    if (existing) existing.classList.add("hidden");
+    return;
+  }
   ensureBossBattleArea();
   const area = document.getElementById("bossBattleArea");
   if (!area || !type) return;

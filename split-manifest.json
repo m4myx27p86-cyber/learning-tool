@@ -1,6 +1,6 @@
 {
-  "version": "opinion-template-paraphrase-20260603",
-  "note": "Adds TOEIC Opinion 4文テンプレ完成 and TOEIC Opinion 言い換え練習 as new cloze-based materials without changing existing quiz logic.",
+  "version": "feature-flags-20260605",
+  "note": "Adds learner-code feature flags for 学習の木, 十二支, and ボス without changing quiz logic.",
   "css_files": [
     "css/base.css",
     "css/access-category-writing.css",
@@ -51,19 +51,21 @@
   ],
   "edited_files": [
     "index.html",
-    "css/game-ui-override.css",
-    "js/game-ui-override.js",
-    "js/main.js",
-    "js/materials.js",
-    "split-manifest.json",
-    "static-checks.json",
-    "assets/characters/tree.svg",
-    "assets/characters/boss.svg",
-    "assets/characters/zodiac-*.svg",
+    "js/config.js",
     "js/auth.js",
-    "data/speaking_review/toeic_opinion_template4.csv",
-    "data/speaking_review/toeic_opinion_paraphrase.csv",
-    "js/config.js"
+    "js/materials.js",
+    "js/admin-access.js",
+    "js/growth.js",
+    "js/material-progress.js",
+    "js/quiz-start.js",
+    "js/results-sync.js",
+    "js/game-ui-override.js",
+    "css/access-category-writing.css",
+    "css/game-ui-override.css",
+    "script.js",
+    "style.css",
+    "apps_script/Code.gs",
+    "learning_tool.xlsx"
   ],
-  "unchanged_policy": "Existing CSVs, GAS endpoint, authentication flow, Speaking Review answer logic, quiz render/check logic, correct-effect logic, history/localStorage keys, and result screen logic were not changed. New materials reuse the existing cloze loader."
+  "unchanged_policy": "Existing quiz data, CSV loaders, scoring logic, local review logic, and GAS endpoint URL were kept. Existing access codes default to all three features ON when new columns are blank."
 }

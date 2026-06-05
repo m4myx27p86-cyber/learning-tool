@@ -666,3 +666,37 @@ button:not(.material-card):not(.choice-button):not(.word-chip),
   #settingReviewPlant .setting-tree-img { width: 132px !important; height: 132px !important; }
   .compact-donut { width: 108px !important; height: 108px !important; }
 }
+
+
+/* Learner-specific feature visibility controlled by AccessCodes */
+body.feature-learning-tree-off .tree-card,
+body.feature-learning-tree-off .growth-tree-panel,
+body.feature-learning-tree-off #settingReviewPlant,
+body.feature-learning-tree-off #settingReviewPlantMessage,
+body.feature-learning-tree-off #localReviewPlant,
+body.feature-learning-tree-off #localReviewPlantMessage,
+body.feature-learning-tree-off .review-plant-card,
+body.feature-learning-tree-off .notice-tree-img {
+  display: none !important;
+}
+body.feature-zodiac-off .zodiac-card,
+body.feature-zodiac-off .daily-zodiac-panel,
+body.feature-zodiac-off .notice-zodiac-img {
+  display: none !important;
+}
+body.feature-boss-off .boss-card,
+body.feature-boss-off #bossBattleArea,
+body.feature-boss-off .boss-feedback-card,
+body.feature-boss-off .boss-result-card,
+body.feature-boss-off .notice-boss-img {
+  display: none !important;
+}
+.growth-dashboard-grid.single-growth-panel {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+.material-card-main.no-character {
+  grid-template-columns: 1fr auto !important;
+}
+body.feature-learning-tree-off.feature-zodiac-off #growthHomeArea {
+  display: none !important;
+}

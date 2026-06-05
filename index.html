@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>A Learning Tool</title>
   <link rel="stylesheet" href="css/base.css?v=split-quest-20260531" />
-  <link rel="stylesheet" href="css/access-category-writing.css?v=split-quest-20260531" />
+  <link rel="stylesheet" href="css/access-category-writing.css?v=feature-flags-20260605" />
   <link rel="stylesheet" href="css/motivation-output.css?v=split-quest-20260531" />
   <link rel="stylesheet" href="css/local-review-iphone.css?v=split-quest-20260531" />
   <link rel="stylesheet" href="css/clear-growth.css?v=split-quest-20260531" />
@@ -23,7 +23,7 @@
   <link rel="stylesheet" href="css/correct-effect-luxury.css?v=split-quest-20260531" />
   <link rel="stylesheet" href="css/polaris-full-visibility.css?v=split-quest-20260531" />
   <link rel="stylesheet" href="css/material-screen-brushup.css?v=target-boss-fix-20260531" />
-  <link rel="stylesheet" href="css/game-ui-override.css?v=visible-game-home-20260603" />
+  <link rel="stylesheet" href="css/game-ui-override.css?v=feature-flags-20260605" />
 </head>
 <body>
   <div class="app-shell">
@@ -233,7 +233,7 @@
         <div class="screen-head">
           <div>
             <h2>学習者コード発行・確認</h2>
-            <p class="muted">学習者ごとに使用可能な教材を選び、コードを発行します。</p>
+            <p class="muted">学習者ごとに使用可能な教材と表示するゲーム機能を選び、コードを発行します。</p>
           </div>
           <button id="accessBackButton" class="secondary-button small-button">教材選択へ戻る</button>
         </div>
@@ -244,6 +244,13 @@
           <input type="text" id="accessStudentNameInput" placeholder="学習者名（任意）" autocomplete="off" />
           <input type="text" id="accessMemoInput" placeholder="メモ（例：英検対策クラス）" autocomplete="off" />
           <div id="accessMaterialCheckboxes" class="checkbox-grid"></div>
+          <div class="access-feature-section">
+            <div class="access-feature-head">
+              <strong>表示するゲーム機能</strong>
+              <span class="muted">チェックを外した機能は、その学習者の画面では非表示になります。</span>
+            </div>
+            <div id="accessFeatureCheckboxes" class="feature-toggle-grid"></div>
+          </div>
           <button id="createAccessCodeButton">コードを発行</button>
           <p id="createAccessCodeMessage"></p>
         </div>
@@ -485,29 +492,29 @@
       </section>
     </main>
   </div>
-  <script src="js/config.js?v=opinion-template-20260603"></script>
+  <script src="js/config.js?v=feature-flags-20260605"></script>
   <script src="js/main.js?v=mock-v3-20260603"></script>
   <script src="js/api.js?v=split-quest-20260531"></script>
-  <script src="js/auth.js?v=mock-v3-20260603"></script>
+  <script src="js/auth.js?v=feature-flags-20260605"></script>
   <script src="js/home-menu.js?v=split-quest-20260531"></script>
-  <script src="js/materials.js?v=mock-v3-20260603"></script>
-  <script src="js/admin-access.js?v=split-quest-20260531"></script>
+  <script src="js/materials.js?v=feature-flags-20260605"></script>
+  <script src="js/admin-access.js?v=feature-flags-20260605"></script>
   <script src="js/settings.js?v=split-quest-20260531"></script>
   <script src="js/data-loaders.js?v=split-quest-20260531"></script>
-  <script src="js/quiz-start.js?v=split-quest-20260531"></script>
+  <script src="js/quiz-start.js?v=feature-flags-20260605"></script>
   <script src="js/quiz-render.js?v=split-quest-20260531"></script>
   <script src="js/quiz-check.js?v=split-quest-20260531"></script>
-  <script src="js/results-sync.js?v=split-quest-20260531"></script>
+  <script src="js/results-sync.js?v=feature-flags-20260605"></script>
   <script src="js/writing.js?v=split-quest-20260531"></script>
   <script src="js/history.js?v=split-quest-20260531"></script>
   <script src="js/mistake-review.js?v=split-quest-20260531"></script>
   <script src="js/home-status.js?v=split-quest-20260531"></script>
-  <script src="js/growth.js?v=mock-v3-20260603"></script>
-  <script src="js/material-progress.js?v=mock-v3-20260603"></script>
+  <script src="js/growth.js?v=feature-flags-20260605"></script>
+  <script src="js/material-progress.js?v=feature-flags-20260605"></script>
   <script src="js/local-review.js?v=split-quest-20260531"></script>
   <script src="js/calendar.js?v=split-quest-20260531"></script>
   <script src="js/dashboard-streak.js?v=split-quest-20260531"></script>
   <script src="js/utils.js?v=split-quest-20260531"></script>
-  <script src="js/game-ui-override.js?v=mock-v3-20260603"></script>
+  <script src="js/game-ui-override.js?v=feature-flags-20260605"></script>
 </body>
 </html>

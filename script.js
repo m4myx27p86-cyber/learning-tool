@@ -17,6 +17,7 @@ const STORAGE_KEYS = {
   sessionName: "learningTool_sessionName",
   sessionAccessCode: "learningTool_sessionAccessCode",
   allowedMaterials: "learningTool_allowedMaterials",
+  featureFlags: "learningTool_featureFlags",
   answerHistory: "learningTool_answerHistory",
   writingHistory: "learningTool_writingHistory",
   localReviewSettings: "learningTool_localReviewSettings",
@@ -194,8 +195,9 @@ const TEST_CONFIG = {
     type: "choice",
     password: "3303",
     defaultTime: 30,
-    path: "data/english_theory/chapter3_theory.csv",
-    description: "SLA Chapter 3 の重要概念を四択で確認します。"
+    path: "data/english_theory/sla_theory_map.csv",
+    review: true,
+    description: "SLA Chapter 3・Chapter 5 の重要概念を四択で確認します。"
   },
   statisticsQuestions: {
     title: "統計：基礎概念確認",
@@ -266,6 +268,87 @@ const TEST_CONFIG = {
     description: "古文常識を選択問題で確認します。"
   }
 };
+
+
+const DEFAULT_FEATURE_FLAGS = Object.freeze({
+  learningTree: true,
+  zodiac: true,
+  boss: true
+});
+
+const FEATURE_FLAG_DEFINITIONS = Object.freeze([
+  { key: "learningTree", param: "learningTreeEnabled", label: "学習の木", description: "ホームや教材画面の木の成長表示" },
+  { key: "zodiac", param: "zodiacEnabled", label: "十二支", description: "日替わり十二支キャラクター" },
+  { key: "boss", param: "bossEnabled", label: "ボス", description: "50問ごとのボスバトル" }
+]);
+
+let featureFlags = { ...DEFAULT_FEATURE_FLAGS };
+
+function normalizeFeatureFlags(value = {}) {
+  let source = value;
+  if (typeof source === "string") {
+    const text = source.trim();
+    if (!text) {
+      source = {};
+    } else {
+      try { source = JSON.parse(text); } catch { source = {}; }
+    }
+  }
+  if (!source || typeof source !== "object") source = {};
+
+  const pick = keys => {
+    for (const key of keys) {
+      if (source[key] !== undefined) return source[key];
+    }
+    return undefined;
+  };
+
+  return {
+    learningTree: toFeatureFlagBoolean(pick(["learningTree", "learningTreeEnabled", "tree", "treeEnabled"]), true),
+    zodiac: toFeatureFlagBoolean(pick(["zodiac", "zodiacEnabled"]), true),
+    boss: toFeatureFlagBoolean(pick(["boss", "bossEnabled"]), true)
+  };
+}
+
+function toFeatureFlagBoolean(value, defaultValue = true) {
+  if (value === undefined || value === null || value === "") return defaultValue;
+  if (typeof value === "boolean") return value;
+  const text = String(value).trim().toLowerCase();
+  if (["false", "0", "off", "no", "disabled", "hide", "hidden", "無効", "非表示", "オフ"].includes(text)) return false;
+  if (["true", "1", "on", "yes", "enabled", "show", "visible", "有効", "表示", "オン"].includes(text)) return true;
+  return defaultValue;
+}
+
+function setFeatureFlags(nextFlags = {}) {
+  featureFlags = normalizeFeatureFlags(nextFlags);
+  applyFeatureVisibilityFlags();
+  return featureFlags;
+}
+
+function getEffectiveFeatureFlags() {
+  return isAdmin ? { ...DEFAULT_FEATURE_FLAGS } : normalizeFeatureFlags(featureFlags);
+}
+
+function isFeatureEnabled(key) {
+  return getEffectiveFeatureFlags()[key] !== false;
+}
+
+function featureFlagParams(flags = featureFlags) {
+  const normalized = normalizeFeatureFlags(flags);
+  return {
+    learningTreeEnabled: normalized.learningTree,
+    zodiacEnabled: normalized.zodiac,
+    bossEnabled: normalized.boss
+  };
+}
+
+function applyFeatureVisibilityFlags() {
+  if (typeof document === "undefined" || !document.body) return;
+  const flags = getEffectiveFeatureFlags();
+  document.body.classList.toggle("feature-learning-tree-off", flags.learningTree === false);
+  document.body.classList.toggle("feature-zodiac-off", flags.zodiac === false);
+  document.body.classList.toggle("feature-boss-off", flags.boss === false);
+}
 
 let currentStudentId = "";
 let currentStudentName = "";
@@ -399,6 +482,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   initSoundToggle();
   restoreSession();
+  if (currentStudentId) {
+    renderMenu();
+    showOnly("menuScreen");
+  }
 });
 
 
@@ -533,6 +620,7 @@ async function checkLogin() {
     currentStudentName = "";
     currentAccessCode = "";
     allowedMaterials = null;
+    setFeatureFlags(DEFAULT_FEATURE_FLAGS);
     isAdmin = false;
     if (message) message.textContent = "";
     showOnly("studentScreen");
@@ -560,6 +648,7 @@ function loginAsAdmin() {
   currentAccessCode = "";
   allowedMaterials = null;
   isAdmin = true;
+  setFeatureFlags(DEFAULT_FEATURE_FLAGS);
   saveSession();
   document.getElementById("loginMessage").textContent = "";
   renderMenu();
@@ -572,6 +661,7 @@ function loginWithAccessCode(result) {
   currentAccessCode = result.code || "";
   allowedMaterials = Array.isArray(result.allowedMaterials) ? result.allowedMaterials : [];
   isAdmin = false;
+  setFeatureFlags(result.featureFlags || result);
   saveSession();
 
   if (allowedMaterials.length === 1) {
@@ -602,6 +692,7 @@ function checkStudentLogin() {
   currentAccessCode = "";
   allowedMaterials = null;
   isAdmin = false;
+  setFeatureFlags(DEFAULT_FEATURE_FLAGS);
   saveSession();
   if (message) message.textContent = "";
   renderMenu();
@@ -613,6 +704,7 @@ function saveSession() {
   localStorage.setItem(STORAGE_KEYS.sessionName, currentStudentName || "");
   localStorage.setItem(STORAGE_KEYS.sessionAccessCode, currentAccessCode || "");
   localStorage.setItem(STORAGE_KEYS.allowedMaterials, JSON.stringify(allowedMaterials));
+  localStorage.setItem(STORAGE_KEYS.featureFlags, JSON.stringify(normalizeFeatureFlags(featureFlags)));
 }
 
 function restoreSession() {
@@ -622,7 +714,9 @@ function restoreSession() {
   currentStudentName = localStorage.getItem(STORAGE_KEYS.sessionName) || "";
   currentAccessCode = localStorage.getItem(STORAGE_KEYS.sessionAccessCode) || "";
   try { allowedMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.allowedMaterials)); } catch { allowedMaterials = null; }
+  try { featureFlags = normalizeFeatureFlags(JSON.parse(localStorage.getItem(STORAGE_KEYS.featureFlags) || "{}")); } catch { featureFlags = { ...DEFAULT_FEATURE_FLAGS }; }
   isAdmin = currentStudentId === ADMIN_PASSWORD;
+  applyFeatureVisibilityFlags();
 }
 
 function logout() {
@@ -631,10 +725,12 @@ function logout() {
   currentAccessCode = "";
   allowedMaterials = null;
   isAdmin = false;
+  setFeatureFlags(DEFAULT_FEATURE_FLAGS);
   localStorage.removeItem(STORAGE_KEYS.sessionStudent);
   localStorage.removeItem(STORAGE_KEYS.sessionName);
   localStorage.removeItem(STORAGE_KEYS.sessionAccessCode);
   localStorage.removeItem(STORAGE_KEYS.allowedMaterials);
+  localStorage.removeItem(STORAGE_KEYS.featureFlags);
   document.getElementById("passwordInput").value = "";
   document.getElementById("studentLoginInput").value = "";
   showOnly("loginScreen");
@@ -644,7 +740,6 @@ function togglePasswordField(id, checked) {
   const field = document.getElementById(id);
   if (field) field.type = checked ? "text" : "password";
 }
-
 
 
 
@@ -683,69 +778,33 @@ function renderGameHomeHero() {
   const history = getCurrentStudentHistory();
   const todayKey = getDateKey(new Date());
   const today = history.filter(item => item.dateKey === todayKey);
-  const todayCorrect = today.filter(item => item.correct).length;
   const correct = history.filter(item => item.correct).length;
   const total = history.length;
-  const days = new Set(history.map(item => item.dateKey).filter(Boolean)).size;
-  const streakInfo = getProtectedStreakInfo();
-  const tree = getTreeLevelInfo(correct);
-  const treeStage = getGrowthStage(correct);
-  const zodiac = getZodiacInfo();
-  const zodiacLevelInfo = getDailyZodiacLevelInfo(todayCorrect);
-  const bossStep = 50;
-  const nextBossAt = Math.max(bossStep, (Math.floor(total / bossStep) + 1) * bossStep);
-  const bossRemain = Math.max(0, nextBossAt - total);
-  const bossProgress = Math.min(100, Math.round((total % bossStep) / bossStep * 100));
-  const rank = tree.level >= 10 ? "Master Learner" : tree.level >= 5 ? "Quest Learner" : "New Adventurer";
-  const treeNextText = tree.isMaxLevel ? "最大Lv.達成" : `次のLv.まで ${tree.remaining}正解`;
-  const zodiacNextText = zodiacLevelInfo.isMaxLevel ? "本日の最高Lv." : `次のLv.まで ${zodiacLevelInfo.remaining}問`;
+  const level = Math.max(1, Math.floor(correct / 25) + 1);
+  const nextNeed = 25 - (correct % 25 || 25);
+  const rank = level >= 8 ? "Master Learner" : level >= 4 ? "Quest Learner" : "New Adventurer";
+  const xpPercent = Math.min(100, (correct % 25) * 4);
 
   area.innerHTML = `
-    <div class="game-hero-copy compact-home-copy">
-      <span class="panel-label">AI Learning Quest</span>
+    <div class="game-hero-copy">
+      <span class="panel-label">AI Learning Tool</span>
       <h3>今日のLearning Quest</h3>
-      <p>木・十二支・ボスで、通算の成長・今日の学習・次の挑戦を一画面で確認できます。</p>
-      <div class="hero-action-row compact-home-actions">
+      <p>このホームは、ゲームのような達成感を足しながら、点数だけでなく「使える知識」「復習」「継続」を見える化するためのオリジナル設計です。</p>
+      <div class="hero-action-row">
         <button id="heroMaterialButton" type="button">教材へ</button>
-        <button id="heroCalendarButton" class="secondary-button" type="button">カレンダー</button>
-        <span class="hero-rank">Lv.${tree.level} / ${escapeHtml(rank)}</span>
+        <span class="hero-rank">Lv.${level} / ${escapeHtml(rank)}</span>
       </div>
     </div>
-    <div class="compact-quest-board" aria-label="学習クエスト状況">
-      <article class="quest-mini-card quest-tree-mini">
-        <span>木</span>
-        <div class="mini-tree-icon plant-stage-${treeStage}" aria-hidden="true"><i></i><b></b><em></em></div>
-        <strong>木 Lv.${tree.level}</strong>
-        <small>${escapeHtml(treeNextText)}</small>
-        <div class="quest-xp"><i style="width:${tree.progress}%"></i></div>
-      </article>
-      <article class="quest-mini-card quest-zodiac-mini">
-        <span>十二支</span>
-        <div class="mini-zodiac-icon" aria-hidden="true">${zodiac.icon}</div>
-        <strong>${zodiac.key} Lv.${zodiacLevelInfo.level}</strong>
-        <small>${escapeHtml(zodiacNextText)}</small>
-        <div class="quest-xp"><i style="width:${zodiacLevelInfo.progress}%"></i></div>
-      </article>
-      <article class="quest-mini-card quest-boss-mini">
-        <span>ボス</span>
-        <div class="mini-boss-icon" aria-hidden="true">👾</div>
-        <strong>Boss Lv.${Math.max(1, Math.floor(total / bossStep) + 1)}</strong>
-        <small>挑戦まであと${bossRemain}問</small>
-        <div class="quest-xp"><i style="width:${bossProgress}%"></i></div>
-      </article>
-    </div>
-    <div class="compact-home-meta">
-      <span>今日 ${today.length}問</span>
-      <span>通算 ${total}問</span>
-      <span>${days}学習日</span>
-      <span>${streakInfo.count || 0}日連続</span>
+    <div class="quest-status-card">
+      <span>Today</span>
+      <strong>${today.length}問</strong>
+      <small>次のレベルまで ${nextNeed} 正解</small>
+      <div class="quest-xp"><i style="width:${xpPercent}%"></i></div>
+      <p>${total ? `累計 ${total}問・正解 ${correct}問` : "まずは1問から始められます。"}</p>
     </div>`;
 
   document.getElementById("heroMaterialButton")?.addEventListener("click", () => {
     document.getElementById("materialShelf")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-  document.getElementById("heroCalendarButton")?.addEventListener("click", () => {
-    document.getElementById("learningCalendarHomeArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -756,6 +815,7 @@ function renderGameHomeHero() {
 ========================= */
 
 function renderMenu() {
+  applyFeatureVisibilityFlags();
   refreshDashboard();
   renderGameHomeHero();
   renderGrowthHome();
@@ -829,6 +889,31 @@ function renderMaterialCategories() {
   document.querySelectorAll("[data-action='history']").forEach(button => button.addEventListener("click", openHistoryScreen));
 }
 
+
+function getMaterialCharacterFile(type) {
+  const featureIsOn = typeof isFeatureEnabled === "function" ? isFeatureEnabled : () => true;
+  const treeOn = featureIsOn("learningTree");
+  const zodiacOn = featureIsOn("zodiac");
+  const treeTypes = ["speakingReview", "speakingReviewCloze", "phrasalVerbs", "vocab", "sokudokuVocab", "target1900Vocab", "polaris3"];
+  const zodiacTypes = {
+    speakingErrorCorrection: "zodiac-寅.svg",
+    monitor: "zodiac-寅.svg",
+    eikenConnectors: "zodiac-寅.svg",
+    sentence: "zodiac-卯.svg",
+    writingTheoryChapter4: "zodiac-卯.svg",
+    writingTheoryMap: "zodiac-卯.svg",
+    englishTheory: "zodiac-申.svg",
+    statisticsQuestions: "zodiac-申.svg",
+    presentationBuilderTasks: "zodiac-申.svg"
+  };
+  if (treeTypes.includes(type)) return treeOn ? "tree.svg" : "";
+  if (zodiacTypes[type]) return zodiacOn ? zodiacTypes[type] : "";
+  if (String(type || "").startsWith("classical")) return zodiacOn ? "zodiac-辰.svg" : "";
+  if (treeOn) return "tree.svg";
+  if (zodiacOn) return "zodiac-卯.svg";
+  return "";
+}
+
 function materialCardHtml(type) {
   const config = TEST_CONFIG[type];
   const categoryLabel = CATEGORY_INFO[config.category]?.label || config.category;
@@ -839,15 +924,24 @@ function materialCardHtml(type) {
   const level = Math.max(1, Math.floor(correct / 20) + 1);
   const progress = Math.min(100, (correct % 20) * 5);
   const progressLabel = total ? `${accuracy}% / ${total}問` : "未学習";
+  const characterFile = getMaterialCharacterFile(type);
+  const characterHtml = characterFile
+    ? `<img class="material-card-character" src="assets/characters/${escapeHtml(characterFile)}" alt="" loading="lazy" aria-hidden="true">`
+    : "";
   return `
     <div class="material-card-wrap">
       <button class="material-card" data-material="${escapeHtml(type)}">
-        <span>${escapeHtml(categoryLabel)}</span>
-        <strong>${escapeHtml(config.title)}</strong>
-        <small>${escapeHtml(config.description || "")}</small>
-        <div class="material-card-progress" aria-label="教材進捗">
-          <b>Lv.${level}</b><em>${escapeHtml(progressLabel)}</em>
-          <i><u style="width:${progress}%"></u></i>
+        <div class="material-card-main ${characterFile ? "" : "no-character"}">
+          <div>
+            <span class="material-tag">${escapeHtml(categoryLabel)}</span>
+            <strong class="material-title">${escapeHtml(config.title)}</strong>
+            <small>${escapeHtml(config.description || "")}</small>
+            <div class="material-card-progress" aria-label="教材進捗">
+              <b>Lv.${level}</b><i><u style="width:${progress}%"></u></i><em>${escapeHtml(progressLabel)}</em>
+            </div>
+          </div>
+          ${characterHtml}
+          <span class="material-card-arrow" aria-hidden="true">›</span>
         </div>
       </button>
     </div>
@@ -932,6 +1026,7 @@ function applyThemeForMaterial(type) {
 function openAccessManager() {
   if (!isAdmin) return;
   renderAccessMaterialCheckboxes();
+  renderAccessFeatureCheckboxes(DEFAULT_FEATURE_FLAGS);
   document.getElementById("createAccessCodeMessage").textContent = "";
   showOnly("adminAccessScreen");
   loadAccessCodeList();
@@ -958,12 +1053,61 @@ function renderAccessMaterialCheckboxes() {
   }).join("");
 }
 
+function renderAccessFeatureCheckboxes(flags = DEFAULT_FEATURE_FLAGS) {
+  const area = document.getElementById("accessFeatureCheckboxes");
+  if (!area) return;
+  const normalized = normalizeFeatureFlags(flags);
+  area.innerHTML = FEATURE_FLAG_DEFINITIONS.map(feature => `
+    <label class="feature-toggle-card">
+      <input type="checkbox" value="${escapeHtml(feature.key)}" ${normalized[feature.key] ? "checked" : ""}>
+      <span>
+        <strong>${escapeHtml(feature.label)}</strong>
+        <small>${escapeHtml(feature.description)}</small>
+      </span>
+    </label>
+  `).join("");
+}
+
+function getAccessFeatureFlagsFromForm() {
+  const flags = { ...DEFAULT_FEATURE_FLAGS };
+  document.querySelectorAll("#accessFeatureCheckboxes input[type='checkbox']").forEach(box => {
+    flags[box.value] = Boolean(box.checked);
+  });
+  return normalizeFeatureFlags(flags);
+}
+
+function resetAccessFeatureCheckboxes() {
+  renderAccessFeatureCheckboxes(DEFAULT_FEATURE_FLAGS);
+}
+
+function getRecordFeatureFlags(record = {}) {
+  return normalizeFeatureFlags(record.featureFlags || record);
+}
+
+function accessFeatureSummaryHtml(flags) {
+  const normalized = normalizeFeatureFlags(flags);
+  return `<div class="feature-badge-list">${FEATURE_FLAG_DEFINITIONS.map(feature => `
+    <span class="feature-badge ${normalized[feature.key] ? "on" : "off"}">${escapeHtml(feature.label)}：${normalized[feature.key] ? "ON" : "OFF"}</span>
+  `).join("")}</div>`;
+}
+
+function accessFeatureToggleCellHtml(code, flags) {
+  const normalized = normalizeFeatureFlags(flags);
+  return `<div class="access-feature-mini-list">${FEATURE_FLAG_DEFINITIONS.map(feature => `
+    <label class="mini-feature-check">
+      <input type="checkbox" data-feature-toggle="${escapeHtml(code)}" data-feature-key="${escapeHtml(feature.key)}" ${normalized[feature.key] ? "checked" : ""}>
+      ${escapeHtml(feature.label)}
+    </label>
+  `).join("")}</div>`;
+}
+
 async function createAccessCodeFromForm() {
   const msg = document.getElementById("createAccessCodeMessage");
   const studentId = document.getElementById("accessStudentIdInput").value.trim();
   const studentName = document.getElementById("accessStudentNameInput").value.trim();
   const memo = document.getElementById("accessMemoInput").value.trim();
   const allowed = [...document.querySelectorAll("#accessMaterialCheckboxes input[type='checkbox']:checked")].map(box => box.value);
+  const flags = getAccessFeatureFlagsFromForm();
 
   if (!studentId) {
     msg.className = "error";
@@ -984,7 +1128,8 @@ async function createAccessCodeFromForm() {
       studentId,
       studentName,
       memo,
-      allowedMaterials: allowed
+      allowedMaterials: allowed,
+      ...featureFlagParams(flags)
     });
 
     if (!result.ok) throw new Error(result.error || "コード発行に失敗しました。");
@@ -995,6 +1140,7 @@ async function createAccessCodeFromForm() {
     document.getElementById("accessStudentNameInput").value = "";
     document.getElementById("accessMemoInput").value = "";
     document.querySelectorAll("#accessMaterialCheckboxes input[type='checkbox']").forEach(box => { box.checked = false; });
+    resetAccessFeatureCheckboxes();
     loadAccessCodeList();
   } catch (error) {
     console.error(error);
@@ -1024,19 +1170,22 @@ function renderAccessCodeList(records) {
   }
 
   area.innerHTML = `
-    <table class="history-table compact-table">
+    <table class="history-table compact-table access-code-table">
       <thead>
         <tr>
-          <th>コード</th><th>ID</th><th>名前</th><th>許可教材</th><th>状態</th><th>使用回数</th><th>最終使用</th><th>操作</th>
+          <th>コード</th><th>ID</th><th>名前</th><th>許可教材</th><th>機能</th><th>状態</th><th>使用回数</th><th>最終使用</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
-        ${records.map(record => `
+        ${records.map(record => {
+          const flags = getRecordFeatureFlags(record);
+          return `
           <tr>
             <td><strong>${escapeHtml(record.code)}</strong></td>
             <td>${escapeHtml(record.studentId)}</td>
             <td>${escapeHtml(record.studentName)}</td>
             <td>${escapeHtml(materialNames(parseMaterialList(record.allowedMaterials)).join(" / "))}</td>
+            <td>${accessFeatureToggleCellHtml(record.code, flags)}${accessFeatureSummaryHtml(flags)}</td>
             <td class="${record.active ? "correct" : "wrong"}">${record.active ? "有効" : "無効"}</td>
             <td>${escapeHtml(record.useCount ?? 0)}</td>
             <td>${escapeHtml(formatSheetDate(record.lastUsedAt))}</td>
@@ -1044,8 +1193,8 @@ function renderAccessCodeList(records) {
               <button class="small-button secondary-button" data-edit-code="${escapeHtml(record.code)}" data-materials="${escapeHtml(parseMaterialList(record.allowedMaterials).join(","))}">教材変更</button>
               <button class="small-button ${record.active ? "quit-button" : "secondary-button"}" data-code="${escapeHtml(record.code)}" data-active="${record.active ? "false" : "true"}">${record.active ? "無効化" : "有効化"}</button>
             </td>
-          </tr>
-        `).join("")}
+          </tr>`;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -1055,6 +1204,9 @@ function renderAccessCodeList(records) {
   });
   area.querySelectorAll("button[data-edit-code]").forEach(button => {
     button.addEventListener("click", () => updateAccessCodeMaterials(button.dataset.editCode, button.dataset.materials || ""));
+  });
+  area.querySelectorAll("input[data-feature-toggle]").forEach(box => {
+    box.addEventListener("change", () => updateAccessCodeFeaturesFromRow(box.dataset.featureToggle));
   });
 }
 
@@ -1067,6 +1219,19 @@ async function updateAccessCodeActive(code, active) {
   }
 }
 
+async function updateAccessCodeFeaturesFromRow(code) {
+  const boxes = [...document.querySelectorAll("input[data-feature-toggle]")].filter(box => box.dataset.featureToggle === code);
+  const flags = { ...DEFAULT_FEATURE_FLAGS };
+  boxes.forEach(box => { flags[box.dataset.featureKey] = Boolean(box.checked); });
+  boxes.forEach(box => { box.disabled = true; });
+  try {
+    await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, ...featureFlagParams(flags) });
+    loadAccessCodeList();
+  } catch (error) {
+    alert(error.message || "機能設定の変更に失敗しました。");
+    boxes.forEach(box => { box.disabled = false; });
+  }
+}
 
 async function updateAccessCodeMaterials(code, currentMaterialsText) {
   const allKeys = Object.keys(TEST_CONFIG).join(",");
@@ -1099,7 +1264,6 @@ function formatSheetDate(value) {
   if (typeof value === "string") return value;
   return String(value);
 }
-
 
 
 /* =========================
@@ -1660,6 +1824,10 @@ function startQuizCommon() {
 
 
 async function startBossQuiz() {
+  if (typeof isFeatureEnabled === "function" && !isFeatureEnabled("boss")) {
+    alert("この学習者コードではボス機能がOFFになっています。");
+    return;
+  }
   if (!testType || !TEST_CONFIG[testType]) return;
   const sourceQuestions = await ensureQuestionsLoaded(testType);
   const statuses = getLocalReviewStatuses(testType, sourceQuestions);
@@ -2483,6 +2651,7 @@ async function sendResultsToSpreadsheet(resultInfo) {
 
 
 function renderBossResultIfNeeded(isQuit) {
+  if (typeof isFeatureEnabled === "function" && !isFeatureEnabled("boss")) return;
   if (!bossBattleState?.active) return;
   const cleared = !isQuit && bossBattleState.correct >= bossBattleState.total && bossBattleState.hp <= 0;
   const motivation = document.getElementById("motivationMessage");
@@ -2912,6 +3081,16 @@ function getTreeLevel(correctCount) {
 function renderGrowthHome() {
   const area = document.getElementById("growthHomeArea");
   if (!area || !currentStudentId) return;
+  const featureIsOn = typeof isFeatureEnabled === "function" ? isFeatureEnabled : () => true;
+  const showTree = featureIsOn("learningTree");
+  const showZodiac = featureIsOn("zodiac");
+  if (!showTree && !showZodiac) {
+    area.innerHTML = "";
+    area.classList.add("hidden");
+    return;
+  }
+  area.classList.remove("hidden");
+
   const history = getCurrentStudentHistory();
   const todayKey = getDateKey(new Date());
   const todayHistory = history.filter(item => item.dateKey === todayKey);
@@ -2937,18 +3116,15 @@ function renderGrowthHome() {
   const expBoosts = Math.floor(correctCount / 100);
   const hintTickets = Math.floor(total / 30);
   const characterMood = todayCorrect >= 10 ? "great" : todayCorrect >= 3 ? "happy" : "calm";
+  const titleText = showTree && showZodiac ? "通算の木と本日の十二支" : showTree ? "通算の木" : "本日の十二支";
+  const bodyText = showTree && showZodiac
+    ? "通算では木が育ち、日替わりでは十二支キャラが育ちます。継続・復習・正解の積み重ねを、画面上で見える化します。"
+    : showTree
+      ? "通算の正解数に合わせて、学習の木が育ちます。"
+      : "今日の正解数に合わせて、日替わり十二支キャラが育ちます。";
+  const badgeText = showTree ? `木 Lv.${treeLevel} / Max ${treeLevelInfo.maxLevel}` : `${zodiac.key} Lv.${zodiacLevel}`;
 
-  area.innerHTML = `
-    <div class="growth-dashboard-head">
-      <div>
-        <span class="panel-label">Learning Growth</span>
-        <h3>通算の木と本日の十二支</h3>
-        <p>通算では木が育ち、日替わりでは十二支キャラが育ちます。継続・復習・正解の積み重ねを、画面上で見える化します。</p>
-      </div>
-      <div class="growth-level-badge">木 Lv.${treeLevel} / Max ${treeLevelInfo.maxLevel}</div>
-    </div>
-
-    <div class="growth-dashboard-grid">
+  const treePanel = showTree ? `
       <article class="growth-tree-panel">
         <div class="panel-label">通算</div>
         <div class="plant-visual plant-stage-${stage}" style="--root-progress:${rootPercent}%;" aria-label="通算学習の木">
@@ -2965,8 +3141,9 @@ function renderGrowthHome() {
           </div>
         </div>
         <p class="growth-next">${treeLevelInfo.isMaxLevel ? `最大レベル達成：${treeLevelInfo.maxTarget}正解到達` : `次の成長まであと <strong>${remaining}</strong> 正解`}</p>
-      </article>
+      </article>` : "";
 
+  const zodiacPanel = showZodiac ? `
       <article class="daily-zodiac-panel zodiac-${characterMood}">
         <div class="panel-label">日替わり十二支</div>
         <div class="zodiac-character" aria-hidden="true">
@@ -2981,7 +3158,21 @@ function renderGrowthHome() {
         </div>
         <div class="zodiac-exp" aria-label="十二支の次レベルまでの進捗"><i style="width:${zodiacLevelInfo.progress}%"></i></div>
         <small>${zodiacLevelInfo.isMaxLevel ? "明日また新しい十二支を育てましょう。" : `Lv.${zodiacLevel + 1} 目標：${zodiacLevelInfo.nextTarget}問`}</small>
-      </article>
+      </article>` : "";
+
+  area.innerHTML = `
+    <div class="growth-dashboard-head">
+      <div>
+        <span class="panel-label">Learning Growth</span>
+        <h3>${titleText}</h3>
+        <p>${bodyText}</p>
+      </div>
+      <div class="growth-level-badge">${badgeText}</div>
+    </div>
+
+    <div class="growth-dashboard-grid ${showTree && showZodiac ? "" : "single-growth-panel"}">
+      ${treePanel}
+      ${zodiacPanel}
     </div>
 
     <div class="growth-stats quest-growth-stats">
@@ -3278,6 +3469,11 @@ function getBossMilestoneForType(type) {
 }
 
 function renderBossBattleArea(type = testType, statuses = []) {
+  if (typeof isFeatureEnabled === "function" && !isFeatureEnabled("boss")) {
+    const existing = document.getElementById("bossBattleArea");
+    if (existing) existing.classList.add("hidden");
+    return;
+  }
   ensureBossBattleArea();
   const area = document.getElementById("bossBattleArea");
   if (!area || !type) return;
@@ -3901,3 +4097,241 @@ function countEnglishWords(text) {
   if (!cleaned) return 0;
   return cleaned.split(/\s+/).filter(Boolean).length;
 }
+
+
+/* =========================================================
+   2026-06-03 Mockup-aligned Game UI Override v3
+   - ホーム / 教材選択 / 教材画面の見た目と配置だけを後読みで整える
+   - ログイン・採点・CSV読込・GAS送信・履歴保存・Speaking Review本体は変更しない
+========================================================= */
+(function () {
+  "use strict";
+
+  const CHARACTER_ASSET_BASE = "assets/characters";
+  const zodiacAssetMap = {
+    "子": "zodiac-子.svg", "丑": "zodiac-丑.svg", "寅": "zodiac-寅.svg", "卯": "zodiac-卯.svg",
+    "辰": "zodiac-辰.svg", "巳": "zodiac-巳.svg", "午": "zodiac-午.svg", "未": "zodiac-未.svg",
+    "申": "zodiac-申.svg", "酉": "zodiac-酉.svg", "戌": "zodiac-戌.svg", "亥": "zodiac-亥.svg"
+  };
+
+  const safeHtml = value => {
+    if (typeof escapeHtml === "function") return escapeHtml(value);
+    return String(value ?? "").replace(/[&<>\"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+  };
+
+  const fallbackDateKey = date => {
+    const d = new Date(date);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  const characterImg = (file, label, extraClass = "") =>
+    `<img class="manga-character-img ${extraClass}" src="${CHARACTER_ASSET_BASE}/${file}" alt="${safeHtml(label)}" loading="lazy" onerror="this.style.display='none'; this.parentElement?.classList.add('character-fallback');" />`;
+
+  const getHistory = () => {
+    if (typeof getCurrentStudentHistory === "function") return getCurrentStudentHistory();
+    if (typeof getLocalHistory === "function" && typeof currentStudentId !== "undefined") {
+      return getLocalHistory().filter(item => item.studentId === currentStudentId);
+    }
+    return [];
+  };
+
+  const getTree = correct => {
+    if (typeof getTreeLevelInfo === "function") return getTreeLevelInfo(correct);
+    const thresholds = [0, 5, 15, 30, 60, 100, 160, 250, 380, 550, 750, 1000];
+    let level = 1;
+    for (let i = 1; i < thresholds.length; i += 1) if (correct >= thresholds[i]) level = i + 1;
+    const nextTarget = thresholds[level] || null;
+    const base = thresholds[level - 1] || 0;
+    return {
+      level,
+      maxLevel: thresholds.length,
+      remaining: nextTarget ? Math.max(0, nextTarget - correct) : 0,
+      progress: nextTarget ? Math.min(100, Math.max(correct > 0 ? 6 : 0, Math.round(((correct - base) / Math.max(1, nextTarget - base)) * 100))) : 100,
+      isMaxLevel: !nextTarget
+    };
+  };
+
+  const getZodiac = () => {
+    if (typeof getZodiacInfo === "function") return getZodiacInfo();
+    return { key: "寅", name: "とら", icon: "🐯", trait: "挑戦する力" };
+  };
+
+  const getZodiacLevel = todayCorrect => {
+    if (typeof getDailyZodiacLevelInfo === "function") return getDailyZodiacLevelInfo(todayCorrect);
+    const thresholds = [0, 3, 10, 20, 30];
+    let level = 1;
+    for (let i = 1; i < thresholds.length; i += 1) if (todayCorrect >= thresholds[i]) level = i + 1;
+    const nextTarget = thresholds[level] || null;
+    const base = thresholds[level - 1] || 0;
+    return {
+      level,
+      remaining: nextTarget ? Math.max(0, nextTarget - todayCorrect) : 0,
+      progress: nextTarget ? Math.min(100, Math.max(todayCorrect > 0 ? 8 : 0, Math.round(((todayCorrect - base) / Math.max(1, nextTarget - base)) * 100))) : 100,
+      isMaxLevel: !nextTarget
+    };
+  };
+
+  function openMaterialShelf() {
+    document.body.classList.add("materials-open");
+    document.body.classList.remove("calendar-open");
+    document.getElementById("materialShelf")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function openCalendarShelf() {
+    document.body.classList.add("calendar-open");
+    document.body.classList.remove("materials-open");
+    document.getElementById("learningCalendarHomeArea")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  window.renderGameHomeHero = function renderGameHomeHeroOverride() {
+    const area = document.getElementById("gameHomeHero");
+    if (!area || typeof currentStudentId === "undefined" || !currentStudentId) return;
+
+    document.body.classList.add("compact-game-home", "restored-game-ui");
+
+    const history = getHistory();
+    const todayKey = typeof getDateKey === "function" ? getDateKey(new Date()) : fallbackDateKey(new Date());
+    const today = history.filter(item => item.dateKey === todayKey);
+    const todayCorrect = today.filter(item => item.correct).length;
+    const correct = history.filter(item => item.correct).length;
+    const total = history.length;
+    const featureIsOn = typeof isFeatureEnabled === "function" ? isFeatureEnabled : () => true;
+    const showTree = featureIsOn("learningTree");
+    const showZodiac = featureIsOn("zodiac");
+    const showBoss = featureIsOn("boss");
+    const tree = getTree(correct);
+    const zodiac = getZodiac();
+    const zodiacLevel = getZodiacLevel(todayCorrect);
+    const zodiacFile = zodiacAssetMap[zodiac.key] || "zodiac-寅.svg";
+    const bossStep = 50;
+    const bossLevel = Math.max(1, Math.floor(total / bossStep) + 1);
+    const nextBossAt = Math.max(bossStep, bossLevel * bossStep);
+    const bossRemain = Math.max(0, nextBossAt - total);
+    const bossProgress = Math.min(100, Math.round((total % bossStep) / bossStep * 100));
+    const streak = typeof getProtectedStreakInfo === "function" ? getProtectedStreakInfo() : { count: 0 };
+    const noticeMascot = showZodiac
+      ? characterImg(zodiacFile, `${zodiac.key}：${zodiac.name}`, "notice-zodiac-img")
+      : showTree
+        ? characterImg("tree.svg", "知識の木", "notice-tree-img")
+        : showBoss
+          ? characterImg("boss.svg", "ボス", "notice-boss-img")
+          : "";
+    const statusCards = [
+      showTree ? `
+        <article class="mock-status-card tree-card">
+          <span>知識の木</span>
+          <div class="mock-character-stage">${characterImg("tree.svg", "知識の木", "tree-img")}</div>
+          <strong>Lv.${tree.level}</strong>
+          <small>${tree.isMaxLevel ? "最大レベル達成" : `次のレベルまで あと ${tree.remaining}問`}</small>
+          <div class="mock-progress"><i style="width:${tree.progress}%"></i><b>${correct} / 1,000</b></div>
+        </article>` : "",
+      showZodiac ? `
+        <article class="mock-status-card zodiac-card">
+          <span>十二支の道</span>
+          <div class="mock-character-stage">${characterImg(zodiacFile, `${zodiac.key}：${zodiac.name}`, "zodiac-img")}</div>
+          <strong>Lv.${zodiacLevel.level}</strong>
+          <small>${zodiacLevel.isMaxLevel ? "本日の最高Lv." : `次のレベルまで あと ${zodiacLevel.remaining}問`}</small>
+          <div class="mock-progress orange"><i style="width:${zodiacLevel.progress}%"></i><b>${todayCorrect} / 30</b></div>
+        </article>` : "",
+      showBoss ? `
+        <article class="mock-status-card boss-card">
+          <span>ボスバトル</span>
+          <div class="mock-character-stage">${characterImg("boss.svg", "ボス", "boss-img")}</div>
+          <strong>Lv.${bossLevel}</strong>
+          <small>次のレベルまで あと ${bossRemain}問</small>
+          <div class="mock-progress purple"><i style="width:${bossProgress}%"></i><b>${total % bossStep} / ${bossStep}</b></div>
+        </article>` : ""
+    ].filter(Boolean).join("");
+
+    area.innerHTML = `
+      <section class="mock-home-notice" aria-label="お知らせ">
+        <div class="notice-mascot">${noticeMascot}</div>
+        <div class="notice-copy"><span>お知らせ</span><strong>今日もコツコツ学習してレベルアップを目指そう！</strong></div>
+        <button type="button" class="notice-open-button" id="heroNoticeMaterialButton" aria-label="教材へ進む">›</button>
+      </section>
+      ${statusCards ? `<section class="mock-status-grid" aria-label="成長状況">${statusCards}</section>` : ""}
+      <button id="heroMaterialButton" class="mock-material-button" type="button">
+        <span class="mock-chest" aria-hidden="true">▣</span>
+        <span><strong>教材へ</strong><small>学習できる教材を選ぼう！</small></span>
+        <b>›</b>
+      </button>
+      <section class="mock-home-mini-grid" aria-label="連続学習とアイテム">
+        <article><span>連続学習日数</span><strong>${streak.count || 0}日</strong><small>最高記録を更新しよう</small></article>
+        <article><span>今日の学習</span><strong>${today.length}問</strong><small>1問でも継続達成</small></article>
+      </section>`;
+
+    document.getElementById("heroMaterialButton")?.addEventListener("click", openMaterialShelf);
+    document.getElementById("heroNoticeMaterialButton")?.addEventListener("click", openMaterialShelf);
+    area.querySelectorAll(".mock-status-card").forEach(card => card.addEventListener("click", openMaterialShelf));
+  };
+
+  function enhanceMaterialQuestLayout() {
+    const settingScreen = document.getElementById("settingScreen");
+    const card = document.getElementById("settingReviewPanel");
+    const head = settingScreen?.querySelector(".unified-material-head");
+    const visual = card?.querySelector(".setting-review-visual-grid");
+    const settings = card?.querySelector(".integrated-settings-block");
+    const conditions = card?.querySelector(".setting-review-conditions");
+    const actions = card?.querySelector(".setting-review-actions");
+    const startActions = card?.querySelector(".integrated-start-actions");
+    const topLine = card?.querySelector(".practice-settings-topline");
+    const listButton = document.getElementById("settingReviewListToggleButton");
+    const plant = document.getElementById("settingReviewPlant");
+    const boss = document.getElementById("bossBattleArea");
+
+    if (!settingScreen || !card || !settings) return;
+    document.body.classList.add("restored-game-ui", "mock-material-screen");
+
+    if (visual && visual.nextElementSibling !== settings) {
+      settings.parentNode.insertBefore(visual, settings);
+    }
+    if (topLine && listButton && listButton.parentElement !== topLine) {
+      topLine.appendChild(listButton);
+    }
+    if (conditions && conditions.parentElement !== settings) {
+      settings.appendChild(conditions);
+    }
+    if (actions && actions.parentElement !== settings) {
+      settings.appendChild(actions);
+    }
+    if (startActions && startActions.parentElement === settings && conditions && settings.compareDocumentPosition(startActions) & Node.DOCUMENT_POSITION_FOLLOWING) {
+      // 通常演習ボタンは設定項目の直後に残し、総復習条件はその下へ置く。
+    }
+    if (boss && head && (typeof isFeatureEnabled !== "function" || isFeatureEnabled("boss")) && boss.previousElementSibling !== head) {
+      head.insertAdjacentElement("afterend", boss);
+      boss.classList.add("boss-top-banner");
+    }
+
+    if (plant && (typeof isFeatureEnabled !== "function" || isFeatureEnabled("learningTree")) && !plant.querySelector(".setting-tree-img")) {
+      plant.innerHTML = `<img class="setting-tree-img" src="${CHARACTER_ASSET_BASE}/tree.svg" alt="知識の木" loading="lazy" onerror="this.style.display='none';">`;
+    }
+
+    const bossChar = document.querySelector("#bossBattleArea .boss-character");
+    if (bossChar && (typeof isFeatureEnabled !== "function" || isFeatureEnabled("boss")) && !bossChar.querySelector("img")) {
+      bossChar.innerHTML = `<img class="boss-banner-img" src="${CHARACTER_ASSET_BASE}/boss.svg" alt="ボス" loading="lazy">`;
+    }
+  }
+
+  const previousRenderSettingProgressDashboard = window.renderSettingProgressDashboard;
+  if (typeof previousRenderSettingProgressDashboard === "function") {
+    window.renderSettingProgressDashboard = function renderSettingProgressDashboardWithMockup() {
+      const result = previousRenderSettingProgressDashboard.apply(this, arguments);
+      Promise.resolve(result).finally(() => setTimeout(enhanceMaterialQuestLayout, 0));
+      return result;
+    };
+  }
+
+  const previousRenderMenu = window.renderMenu;
+  if (typeof previousRenderMenu === "function") {
+    window.renderMenu = function renderMenuWithMockup() {
+      previousRenderMenu.apply(this, arguments);
+      document.body.classList.add("compact-game-home", "restored-game-ui");
+    };
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    document.body.classList.add("restored-game-ui");
+    setTimeout(enhanceMaterialQuestLayout, 50);
+  });
+})();
+

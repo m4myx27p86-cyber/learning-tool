@@ -5,6 +5,7 @@
 function openAccessManager() {
   if (!isAdmin) return;
   renderAccessMaterialCheckboxes();
+  renderAccessFeatureCheckboxes(DEFAULT_FEATURE_FLAGS);
   document.getElementById("createAccessCodeMessage").textContent = "";
   showOnly("adminAccessScreen");
   loadAccessCodeList();
@@ -31,12 +32,61 @@ function renderAccessMaterialCheckboxes() {
   }).join("");
 }
 
+function renderAccessFeatureCheckboxes(flags = DEFAULT_FEATURE_FLAGS) {
+  const area = document.getElementById("accessFeatureCheckboxes");
+  if (!area) return;
+  const normalized = normalizeFeatureFlags(flags);
+  area.innerHTML = FEATURE_FLAG_DEFINITIONS.map(feature => `
+    <label class="feature-toggle-card">
+      <input type="checkbox" value="${escapeHtml(feature.key)}" ${normalized[feature.key] ? "checked" : ""}>
+      <span>
+        <strong>${escapeHtml(feature.label)}</strong>
+        <small>${escapeHtml(feature.description)}</small>
+      </span>
+    </label>
+  `).join("");
+}
+
+function getAccessFeatureFlagsFromForm() {
+  const flags = { ...DEFAULT_FEATURE_FLAGS };
+  document.querySelectorAll("#accessFeatureCheckboxes input[type='checkbox']").forEach(box => {
+    flags[box.value] = Boolean(box.checked);
+  });
+  return normalizeFeatureFlags(flags);
+}
+
+function resetAccessFeatureCheckboxes() {
+  renderAccessFeatureCheckboxes(DEFAULT_FEATURE_FLAGS);
+}
+
+function getRecordFeatureFlags(record = {}) {
+  return normalizeFeatureFlags(record.featureFlags || record);
+}
+
+function accessFeatureSummaryHtml(flags) {
+  const normalized = normalizeFeatureFlags(flags);
+  return `<div class="feature-badge-list">${FEATURE_FLAG_DEFINITIONS.map(feature => `
+    <span class="feature-badge ${normalized[feature.key] ? "on" : "off"}">${escapeHtml(feature.label)}：${normalized[feature.key] ? "ON" : "OFF"}</span>
+  `).join("")}</div>`;
+}
+
+function accessFeatureToggleCellHtml(code, flags) {
+  const normalized = normalizeFeatureFlags(flags);
+  return `<div class="access-feature-mini-list">${FEATURE_FLAG_DEFINITIONS.map(feature => `
+    <label class="mini-feature-check">
+      <input type="checkbox" data-feature-toggle="${escapeHtml(code)}" data-feature-key="${escapeHtml(feature.key)}" ${normalized[feature.key] ? "checked" : ""}>
+      ${escapeHtml(feature.label)}
+    </label>
+  `).join("")}</div>`;
+}
+
 async function createAccessCodeFromForm() {
   const msg = document.getElementById("createAccessCodeMessage");
   const studentId = document.getElementById("accessStudentIdInput").value.trim();
   const studentName = document.getElementById("accessStudentNameInput").value.trim();
   const memo = document.getElementById("accessMemoInput").value.trim();
   const allowed = [...document.querySelectorAll("#accessMaterialCheckboxes input[type='checkbox']:checked")].map(box => box.value);
+  const flags = getAccessFeatureFlagsFromForm();
 
   if (!studentId) {
     msg.className = "error";
@@ -57,7 +107,8 @@ async function createAccessCodeFromForm() {
       studentId,
       studentName,
       memo,
-      allowedMaterials: allowed
+      allowedMaterials: allowed,
+      ...featureFlagParams(flags)
     });
 
     if (!result.ok) throw new Error(result.error || "コード発行に失敗しました。");
@@ -68,6 +119,7 @@ async function createAccessCodeFromForm() {
     document.getElementById("accessStudentNameInput").value = "";
     document.getElementById("accessMemoInput").value = "";
     document.querySelectorAll("#accessMaterialCheckboxes input[type='checkbox']").forEach(box => { box.checked = false; });
+    resetAccessFeatureCheckboxes();
     loadAccessCodeList();
   } catch (error) {
     console.error(error);
@@ -97,19 +149,22 @@ function renderAccessCodeList(records) {
   }
 
   area.innerHTML = `
-    <table class="history-table compact-table">
+    <table class="history-table compact-table access-code-table">
       <thead>
         <tr>
-          <th>コード</th><th>ID</th><th>名前</th><th>許可教材</th><th>状態</th><th>使用回数</th><th>最終使用</th><th>操作</th>
+          <th>コード</th><th>ID</th><th>名前</th><th>許可教材</th><th>機能</th><th>状態</th><th>使用回数</th><th>最終使用</th><th>操作</th>
         </tr>
       </thead>
       <tbody>
-        ${records.map(record => `
+        ${records.map(record => {
+          const flags = getRecordFeatureFlags(record);
+          return `
           <tr>
             <td><strong>${escapeHtml(record.code)}</strong></td>
             <td>${escapeHtml(record.studentId)}</td>
             <td>${escapeHtml(record.studentName)}</td>
             <td>${escapeHtml(materialNames(parseMaterialList(record.allowedMaterials)).join(" / "))}</td>
+            <td>${accessFeatureToggleCellHtml(record.code, flags)}${accessFeatureSummaryHtml(flags)}</td>
             <td class="${record.active ? "correct" : "wrong"}">${record.active ? "有効" : "無効"}</td>
             <td>${escapeHtml(record.useCount ?? 0)}</td>
             <td>${escapeHtml(formatSheetDate(record.lastUsedAt))}</td>
@@ -117,8 +172,8 @@ function renderAccessCodeList(records) {
               <button class="small-button secondary-button" data-edit-code="${escapeHtml(record.code)}" data-materials="${escapeHtml(parseMaterialList(record.allowedMaterials).join(","))}">教材変更</button>
               <button class="small-button ${record.active ? "quit-button" : "secondary-button"}" data-code="${escapeHtml(record.code)}" data-active="${record.active ? "false" : "true"}">${record.active ? "無効化" : "有効化"}</button>
             </td>
-          </tr>
-        `).join("")}
+          </tr>`;
+        }).join("")}
       </tbody>
     </table>
   `;
@@ -128,6 +183,9 @@ function renderAccessCodeList(records) {
   });
   area.querySelectorAll("button[data-edit-code]").forEach(button => {
     button.addEventListener("click", () => updateAccessCodeMaterials(button.dataset.editCode, button.dataset.materials || ""));
+  });
+  area.querySelectorAll("input[data-feature-toggle]").forEach(box => {
+    box.addEventListener("change", () => updateAccessCodeFeaturesFromRow(box.dataset.featureToggle));
   });
 }
 
@@ -140,6 +198,19 @@ async function updateAccessCodeActive(code, active) {
   }
 }
 
+async function updateAccessCodeFeaturesFromRow(code) {
+  const boxes = [...document.querySelectorAll("input[data-feature-toggle]")].filter(box => box.dataset.featureToggle === code);
+  const flags = { ...DEFAULT_FEATURE_FLAGS };
+  boxes.forEach(box => { flags[box.dataset.featureKey] = Boolean(box.checked); });
+  boxes.forEach(box => { box.disabled = true; });
+  try {
+    await apiGetJsonp("updateAccessCode", { adminPassword: ADMIN_PASSWORD, code, ...featureFlagParams(flags) });
+    loadAccessCodeList();
+  } catch (error) {
+    alert(error.message || "機能設定の変更に失敗しました。");
+    boxes.forEach(box => { box.disabled = false; });
+  }
+}
 
 async function updateAccessCodeMaterials(code, currentMaterialsText) {
   const allKeys = Object.keys(TEST_CONFIG).join(",");
@@ -172,4 +243,3 @@ function formatSheetDate(value) {
   if (typeof value === "string") return value;
   return String(value);
 }
-

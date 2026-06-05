@@ -114,6 +114,7 @@ async function sendResultsToSpreadsheet(resultInfo) {
 
 
 function renderBossResultIfNeeded(isQuit) {
+  if (typeof isFeatureEnabled === "function" && !isFeatureEnabled("boss")) return;
   if (!bossBattleState?.active) return;
   const cleared = !isQuit && bossBattleState.correct >= bossBattleState.total && bossBattleState.hp <= 0;
   const motivation = document.getElementById("motivationMessage");

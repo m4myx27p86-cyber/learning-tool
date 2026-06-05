@@ -94,6 +94,10 @@
     const todayCorrect = today.filter(item => item.correct).length;
     const correct = history.filter(item => item.correct).length;
     const total = history.length;
+    const featureIsOn = typeof isFeatureEnabled === "function" ? isFeatureEnabled : () => true;
+    const showTree = featureIsOn("learningTree");
+    const showZodiac = featureIsOn("zodiac");
+    const showBoss = featureIsOn("boss");
     const tree = getTree(correct);
     const zodiac = getZodiac();
     const zodiacLevel = getZodiacLevel(todayCorrect);
@@ -104,36 +108,47 @@
     const bossRemain = Math.max(0, nextBossAt - total);
     const bossProgress = Math.min(100, Math.round((total % bossStep) / bossStep * 100));
     const streak = typeof getProtectedStreakInfo === "function" ? getProtectedStreakInfo() : { count: 0 };
-
-    area.innerHTML = `
-      <section class="mock-home-notice" aria-label="お知らせ">
-        <div class="notice-mascot">${characterImg(zodiacFile, `${zodiac.key}：${zodiac.name}`, "notice-zodiac-img")}</div>
-        <div class="notice-copy"><span>お知らせ</span><strong>今日もコツコツ学習してレベルアップを目指そう！</strong></div>
-        <button type="button" class="notice-open-button" id="heroNoticeMaterialButton" aria-label="教材へ進む">›</button>
-      </section>
-      <section class="mock-status-grid" aria-label="成長状況">
+    const noticeMascot = showZodiac
+      ? characterImg(zodiacFile, `${zodiac.key}：${zodiac.name}`, "notice-zodiac-img")
+      : showTree
+        ? characterImg("tree.svg", "知識の木", "notice-tree-img")
+        : showBoss
+          ? characterImg("boss.svg", "ボス", "notice-boss-img")
+          : "";
+    const statusCards = [
+      showTree ? `
         <article class="mock-status-card tree-card">
           <span>知識の木</span>
           <div class="mock-character-stage">${characterImg("tree.svg", "知識の木", "tree-img")}</div>
           <strong>Lv.${tree.level}</strong>
           <small>${tree.isMaxLevel ? "最大レベル達成" : `次のレベルまで あと ${tree.remaining}問`}</small>
           <div class="mock-progress"><i style="width:${tree.progress}%"></i><b>${correct} / 1,000</b></div>
-        </article>
+        </article>` : "",
+      showZodiac ? `
         <article class="mock-status-card zodiac-card">
           <span>十二支の道</span>
           <div class="mock-character-stage">${characterImg(zodiacFile, `${zodiac.key}：${zodiac.name}`, "zodiac-img")}</div>
           <strong>Lv.${zodiacLevel.level}</strong>
           <small>${zodiacLevel.isMaxLevel ? "本日の最高Lv." : `次のレベルまで あと ${zodiacLevel.remaining}問`}</small>
           <div class="mock-progress orange"><i style="width:${zodiacLevel.progress}%"></i><b>${todayCorrect} / 30</b></div>
-        </article>
+        </article>` : "",
+      showBoss ? `
         <article class="mock-status-card boss-card">
           <span>ボスバトル</span>
           <div class="mock-character-stage">${characterImg("boss.svg", "ボス", "boss-img")}</div>
           <strong>Lv.${bossLevel}</strong>
           <small>次のレベルまで あと ${bossRemain}問</small>
           <div class="mock-progress purple"><i style="width:${bossProgress}%"></i><b>${total % bossStep} / ${bossStep}</b></div>
-        </article>
+        </article>` : ""
+    ].filter(Boolean).join("");
+
+    area.innerHTML = `
+      <section class="mock-home-notice" aria-label="お知らせ">
+        <div class="notice-mascot">${noticeMascot}</div>
+        <div class="notice-copy"><span>お知らせ</span><strong>今日もコツコツ学習してレベルアップを目指そう！</strong></div>
+        <button type="button" class="notice-open-button" id="heroNoticeMaterialButton" aria-label="教材へ進む">›</button>
       </section>
+      ${statusCards ? `<section class="mock-status-grid" aria-label="成長状況">${statusCards}</section>` : ""}
       <button id="heroMaterialButton" class="mock-material-button" type="button">
         <span class="mock-chest" aria-hidden="true">▣</span>
         <span><strong>教材へ</strong><small>学習できる教材を選ぼう！</small></span>
@@ -181,17 +196,17 @@
     if (startActions && startActions.parentElement === settings && conditions && settings.compareDocumentPosition(startActions) & Node.DOCUMENT_POSITION_FOLLOWING) {
       // 通常演習ボタンは設定項目の直後に残し、総復習条件はその下へ置く。
     }
-    if (boss && head && boss.previousElementSibling !== head) {
+    if (boss && head && (typeof isFeatureEnabled !== "function" || isFeatureEnabled("boss")) && boss.previousElementSibling !== head) {
       head.insertAdjacentElement("afterend", boss);
       boss.classList.add("boss-top-banner");
     }
 
-    if (plant && !plant.querySelector(".setting-tree-img")) {
+    if (plant && (typeof isFeatureEnabled !== "function" || isFeatureEnabled("learningTree")) && !plant.querySelector(".setting-tree-img")) {
       plant.innerHTML = `<img class="setting-tree-img" src="${CHARACTER_ASSET_BASE}/tree.svg" alt="知識の木" loading="lazy" onerror="this.style.display='none';">`;
     }
 
     const bossChar = document.querySelector("#bossBattleArea .boss-character");
-    if (bossChar && !bossChar.querySelector("img")) {
+    if (bossChar && (typeof isFeatureEnabled !== "function" || isFeatureEnabled("boss")) && !bossChar.querySelector("img")) {
       bossChar.innerHTML = `<img class="boss-banner-img" src="${CHARACTER_ASSET_BASE}/boss.svg" alt="ボス" loading="lazy">`;
     }
   }

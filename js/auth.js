@@ -28,6 +28,7 @@ async function checkLogin() {
     currentStudentName = "";
     currentAccessCode = "";
     allowedMaterials = null;
+    setFeatureFlags(DEFAULT_FEATURE_FLAGS);
     isAdmin = false;
     if (message) message.textContent = "";
     showOnly("studentScreen");
@@ -55,6 +56,7 @@ function loginAsAdmin() {
   currentAccessCode = "";
   allowedMaterials = null;
   isAdmin = true;
+  setFeatureFlags(DEFAULT_FEATURE_FLAGS);
   saveSession();
   document.getElementById("loginMessage").textContent = "";
   renderMenu();
@@ -67,6 +69,7 @@ function loginWithAccessCode(result) {
   currentAccessCode = result.code || "";
   allowedMaterials = Array.isArray(result.allowedMaterials) ? result.allowedMaterials : [];
   isAdmin = false;
+  setFeatureFlags(result.featureFlags || result);
   saveSession();
 
   if (allowedMaterials.length === 1) {
@@ -97,6 +100,7 @@ function checkStudentLogin() {
   currentAccessCode = "";
   allowedMaterials = null;
   isAdmin = false;
+  setFeatureFlags(DEFAULT_FEATURE_FLAGS);
   saveSession();
   if (message) message.textContent = "";
   renderMenu();
@@ -108,6 +112,7 @@ function saveSession() {
   localStorage.setItem(STORAGE_KEYS.sessionName, currentStudentName || "");
   localStorage.setItem(STORAGE_KEYS.sessionAccessCode, currentAccessCode || "");
   localStorage.setItem(STORAGE_KEYS.allowedMaterials, JSON.stringify(allowedMaterials));
+  localStorage.setItem(STORAGE_KEYS.featureFlags, JSON.stringify(normalizeFeatureFlags(featureFlags)));
 }
 
 function restoreSession() {
@@ -117,7 +122,9 @@ function restoreSession() {
   currentStudentName = localStorage.getItem(STORAGE_KEYS.sessionName) || "";
   currentAccessCode = localStorage.getItem(STORAGE_KEYS.sessionAccessCode) || "";
   try { allowedMaterials = JSON.parse(localStorage.getItem(STORAGE_KEYS.allowedMaterials)); } catch { allowedMaterials = null; }
+  try { featureFlags = normalizeFeatureFlags(JSON.parse(localStorage.getItem(STORAGE_KEYS.featureFlags) || "{}")); } catch { featureFlags = { ...DEFAULT_FEATURE_FLAGS }; }
   isAdmin = currentStudentId === ADMIN_PASSWORD;
+  applyFeatureVisibilityFlags();
 }
 
 function logout() {
@@ -126,10 +133,12 @@ function logout() {
   currentAccessCode = "";
   allowedMaterials = null;
   isAdmin = false;
+  setFeatureFlags(DEFAULT_FEATURE_FLAGS);
   localStorage.removeItem(STORAGE_KEYS.sessionStudent);
   localStorage.removeItem(STORAGE_KEYS.sessionName);
   localStorage.removeItem(STORAGE_KEYS.sessionAccessCode);
   localStorage.removeItem(STORAGE_KEYS.allowedMaterials);
+  localStorage.removeItem(STORAGE_KEYS.featureFlags);
   document.getElementById("passwordInput").value = "";
   document.getElementById("studentLoginInput").value = "";
   showOnly("loginScreen");
@@ -139,5 +148,4 @@ function togglePasswordField(id, checked) {
   const field = document.getElementById(id);
   if (field) field.type = checked ? "text" : "password";
 }
-
 

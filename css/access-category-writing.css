@@ -142,3 +142,85 @@
   .admin-quick { flex-direction: column; }
 }
 
+
+
+/* =========================================================
+   Access code feature toggles / learner feature visibility
+========================================================= */
+.access-feature-section {
+  margin: 18px 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: #f8fafc;
+}
+.access-feature-head {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px 14px;
+  align-items: baseline;
+  margin-bottom: 12px;
+}
+.feature-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.feature-toggle-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 74px;
+  padding: 12px 13px;
+  border: 1px solid #dbe3ef;
+  border-radius: 16px;
+  background: #ffffff;
+  cursor: pointer;
+}
+.feature-toggle-card input {
+  width: auto;
+  margin: 4px 0 0;
+  flex: 0 0 auto;
+}
+.feature-toggle-card strong,
+.feature-toggle-card small {
+  display: block;
+  line-height: 1.45;
+}
+.feature-toggle-card strong { color: #0f172a; font-size: 15px; }
+.feature-toggle-card small { color: #64748b; font-weight: 700; margin-top: 2px; }
+.access-code-table th:nth-child(5),
+.access-code-table td:nth-child(5) { min-width: 210px; }
+.access-feature-mini-list,
+.feature-badge-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.access-feature-mini-list { margin-bottom: 7px; }
+.mini-feature-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.mini-feature-check input { width: auto; margin: 0; }
+.feature-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 7px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.feature-badge.on { background: #ecfdf5; color: #047857; border: 1px solid #bbf7d0; }
+.feature-badge.off { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }

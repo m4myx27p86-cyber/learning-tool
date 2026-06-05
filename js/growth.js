@@ -94,6 +94,16 @@ function getTreeLevel(correctCount) {
 function renderGrowthHome() {
   const area = document.getElementById("growthHomeArea");
   if (!area || !currentStudentId) return;
+  const featureIsOn = typeof isFeatureEnabled === "function" ? isFeatureEnabled : () => true;
+  const showTree = featureIsOn("learningTree");
+  const showZodiac = featureIsOn("zodiac");
+  if (!showTree && !showZodiac) {
+    area.innerHTML = "";
+    area.classList.add("hidden");
+    return;
+  }
+  area.classList.remove("hidden");
+
   const history = getCurrentStudentHistory();
   const todayKey = getDateKey(new Date());
   const todayHistory = history.filter(item => item.dateKey === todayKey);
@@ -119,18 +129,15 @@ function renderGrowthHome() {
   const expBoosts = Math.floor(correctCount / 100);
   const hintTickets = Math.floor(total / 30);
   const characterMood = todayCorrect >= 10 ? "great" : todayCorrect >= 3 ? "happy" : "calm";
+  const titleText = showTree && showZodiac ? "通算の木と本日の十二支" : showTree ? "通算の木" : "本日の十二支";
+  const bodyText = showTree && showZodiac
+    ? "通算では木が育ち、日替わりでは十二支キャラが育ちます。継続・復習・正解の積み重ねを、画面上で見える化します。"
+    : showTree
+      ? "通算の正解数に合わせて、学習の木が育ちます。"
+      : "今日の正解数に合わせて、日替わり十二支キャラが育ちます。";
+  const badgeText = showTree ? `木 Lv.${treeLevel} / Max ${treeLevelInfo.maxLevel}` : `${zodiac.key} Lv.${zodiacLevel}`;
 
-  area.innerHTML = `
-    <div class="growth-dashboard-head">
-      <div>
-        <span class="panel-label">Learning Growth</span>
-        <h3>通算の木と本日の十二支</h3>
-        <p>通算では木が育ち、日替わりでは十二支キャラが育ちます。継続・復習・正解の積み重ねを、画面上で見える化します。</p>
-      </div>
-      <div class="growth-level-badge">木 Lv.${treeLevel} / Max ${treeLevelInfo.maxLevel}</div>
-    </div>
-
-    <div class="growth-dashboard-grid">
+  const treePanel = showTree ? `
       <article class="growth-tree-panel">
         <div class="panel-label">通算</div>
         <div class="plant-visual plant-stage-${stage}" style="--root-progress:${rootPercent}%;" aria-label="通算学習の木">
@@ -147,8 +154,9 @@ function renderGrowthHome() {
           </div>
         </div>
         <p class="growth-next">${treeLevelInfo.isMaxLevel ? `最大レベル達成：${treeLevelInfo.maxTarget}正解到達` : `次の成長まであと <strong>${remaining}</strong> 正解`}</p>
-      </article>
+      </article>` : "";
 
+  const zodiacPanel = showZodiac ? `
       <article class="daily-zodiac-panel zodiac-${characterMood}">
         <div class="panel-label">日替わり十二支</div>
         <div class="zodiac-character" aria-hidden="true">
@@ -163,7 +171,21 @@ function renderGrowthHome() {
         </div>
         <div class="zodiac-exp" aria-label="十二支の次レベルまでの進捗"><i style="width:${zodiacLevelInfo.progress}%"></i></div>
         <small>${zodiacLevelInfo.isMaxLevel ? "明日また新しい十二支を育てましょう。" : `Lv.${zodiacLevel + 1} 目標：${zodiacLevelInfo.nextTarget}問`}</small>
-      </article>
+      </article>` : "";
+
+  area.innerHTML = `
+    <div class="growth-dashboard-head">
+      <div>
+        <span class="panel-label">Learning Growth</span>
+        <h3>${titleText}</h3>
+        <p>${bodyText}</p>
+      </div>
+      <div class="growth-level-badge">${badgeText}</div>
+    </div>
+
+    <div class="growth-dashboard-grid ${showTree && showZodiac ? "" : "single-growth-panel"}">
+      ${treePanel}
+      ${zodiacPanel}
     </div>
 
     <div class="growth-stats quest-growth-stats">
