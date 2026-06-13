@@ -1401,9 +1401,7 @@ async function loadChoiceQuestions(filePath) {
 
     // passage列があるCSVだけ本文として扱います。
     // word列を本文に流用すると、ポラリス3で設問が本文欄に出るため、ここでは代用しません。
-    const passageNames = ["passage", "context", "body", "source", "text", "本文", "長文"];
-    const hasExplicitPassageColumn = hasCsvHeader(header, passageNames);
-    const passage = getCsvCell(row, header, passageNames, -1);
+    const passage = getCsvCell(row, header, ["passage", "context", "body", "source", "text", "本文", "長文"], -1);
 
     // ポラリス3のCSVでは word列が設問、questionType列が Vocabulary/Factual です。
     // fallbackを9列目にすると questionType が設問として表示されるため、明示的なquestion列がない場合はword列を使います。
@@ -1439,7 +1437,6 @@ async function loadChoiceQuestions(filePath) {
       questionType,
       summaryText,
       summaryFullText: summaryText,
-      hasExplicitPassageColumn,
       sourceFile: filePath
     };
   }).filter(q => q.id && q.section && (q.word || q.question || q.passage) && q.correctAnswer && q.choices.length > 0);
@@ -1447,12 +1444,6 @@ async function loadChoiceQuestions(filePath) {
 
 function normalizeCsvHeader(value) {
   return String(value || "").trim().toLowerCase().replace(/[\s_\-－ー]/g, "");
-}
-
-function hasCsvHeader(header, names) {
-  const normalizedHeader = header.map(normalizeCsvHeader);
-  const normalizedNames = (Array.isArray(names) ? names : [names]).map(normalizeCsvHeader);
-  return normalizedNames.some(name => normalizedHeader.includes(name));
 }
 
 function getCsvCell(row, header, names, fallbackIndex = -1) {
@@ -1493,9 +1484,7 @@ async function loadPolaris3Questions(config) {
     loaded.forEach(question => {
       const sectionLessonKey = getPolarisLessonKey(question.section) || fileLessonKey;
       const manifestEntry = getPolarisManifestEntry(manifest, question.section, sectionLessonKey, fileLessonKey, file);
-      const embeddedPassage = question.hasExplicitPassageColumn
-        ? (question.passage || "")
-        : (looksLikePolarisQuestion(question.passage, question.question) ? "" : (question.passage || ""));
+      const embeddedPassage = looksLikePolarisQuestion(question.passage, question.question) ? "" : (question.passage || "");
 
       // 各Lesson CSVの passage 列を最優先します。
       // manifest.csvの description/path は本文ではなく見出し・ファイル情報なので、本文として上書きしません。
@@ -1607,6 +1596,7 @@ function makePolarisLessonTitle(value) {
 function looksLikePolarisQuestion(text, questionText = "") {
   const clean = String(text || "").trim();
   if (!clean) return true;
+  if (/^\[\d+\]/.test(clean)) return false;
   if (questionText && normalizeForCompare(clean) === normalizeForCompare(questionText)) return true;
   return clean.length < 180 && /[?？]|according|which|what|why|author|main idea|closest in meaning|本文|選び/i.test(clean);
 }

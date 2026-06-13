@@ -20,13 +20,34 @@ async function openSettings(type) {
   document.getElementById("timeLimitSelect").value = String(config.defaultTime || 0);
   toggleCustomQuestionInput();
 
-  const sourceQuestions = await ensureQuestionsLoaded(type);
+  const sectionSelect = document.getElementById("sectionSelect");
+  if (sectionSelect) {
+    sectionSelect.innerHTML = `<option value="all">Loading...</option>`;
+  }
+
+  let sourceQuestions = [];
+  try {
+    sourceQuestions = await ensureQuestionsLoaded(type);
+  } catch (error) {
+    console.error("Failed to load material data:", type, error);
+    if (sectionSelect) {
+      const message = error?.message || "unknown error";
+      sectionSelect.innerHTML = `<option value="all">Load error: ${escapeHtml(message)}</option>`;
+    }
+    alert(`Failed to load material data: ${error?.message || "check CSV files"}`);
+    return;
+  }
+
   setupSectionSelect(sourceQuestions);
   updateMistakeCountInSettings();
   settingReviewListVisible = false;
   const listPanel = document.getElementById("settingReviewListPanel");
   if (listPanel) listPanel.classList.add("hidden");
-  await renderSettingProgressDashboard(type);
+  try {
+    await renderSettingProgressDashboard(type);
+  } catch (error) {
+    console.error("Failed to render settings progress:", type, error);
+  }
 }
 
 async function ensureQuestionsLoaded(type) {
@@ -54,6 +75,7 @@ async function ensureQuestionsLoaded(type) {
 
 function setupSectionSelect(sourceQuestions) {
   const select = document.getElementById("sectionSelect");
+  if (!select) return;
   const sections = [...new Set(sourceQuestions.map(q => q.section))]
     .filter(Boolean)
     .sort((a, b) => String(a).localeCompare(String(b), "ja", { numeric: true }));
@@ -108,4 +130,3 @@ function filterStatusesBySelectedSection(statuses) {
 function orderQuestionsForMode(type, pool) {
   return TEST_CONFIG[type]?.keepOrder ? [...pool] : shuffle(pool);
 }
-
