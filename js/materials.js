@@ -41,9 +41,9 @@ function renderMaterialCategories() {
       cards += `
         <div class="material-card-wrap utility-card-wrap">
           <button class="material-card accent-card" data-action="calendar">
-            <span>計画</span>
-            <strong>TOEIC S&amp;W 学習カレンダー</strong>
-            <small>毎日の学習チェックを端末内に保存します。</small>
+            <span>継続</span>
+            <strong>連続ログイン日数</strong>
+            <small>毎日のログイン記録と学習継続を確認します。</small>
           </button>
         </div>
       `;
@@ -204,4 +204,3 @@ function applyThemeForMaterial(type) {
   if (type) document.body.classList.add(materialClass);
   if (type) document.body.dataset.currentMaterial = type;
 }
-

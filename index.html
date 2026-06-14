@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="css/polaris-full-visibility.css?v=split-quest-20260531" />
   <link rel="stylesheet" href="css/material-screen-brushup.css?v=target-boss-fix-20260531" />
   <link rel="stylesheet" href="css/game-ui-override.css?v=feature-flags-20260605" />
+  <link rel="stylesheet" href="css/anime-quest-ui.css?v=github-design-features-20260614" />
 </head>
 <body>
   <div class="app-shell">
@@ -278,10 +279,10 @@
       </section>
 
       <section id="calendarScreen" class="hidden">
-        <h2>TOEIC S&W 学習カレンダー</h2>
-        <p class="muted">6月21日のTOEIC S&Wに向けて、毎日の学習をチェックしましょう。</p>
+        <h2>連続ログイン日数</h2>
+        <p class="muted">毎日のログインと学習継続を確認します。</p>
         <div id="calendarArea"></div>
-        <button id="resetCalendarButton" class="secondary-button">チェックをリセット</button>
+        <button id="resetCalendarButton" class="secondary-button">ログイン記録をリセット</button>
         <button id="calendarBackButton" class="secondary-button">戻る</button>
       </section>
 
@@ -497,10 +498,10 @@
   <script src="js/api.js?v=split-quest-20260531"></script>
   <script src="js/auth.js?v=feature-flags-20260605"></script>
   <script src="js/home-menu.js?v=split-quest-20260531"></script>
-  <script src="js/materials.js?v=feature-flags-20260605"></script>
+  <script src="js/materials.js?v=streak-card-20260614"></script>
   <script src="js/admin-access.js?v=feature-flags-20260605"></script>
   <script src="js/utils.js?v=polaris-loader-order-20260613"></script>
-  <script src="js/data-loaders.js?v=polaris-passage-final-20260613"></script>
+  <script src="js/data-loaders.js?v=file-fetch-20260614"></script>
   <script src="js/settings.js?v=polaris-settings-debug-20260613"></script>
   <script src="js/quiz-start.js?v=feature-flags-20260605"></script>
   <script src="js/quiz-render.js?v=split-quest-20260531"></script>
@@ -513,8 +514,9 @@
   <script src="js/growth.js?v=feature-flags-20260605"></script>
   <script src="js/material-progress.js?v=feature-flags-20260605"></script>
   <script src="js/local-review.js?v=split-quest-20260531"></script>
-  <script src="js/calendar.js?v=split-quest-20260531"></script>
+  <script src="js/calendar.js?v=login-streak-20260614"></script>
   <script src="js/dashboard-streak.js?v=split-quest-20260531"></script>
   <script src="js/game-ui-override.js?v=feature-flags-20260605"></script>
+  <script src="js/anime-quest-ui.js?v=ud-streak-20260614"></script>
 </body>
 </html>

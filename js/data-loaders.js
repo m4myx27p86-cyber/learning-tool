@@ -2,14 +2,25 @@
    CSV読み込み
 ========================= */
 
-async function loadChoiceQuestions(filePath) {
-  const response = await fetch(filePath);
-  if (!response.ok) {
-    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
-    return [];
-  }
+function localFileHelpMessage(filePath) {
+  return `Cannot read ${filePath}. Open the app at http://127.0.0.1:8000/index.html instead of opening index.html directly.`;
+}
 
-  const text = await response.text();
+async function fetchTextResource(filePath) {
+  try {
+    const response = await fetch(filePath, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    return await response.text();
+  } catch (error) {
+    if (typeof location !== "undefined" && location.protocol === "file:") {
+      throw new Error(localFileHelpMessage(filePath));
+    }
+    throw new Error(`Cannot read ${filePath}: ${error?.message || "fetch failed"}`);
+  }
+}
+
+async function loadChoiceQuestions(filePath) {
+  const text = await fetchTextResource(filePath);
   const rows = parseCSV(text);
   const header = (rows.shift() || []).map(cell => String(cell || "").trim());
 
@@ -157,10 +168,7 @@ async function loadPolaris3Manifest(manifestPath) {
   if (!manifestPath) return manifest;
 
   try {
-    const response = await fetch(manifestPath);
-    if (!response.ok) return manifest;
-
-    const text = await response.text();
+    const text = await fetchTextResource(manifestPath);
     const rows = parseCSV(text);
     const header = (rows.shift() || []).map(cell => String(cell || "").trim());
 
@@ -221,13 +229,7 @@ function looksLikePolarisQuestion(text, questionText = "") {
 }
 
 async function loadErrorCorrectionQuestions(filePath) {
-  const response = await fetch(filePath);
-  if (!response.ok) {
-    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
-    return [];
-  }
-
-  const text = await response.text();
+  const text = await fetchTextResource(filePath);
   const rows = parseCSV(text);
   const header = (rows.shift() || []).map(cell => String(cell || "").trim());
   const isCurrentReviewCsv =
@@ -298,13 +300,16 @@ async function loadErrorCorrectionQuestions(filePath) {
 
 async function loadSentenceQuestions(files) {
   const all = [];
+  const failures = [];
   for (const file of files) {
-    const response = await fetch(file);
-    if (!response.ok) {
-      console.warn(`読み込み失敗: ${file}`);
+    let text = "";
+    try {
+      text = await fetchTextResource(file);
+    } catch (error) {
+      failures.push(error);
+      console.warn(error);
       continue;
     }
-    const text = await response.text();
     const rows = parseCSV(text);
     rows.shift();
     const loaded = rows.map(row => ({
@@ -318,17 +323,12 @@ async function loadSentenceQuestions(files) {
     })).filter(q => q.id && q.section && q.answer);
     all.push(...loaded);
   }
+  if (!all.length && failures.length) throw failures[0];
   return all;
 }
 
 async function loadClozeQuestions(filePath) {
-  const response = await fetch(filePath);
-  if (!response.ok) {
-    alert(`${filePath} を読み込めませんでした。フォルダ名・ファイル名を確認してください。`);
-    return [];
-  }
-
-  const text = await response.text();
+  const text = await fetchTextResource(filePath);
   const rows = parseCSV(text);
   rows.shift();
 
@@ -344,12 +344,7 @@ async function loadClozeQuestions(filePath) {
 }
 
 async function loadWritingTasks(filePath) {
-  const response = await fetch(filePath);
-  if (!response.ok) {
-    alert(`${filePath} を読み込めませんでした。`);
-    return [];
-  }
-  const text = await response.text();
+  const text = await fetchTextResource(filePath);
   const rows = parseCSV(text);
   rows.shift();
   return rows.map(row => ({
